@@ -25,6 +25,22 @@ migrate_working_dir/
 
 # Secrets locaux (clé OpenAI, flags) — ne pas versionner
 dart_defines.json
+.env
+.env.*
+*.local
+
+# Firebase / Google credentials
+android/app/google-services.json
+ios/Runner/GoogleService-Info.plist
+# Généré par FlutterFire (contient des clés API côté client)
+lib/firebase_options.dart
+
+# Signing / private keys
+*.jks
+*.keystore
+*.p12
+*.pem
+*.key
 
 # Flutter/Dart/Pub related
 **/doc/api/
