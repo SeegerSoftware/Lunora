@@ -146,6 +146,21 @@ class StoryReaderScreen extends ConsumerWidget {
                                       horizontal: LunoraSpacing.sm,
                                     ),
                                   ),
+                                  Chip(
+                                    label: Text(
+                                      _sourceLabel(story.generationSource),
+                                      style: theme.textTheme.labelLarge?.copyWith(
+                                        color: colorScheme.onPrimaryContainer,
+                                        fontWeight: FontWeight.w700,
+                                      ),
+                                    ),
+                                    backgroundColor: LunoraColors.nightBlueLift
+                                        .withValues(alpha: 0.72),
+                                    side: BorderSide.none,
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: LunoraSpacing.sm,
+                                    ),
+                                  ),
                                 ],
                               ),
                               const SizedBox(height: LunoraSpacing.xl),
@@ -202,5 +217,22 @@ class StoryReaderScreen extends ConsumerWidget {
         ],
       ),
     );
+  }
+}
+
+String _sourceLabel(String source) {
+  switch (source) {
+    case 'remote-ai':
+      return 'Source: IA reelle';
+    case 'fallback-config':
+      return 'Source: fallback (config)';
+    case 'fallback-error':
+      return 'Source: fallback (erreur API)';
+    case 'fallback-safety':
+      return 'Source: fallback (securite)';
+    case 'fallback-mock':
+      return 'Source: fallback local';
+    default:
+      return 'Source: inconnue';
   }
 }

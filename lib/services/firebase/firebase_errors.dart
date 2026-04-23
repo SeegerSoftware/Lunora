@@ -30,13 +30,35 @@ abstract final class FirebaseErrors {
   }
 
   static String firestoreMessage(Object error) {
+    if (error is FirebaseException) {
+      final code = error.code.trim();
+      final msg = (error.message ?? '').trim();
+      switch (code) {
+        case 'permission-denied':
+          return 'Acces refuse aux donnees (permission-denied).';
+        case 'unavailable':
+          return 'Service temporairement indisponible (unavailable).';
+        case 'failed-precondition':
+          return msg.isNotEmpty
+              ? 'Firestore precondition: $msg'
+              : 'Firestore precondition non satisfaite (failed-precondition).';
+        case 'not-found':
+          return 'Document/ressource introuvable (not-found).';
+        default:
+          if (msg.isNotEmpty) return 'Firestore [$code]: $msg';
+          return 'Firestore [$code]';
+      }
+    }
     final s = error.toString();
     if (s.contains('permission-denied')) {
-      return 'Accès refusé aux données.';
+      return 'Acces refuse aux donnees (permission-denied).';
     }
     if (s.contains('unavailable')) {
-      return 'Service temporairement indisponible.';
+      return 'Service temporairement indisponible (unavailable).';
     }
-    return 'Erreur lors de la lecture ou de l’enregistrement.';
+    if (s.contains('failed-precondition')) {
+      return 'Firestore precondition non satisfaite (failed-precondition).';
+    }
+    return 'Erreur Firestore: $s';
   }
 }

@@ -1,5 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 
+import '../../../core/config/ai_generation_config.dart';
 import '../../../core/utils/date_key_utils.dart';
 import '../../story_memory/data/story_memory_repository.dart';
 import '../../story_memory/services/story_memory_builder.dart';
@@ -81,7 +82,12 @@ class FirebaseStoryRepository implements StoryRepository {
       if (existing.exists && existing.data() != null) {
         final m = Map<String, dynamic>.from(existing.data()!);
         m['id'] = existing.id;
-        return Story.fromMap(m);
+        final cached = Story.fromMap(m);
+        final shouldRefreshFromAi =
+            AiGenerationConfig.canUseRemoteAi &&
+            cached.generationSource.startsWith('fallback');
+        if (!shouldRefreshFromAi) return cached;
+        await ref.delete();
       }
 
       final isSerialized = child.storyFormat == StoryFormat.serializedChapters;
@@ -165,6 +171,7 @@ class FirebaseStoryRepository implements StoryRepository {
         chapterNumber: chapterIndex,
         totalChapters: totalChapters,
         seriesId: generated.seriesId ?? seriesId,
+        generationSource: generated.generationSource,
         createdAt: DateTime.now(),
       );
 

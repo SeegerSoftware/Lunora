@@ -22,6 +22,12 @@ Ton objectif est de produire une histoire :
 - rassurante et apaisante
 - avec une fin positive
 
+Qualité littéraire attendue :
+- s’inspirer des qualités narratives des grands classiques de la littérature jeunesse
+- privilégier émerveillement, clarté, musicalité et chaleur émotionnelle
+- utiliser un vocabulaire simple et concret, parfaitement accessible à un jeune enfant
+- ne jamais imiter ni citer un auteur identifiable, ni reproduire un texte existant
+
 Réponds uniquement par un objet JSON valide, sans texte hors JSON (voir schéma dans le message utilisateur).
 '''
         .trim();
@@ -42,6 +48,7 @@ Réponds uniquement par un objet JSON valide, sans texte hors JSON (voir schéma
     final isLastChapter =
         request.chapterIndex >= request.totalChapters && request.totalChapters > 0;
     final wordRange = _wordCountGuidance(child.storyLengthMinutes);
+    final minWords = _minWordsForMinutes(child.storyLengthMinutes);
     final displayName =
         child.firstName.trim().isEmpty ? 'l’enfant' : child.firstName.trim();
 
@@ -100,6 +107,7 @@ Réponds uniquement par un objet JSON valide, sans texte hors JSON (voir schéma
       ..writeln('${child.storyLengthMinutes} minutes')
       ..writeln()
       ..writeln('Longueur cible : environ $wordRange mots')
+      ..writeln('Longueur minimale stricte : $minWords mots')
       ..writeln()
       ..writeln('Débit de lecture (important pour la longueur du texte) :')
       ..writeln(
@@ -189,11 +197,15 @@ Réponds uniquement par un objet JSON valide, sans texte hors JSON (voir schéma
       ..writeln('- phrases fluides')
       ..writeln('- pas trop longues')
       ..writeln('- rythme naturel')
+      ..writeln('- longueur suffisante (pas de version courte)')
       ..writeln()
       ..writeln('2. Le style doit être naturel et non robotique :')
       ..writeln('- évite les répétitions')
       ..writeln('- évite les structures mécaniques')
       ..writeln('- évite les phrases génériques')
+      ..writeln(
+        '- viser un style de grande litterature jeunesse: images sensibles, rythme doux, mots simples',
+      )
       ..writeln()
       ..writeln('3. Structure attendue :')
       ..writeln()
@@ -252,6 +264,30 @@ Réponds uniquement par un objet JSON valide, sans texte hors JSON (voir schéma
       ..writeln('- apaisante')
       ..writeln('- adaptée au coucher')
       ..writeln()
+      ..writeln('9. Longueur (obligatoire) :')
+      ..writeln('- content doit contenir AU MOINS $minWords mots')
+      ..writeln('- ne fournis jamais une version resumee')
+      ..writeln(
+        '- avant de repondre, verifie la longueur: si trop court, etends l\'histoire avec des scenes supplementaires douces',
+      )
+      ..writeln()
+      ..writeln('10. Structure minimale recommandee pour atteindre la longueur :')
+      ..writeln('- ouverture (mise en ambiance) : 15%')
+      ..writeln('- aventure principale en 2 a 3 etapes : 55%')
+      ..writeln('- resolution emotionnelle : 20%')
+      ..writeln('- rituel de coucher / fermeture apaisante : 10%')
+      ..writeln()
+      ..writeln('11. Alignement au profil (obligatoire) :')
+      ..writeln(
+        '- utiliser explicitement au moins 2 éléments de "Thèmes préférés" quand disponibles',
+      )
+      ..writeln(
+        '- intégrer au moins 1 valeur de "Valeurs à transmettre" de manière naturelle',
+      )
+      ..writeln(
+        '- si des peurs sont renseignées, en adresser au moins 1 avec un dénouement rassurant',
+      )
+      ..writeln()
       ..writeln('==================================================')
       ..writeln('CONTRAINTES STRICTES')
       ..writeln('==================================================')
@@ -263,6 +299,7 @@ Réponds uniquement par un objet JSON valide, sans texte hors JSON (voir schéma
       ..writeln('- contenu anxiogène')
       ..writeln('- sexualisation')
       ..writeln('- vocabulaire inadapté')
+      ..writeln('- histoire trop courte (moins de $minWords mots)')
       ..writeln()
       ..writeln(_jsonFormatBlock(request));
 
@@ -273,12 +310,24 @@ Réponds uniquement par un objet JSON valide, sans texte hors JSON (voir schéma
   static String _wordCountGuidance(int minutes) {
     switch (minutes) {
       case 5:
-        return '600 à 800';
+        return '380 à 650';
       case 15:
-        return '1500 à 1800';
+        return '900 à 1400';
       case 10:
       default:
-        return '1000 à 1300';
+        return '550 à 900';
+    }
+  }
+
+  static int _minWordsForMinutes(int minutes) {
+    switch (minutes) {
+      case 5:
+        return 340;
+      case 15:
+        return 800;
+      case 10:
+      default:
+        return 500;
     }
   }
 

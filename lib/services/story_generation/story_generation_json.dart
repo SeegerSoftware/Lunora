@@ -129,7 +129,7 @@ abstract final class StoryGenerationJsonParser {
 }
 
 abstract final class StoryGenerationResultNormalizer {
-  static const int _minContentLength = 200;
+  static const int _minContentLength = 350;
 
   /// Valeurs de chapitre / série : la source de vérité est la requête produit (pas le modèle).
   static StoryGenerationResult normalize({
@@ -152,6 +152,11 @@ abstract final class StoryGenerationResultNormalizer {
       throw FormatException(
         'content trop court (${rawContent.length} car., min $_minContentLength)',
       );
+    }
+    final minWords = _minWordsForMinutes(child.storyLengthMinutes);
+    final words = _wordCount(rawContent);
+    if (words < minWords) {
+      throw FormatException('content trop court ($words mots, min $minWords)');
     }
     final content = rawContent;
 
@@ -185,7 +190,28 @@ abstract final class StoryGenerationResultNormalizer {
       chapterNumber: request.chapterIndex,
       totalChapters: request.totalChapters,
       seriesId: seriesId,
+      generationSource: 'remote-ai',
     );
+  }
+
+  static int _wordCount(String content) {
+    return content
+        .trim()
+        .split(RegExp(r'\s+'))
+        .where((w) => w.isNotEmpty)
+        .length;
+  }
+
+  static int _minWordsForMinutes(int minutes) {
+    switch (minutes) {
+      case 5:
+        return 340;
+      case 15:
+        return 800;
+      case 10:
+      default:
+        return 500;
+    }
   }
 
   static int _nearestAllowedMinutes(int value, int preferred) {

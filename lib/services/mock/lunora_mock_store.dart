@@ -12,6 +12,7 @@ class LunoraMockStore {
   UserModel? sessionUser;
   ChildProfile? childProfile;
   Subscription? subscription;
+  final Map<String, UserModel> _usersByEmail = <String, UserModel>{};
 
   final Map<String, Story> _storyByChildAndDateKey = <String, Story>{};
   final Map<String, String> _seriesAnchorDateKeyByChildId = <String, String>{};
@@ -120,5 +121,13 @@ class LunoraMockStore {
     childProfile = null;
     subscription = null;
     clearStories();
+  }
+
+  UserModel? userByEmail(String email) {
+    return _usersByEmail[email.trim().toLowerCase()];
+  }
+
+  void putUser(UserModel user) {
+    _usersByEmail[user.email.trim().toLowerCase()] = user;
   }
 }

@@ -83,7 +83,6 @@ class AuthSessionNotifier extends Notifier<UserModel?> {
   Future<void> signOut() async {
     await ref.read(authRepositoryProvider).signOut();
     syncSignedOutFromFirebase();
-    ref.read(lunoraMockStoreProvider).clearAll();
   }
 
   void applyPlanSelection({

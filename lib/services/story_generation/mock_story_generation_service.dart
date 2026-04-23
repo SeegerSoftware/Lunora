@@ -33,6 +33,9 @@ class MockStoryGenerationService implements StoryGenerationService {
     final firstName = child.firstName;
     final dk = request.dateKey;
     final ch = request.chapterIndex;
+    final likedThemes = child.preferredThemes.where((e) => e.trim().isNotEmpty).toList();
+    final primaryTheme = likedThemes.isEmpty ? 'rêves étoilés' : likedThemes.first;
+    final secondaryTheme = likedThemes.length > 1 ? likedThemes[1] : 'douce aventure';
 
     final title = isSerialized
         ? 'Les lanternes de $universe · chapitre $ch'
@@ -42,6 +45,10 @@ class MockStoryGenerationService implements StoryGenerationService {
         '''
 Ce soir du $dk, $firstName s’endort dans un monde $universe, baigné d’une lumière $toneLabel.
 Les bruits du jour s’éloignent peu à peu, comme des vagues qui reculent doucement.
+
+Dans cette histoire, $firstName retrouve deux repères qu’il/elle aime particulièrement :
+$primaryTheme et $secondaryTheme. Chaque scène s’appuie sur ces thèmes pour rester familière
+et rassurante.
 
 Un petit rite commence : trois respirations lentes, les mains posées sur le cœur,
 et l’idée que demain sera accueilli avec calme. Les pensées s’alignent comme des étoiles patientes,
@@ -90,6 +97,7 @@ et une fin douce : « Dors bien, tout est tranquille. »
         chapterNumber: request.chapterIndex,
         totalChapters: request.totalChapters,
         seriesId: seriesId,
+        generationSource: 'fallback-safety',
       );
     }
 
@@ -109,6 +117,7 @@ et une fin douce : « Dors bien, tout est tranquille. »
       chapterNumber: request.chapterIndex,
       totalChapters: request.totalChapters,
       seriesId: seriesId,
+      generationSource: 'fallback-mock',
     );
   }
 }

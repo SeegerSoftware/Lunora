@@ -31,7 +31,8 @@ class AiStoryGenerationService implements StoryGenerationService {
   @override
   Future<StoryGenerationResult> generate(StoryGenerationRequest request) async {
     if (!AiGenerationConfig.canUseRemoteAi) {
-      return _fallback.generate(request);
+      final fallback = await _fallback.generate(request);
+      return fallback.copyWith(generationSource: 'fallback-config');
     }
 
     try {
@@ -61,7 +62,8 @@ class AiStoryGenerationService implements StoryGenerationService {
           'AiStoryGeneration: safety policy rejected output, using fallback',
           name: 'lunora.ai',
         );
-        return _fallback.generate(request);
+        final fallback = await _fallback.generate(request);
+        return fallback.copyWith(generationSource: 'fallback-safety');
       }
 
       return result;
@@ -75,7 +77,8 @@ class AiStoryGenerationService implements StoryGenerationService {
       if (kDebugMode) {
         debugPrint('AiStoryGenerationService fallback: $e');
       }
-      return _fallback.generate(request);
+      final fallback = await _fallback.generate(request);
+      return fallback.copyWith(generationSource: 'fallback-error');
     }
   }
 }

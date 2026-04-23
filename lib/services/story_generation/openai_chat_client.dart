@@ -41,7 +41,7 @@ class OpenAiChatClient {
   Future<String> completeJsonChat({
     required String systemMessage,
     required String userMessage,
-    double temperature = 0.82,
+    double temperature = 0.55,
     int maxTokens = 4500,
   }) async {
     final payload = <String, dynamic>{

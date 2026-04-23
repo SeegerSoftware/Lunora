@@ -15,7 +15,10 @@ class MockAuthRepository implements AuthRepository {
   final Uuid _uuid;
 
   @override
-  Future<UserModel?> restoreSession() async => null;
+  Future<UserModel?> restoreSession() async {
+    await Future<void>.delayed(const Duration(milliseconds: 60));
+    return _store.sessionUser;
+  }
 
   @override
   Future<UserModel> signIn({
@@ -46,7 +49,10 @@ class MockAuthRepository implements AuthRepository {
 
   UserModel _userFrom(String email) {
     final normalized = email.trim().toLowerCase();
-    return UserModel(
+    final existing = _store.userByEmail(normalized);
+    if (existing != null) return existing;
+
+    final created = UserModel(
       id: _uuid.v4(),
       email: normalized,
       createdAt: DateTime.now(),
@@ -54,5 +60,8 @@ class MockAuthRepository implements AuthRepository {
       subscriptionStatus: SubscriptionStatus.none,
       isAdmin: AdminConfig.matchesAdminEmail(normalized),
     );
+    _store.putUser(created);
+    return created;
   }
+
 }

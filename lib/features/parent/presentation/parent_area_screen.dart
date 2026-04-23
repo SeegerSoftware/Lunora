@@ -1,11 +1,19 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:uuid/uuid.dart';
 
 import '../../../core/theme/colors.dart';
 import '../../../core/theme/spacing.dart';
 import '../../../core/theme/text_styles.dart';
+import '../../../core/di/providers.dart';
+import '../../../shared/models/child_profile.dart';
+import '../../../shared/models/enums/story_format.dart';
+import '../../../shared/models/enums/story_tone.dart';
+import '../../../shared/models/enums/universe_type.dart';
+import '../../../shared/models/user_model.dart';
 import '../../auth/presentation/providers/auth_providers.dart';
+import '../../child_profile/presentation/providers/child_profile_providers.dart';
 import '../../stories/presentation/providers/story_providers.dart';
 import '../../../shared/widgets/magical/magical.dart';
 
@@ -112,6 +120,18 @@ class ParentAreaScreen extends ConsumerWidget {
                 ),
                 const SizedBox(height: LunoraSpacing.sm),
                 MagicalAppButton(
+                  label: 'Générer une histoire (test)',
+                  icon: Icons.auto_stories_rounded,
+                  onPressed: user == null
+                      ? null
+                      : () => _openQuickStoryGenerator(
+                          context: context,
+                          ref: ref,
+                          user: user,
+                        ),
+                ),
+                const SizedBox(height: LunoraSpacing.sm),
+                MagicalAppButton(
                   label: 'Abonnement',
                   icon: Icons.workspace_premium_rounded,
                   variant: MagicalButtonVariant.secondary,
@@ -123,6 +143,187 @@ class ParentAreaScreen extends ConsumerWidget {
         ],
       ),
     );
+  }
+}
+
+Future<void> _openQuickStoryGenerator({
+  required BuildContext context,
+  required WidgetRef ref,
+  required UserModel user,
+}) async {
+  final formKey = GlobalKey<FormState>();
+  final existing = ref.read(childProfileProvider);
+  final firstNameCtrl = TextEditingController(text: existing?.firstName ?? '');
+  final themesCtrl = TextEditingController(
+    text: existing?.preferredThemes.join(', ') ?? '',
+  );
+  var birthYear = existing?.birthYear ?? 2019;
+  var storyMinutes = existing?.storyLengthMinutes ?? 10;
+  var format = existing?.storyFormat ?? StoryFormat.dailyStandalone;
+  var seriesDays = (existing?.seriesDurationDays ?? 0) == 0
+      ? 7
+      : existing!.seriesDurationDays;
+
+  final created = await showDialog<bool>(
+    context: context,
+    builder: (dialogContext) {
+      return StatefulBuilder(
+        builder: (context, setDialogState) {
+          return AlertDialog(
+            title: const Text('Générer une histoire'),
+            content: SingleChildScrollView(
+              child: Form(
+                key: formKey,
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    TextFormField(
+                      controller: firstNameCtrl,
+                      decoration: const InputDecoration(labelText: 'Prénom'),
+                      validator: (value) {
+                        if ((value ?? '').trim().isEmpty) {
+                          return 'Prénom obligatoire';
+                        }
+                        return null;
+                      },
+                    ),
+                    const SizedBox(height: 12),
+                    TextFormField(
+                      controller: themesCtrl,
+                      decoration: const InputDecoration(
+                        labelText: 'Thèmes préférés (optionnel)',
+                        hintText: 'étoiles, dragons gentils, forêt',
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    DropdownButtonFormField<int>(
+                      initialValue: birthYear,
+                      decoration: const InputDecoration(labelText: 'Année'),
+                      items: List<int>.generate(
+                        16,
+                        (i) => DateTime.now().year - i,
+                      ).map((year) {
+                        return DropdownMenuItem<int>(
+                          value: year,
+                          child: Text('$year'),
+                        );
+                      }).toList(),
+                      onChanged: (value) {
+                        if (value == null) return;
+                        setDialogState(() => birthYear = value);
+                      },
+                    ),
+                    const SizedBox(height: 12),
+                    DropdownButtonFormField<int>(
+                      initialValue: storyMinutes,
+                      decoration: const InputDecoration(labelText: 'Durée'),
+                      items: const [
+                        DropdownMenuItem(value: 5, child: Text('5 min')),
+                        DropdownMenuItem(value: 10, child: Text('10 min')),
+                        DropdownMenuItem(value: 15, child: Text('15 min')),
+                      ],
+                      onChanged: (value) {
+                        if (value == null) return;
+                        setDialogState(() => storyMinutes = value);
+                      },
+                    ),
+                    const SizedBox(height: 12),
+                    DropdownButtonFormField<StoryFormat>(
+                      initialValue: format,
+                      decoration: const InputDecoration(
+                        labelText: 'Format narratif',
+                      ),
+                      items: const [
+                        DropdownMenuItem(
+                          value: StoryFormat.dailyStandalone,
+                          child: Text('Histoire du jour'),
+                        ),
+                        DropdownMenuItem(
+                          value: StoryFormat.serializedChapters,
+                          child: Text('Série en chapitres'),
+                        ),
+                      ],
+                      onChanged: (value) {
+                        if (value == null) return;
+                        setDialogState(() => format = value);
+                      },
+                    ),
+                    if (format == StoryFormat.serializedChapters) ...[
+                      const SizedBox(height: 12),
+                      DropdownButtonFormField<int>(
+                        initialValue: seriesDays,
+                        decoration: const InputDecoration(
+                          labelText: 'Durée de série',
+                        ),
+                        items: const [
+                          DropdownMenuItem(value: 7, child: Text('7 jours')),
+                          DropdownMenuItem(value: 14, child: Text('14 jours')),
+                          DropdownMenuItem(value: 21, child: Text('21 jours')),
+                          DropdownMenuItem(value: 28, child: Text('28 jours')),
+                        ],
+                        onChanged: (value) {
+                          if (value == null) return;
+                          setDialogState(() => seriesDays = value);
+                        },
+                      ),
+                    ],
+                  ],
+                ),
+              ),
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(dialogContext).pop(false),
+                child: const Text('Annuler'),
+              ),
+              FilledButton(
+                onPressed: () {
+                  if (!(formKey.currentState?.validate() ?? false)) return;
+                  Navigator.of(dialogContext).pop(true);
+                },
+                child: const Text('Créer et générer'),
+              ),
+            ],
+          );
+        },
+      );
+    },
+  );
+
+  if (created != true) return;
+
+  final profile = ChildProfile(
+    id: existing?.id ?? const Uuid().v4(),
+    userId: user.id,
+    firstName: firstNameCtrl.text.trim(),
+    birthMonth: existing?.birthMonth ?? 6,
+    birthYear: birthYear,
+    preferredThemes: themesCtrl.text
+        .split(',')
+        .map((s) => s.trim())
+        .where((s) => s.isNotEmpty)
+        .toList(),
+    avoidThemes: existing?.avoidThemes ?? const [],
+    personalityTraits: existing?.personalityTraits ?? const [],
+    fearsToAddress: existing?.fearsToAddress ?? const [],
+    valuesToTeach: existing?.valuesToTeach ?? const [],
+    universeType: existing?.universeType ?? UniverseType.skyAndStars,
+    preferredTone: existing?.preferredTone ?? StoryTone.reassuring,
+    storyFormat: format,
+    seriesDurationDays: format == StoryFormat.serializedChapters ? seriesDays : 0,
+    storyLengthMinutes: storyMinutes,
+    createdAt: existing?.createdAt ?? DateTime.now(),
+    updatedAt: DateTime.now(),
+  );
+
+  await ref.read(childProfileProvider.notifier).upsert(profile);
+  await ref
+      .read(storyRepositoryProvider)
+      .adminRegenerateTodayStory(user: user, child: profile);
+  ref.invalidate(todayStoryProvider);
+  ref.invalidate(storyHistoryProvider);
+  if (context.mounted) {
+    context.push('/story');
   }
 }
 

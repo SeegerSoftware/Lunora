@@ -20,6 +20,7 @@ class Story extends Equatable {
     required this.chapterNumber,
     required this.totalChapters,
     this.seriesId,
+    this.generationSource = 'unknown',
     required this.createdAt,
   });
 
@@ -37,6 +38,7 @@ class Story extends Equatable {
   final int chapterNumber;
   final int totalChapters;
   final String? seriesId;
+  final String generationSource;
   final DateTime createdAt;
 
   bool get isSerialized => format == StoryFormat.serializedChapters;
@@ -56,6 +58,7 @@ class Story extends Equatable {
     int? chapterNumber,
     int? totalChapters,
     String? seriesId,
+    String? generationSource,
     DateTime? createdAt,
   }) {
     return Story(
@@ -74,6 +77,7 @@ class Story extends Equatable {
       chapterNumber: chapterNumber ?? this.chapterNumber,
       totalChapters: totalChapters ?? this.totalChapters,
       seriesId: seriesId ?? this.seriesId,
+      generationSource: generationSource ?? this.generationSource,
       createdAt: createdAt ?? this.createdAt,
     );
   }
@@ -94,6 +98,7 @@ class Story extends Equatable {
       'chapterNumber': chapterNumber,
       'totalChapters': totalChapters,
       'seriesId': seriesId,
+      'generationSource': generationSource,
       'createdAt': createdAt.toIso8601String(),
     };
   }
@@ -114,6 +119,7 @@ class Story extends Equatable {
       chapterNumber: (map['chapterNumber'] as num).toInt(),
       totalChapters: (map['totalChapters'] as num).toInt(),
       seriesId: map['seriesId'] as String?,
+      generationSource: (map['generationSource'] as String?) ?? 'unknown',
       createdAt: _readDate(map['createdAt']),
     );
   }
@@ -142,6 +148,7 @@ class Story extends Equatable {
     chapterNumber,
     totalChapters,
     seriesId,
+    generationSource,
     createdAt,
   ];
 }
