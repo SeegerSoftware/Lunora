@@ -1,7 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/foundation.dart';
 
-import '../../../core/config/ai_generation_config.dart';
 import '../../../core/utils/date_key_utils.dart';
 import '../../story_memory/domain/story_memory_context.dart';
 import '../../story_memory/data/story_memory_repository.dart';
@@ -103,20 +102,9 @@ class FirebaseStoryRepository implements StoryRepository {
         final m = Map<String, dynamic>.from(existingSnap.data()!);
         m['id'] = existingSnap.id;
         final cached = Story.fromMap(m);
-        final shouldRefreshFromAi =
-            AiGenerationConfig.canUseRemoteAi &&
-            cached.generationSource.startsWith('fallback');
-        if (!shouldRefreshFromAi) return cached;
-        try {
-          await ref.delete();
-        } catch (e) {
-          // Anciennes données peuvent être non supprimables selon les règles.
-          // On retourne le cache plutôt que bloquer le parent.
-          if (kDebugMode) {
-            debugPrint('Story refresh skipped (delete denied): $e');
-          }
-          return cached;
-        }
+        // Ne jamais régénérer automatiquement à la reconnexion :
+        // conserver l’histoire existante pour une expérience stable.
+        return cached;
       }
 
       final isSerialized = child.storyFormat == StoryFormat.serializedChapters;

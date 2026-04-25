@@ -1,4 +1,3 @@
-import '../../../core/config/ai_generation_config.dart';
 import '../../../core/utils/date_key_utils.dart';
 import '../../story_memory/data/story_memory_repository.dart';
 import '../../story_memory/services/story_memory_builder.dart';
@@ -51,11 +50,8 @@ class MockStoryRepository implements StoryRepository {
     final todayKey = DateKeyUtils.todayKey();
     final cached = _store.storyFor(child.id, todayKey);
     if (cached != null) {
-      final shouldRefreshFromAi =
-          AiGenerationConfig.canUseRemoteAi &&
-          cached.generationSource.startsWith('fallback');
-      if (!shouldRefreshFromAi) return cached;
-      _store.removeStoryForDate(child.id, todayKey);
+      // Ne pas régénérer automatiquement au prochain login.
+      return cached;
     }
 
     final isSerialized = child.storyFormat == StoryFormat.serializedChapters;
