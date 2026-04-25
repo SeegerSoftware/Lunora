@@ -33,7 +33,7 @@ class WelcomeScreen extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        'Lunora',
+                        'Elunai',
                         style: theme.textTheme.displaySmall?.copyWith(
                           color: LunoraColors.warmBeige,
                           fontWeight: FontWeight.w900,
@@ -42,7 +42,7 @@ class WelcomeScreen extends StatelessWidget {
                       ),
                       const SizedBox(height: LunoraSpacing.sm),
                       Text(
-                        'Une histoire douce chaque soir, pour un rituel du coucher serein.',
+                        'La plateforme d’histoires intelligentes 0-12 ans qui s’adapte à chaque enfant.',
                         style: LunoraTextStyles.greetingSub(theme.textTheme)
                             .copyWith(fontSize: 16),
                       ),

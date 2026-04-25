@@ -52,7 +52,7 @@ class AiStoryGenerationService implements StoryGenerationService {
       if (!_safetyPolicy.assertChildFriendly(profile: request.child, draft: draft)) {
         developer.log(
           'AiStoryGeneration: safety policy rejected output, using fallback',
-          name: 'lunora.ai',
+          name: 'elunai.ai',
         );
         final fallback = await _fallback.generate(request);
         return fallback.copyWith(generationSource: 'fallback-safety');
@@ -62,7 +62,7 @@ class AiStoryGenerationService implements StoryGenerationService {
     } catch (e, st) {
       developer.log(
         'AiStoryGeneration: $e',
-        name: 'lunora.ai',
+        name: 'elunai.ai',
         error: e,
         stackTrace: st,
       );
@@ -91,7 +91,7 @@ class AiStoryGenerationService implements StoryGenerationService {
     } catch (e, st) {
       developer.log(
         'AiSeriesBibleGeneration: $e',
-        name: 'lunora.ai',
+        name: 'elunai.ai',
         error: e,
         stackTrace: st,
       );

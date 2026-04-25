@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import '../../../core/theme/colors.dart';
 import '../../../core/theme/spacing.dart';
 
-/// En-tête doux : lune + titre (rituel du soir).
+/// En-tête doux : lune + titre.
 class MoonHeader extends StatelessWidget {
   const MoonHeader({
     super.key,

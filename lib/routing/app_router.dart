@@ -11,6 +11,7 @@ import '../features/child_profile/presentation/providers/child_profile_providers
 import '../features/home/presentation/home_screen.dart';
 import '../features/parent/presentation/parent_area_screen.dart';
 import '../features/stories/presentation/story_history_screen.dart';
+import '../features/stories/presentation/instant_story_screen.dart';
 import '../features/stories/presentation/story_reader_screen.dart';
 import '../features/subscription/presentation/stripe_checkout_screen.dart';
 import '../features/subscription/presentation/subscription_screen.dart';
@@ -57,6 +58,13 @@ final goRouterProvider = Provider<GoRouter>((ref) {
         pageBuilder: (context, state) => lunoraFadePage(
           key: state.pageKey,
           child: const HomeScreen(),
+        ),
+      ),
+      GoRoute(
+        path: '/generate',
+        pageBuilder: (context, state) => lunoraFadePage(
+          key: state.pageKey,
+          child: const InstantStoryScreen(),
         ),
       ),
       GoRoute(

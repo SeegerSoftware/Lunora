@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import '../../../core/theme/colors.dart';
 import '../../../core/theme/spacing.dart';
 import '../../../core/theme/text_styles.dart';
+import '../../../shared/models/enums/story_format.dart';
 import '../../../shared/models/story.dart';
 import '../../../shared/widgets/lunora_fade_in.dart';
 import '../../../shared/widgets/lunora_screen_shell.dart';
@@ -61,7 +62,7 @@ class StoryHistoryScreen extends ConsumerWidget {
                     padding: LunoraSpacing.screen,
                     child: LunoraFadeIn(
                       child: Text(
-                        'Les histoires lues apparaîtront ici, dans un joli carnet de nuit.',
+                        'Les histoires générées apparaîtront ici, dans le carnet de lecture.',
                         textAlign: TextAlign.center,
                         style: theme.textTheme.bodyLarge?.copyWith(
                           color: LunoraColors.mist.withValues(alpha: 0.82),
@@ -78,17 +79,22 @@ class StoryHistoryScreen extends ConsumerWidget {
                   top: LunoraSpacing.sm,
                   bottom: LunoraSpacing.xxl,
                 ),
-                itemCount: stories.length,
+                itemCount: _timelineBlocks(stories).length,
                 separatorBuilder: (context, _) =>
                     const SizedBox(height: LunoraSpacing.md),
                 itemBuilder: (context, index) {
-                  final story = stories[index];
+                  final block = _timelineBlocks(stories)[index];
                   return LunoraFadeIn(
                     delay: Duration(milliseconds: 40 * index.clamp(0, 8)),
-                    child: _HistoryStoryTile(
-                      story: story,
-                      onTap: () => context.push('/story?id=${story.id}'),
-                    ),
+                    child: block.isSeries
+                        ? _SeriesTimelineTile(
+                            stories: block.stories,
+                            onResume: () => context.push('/story?id=${block.stories.first.id}'),
+                          )
+                        : _HistoryStoryTile(
+                            story: block.stories.first,
+                            onTap: () => context.push('/story?id=${block.stories.first.id}'),
+                          ),
                   );
                 },
               );
@@ -111,6 +117,38 @@ class StoryHistoryScreen extends ConsumerWidget {
       ),
     );
   }
+}
+
+class _TimelineBlock {
+  const _TimelineBlock({
+    required this.stories,
+    required this.isSeries,
+  });
+
+  final List<Story> stories;
+  final bool isSeries;
+}
+
+List<_TimelineBlock> _timelineBlocks(List<Story> stories) {
+  final blocks = <_TimelineBlock>[];
+  final seriesMap = <String, List<Story>>{};
+
+  for (final s in stories) {
+    if (s.format == StoryFormat.serializedChapters && s.seriesId != null) {
+      seriesMap.putIfAbsent(s.seriesId!, () => []).add(s);
+      continue;
+    }
+    blocks.add(_TimelineBlock(stories: [s], isSeries: false));
+  }
+
+  final seriesBlocks = seriesMap.values.map((seriesStories) {
+    seriesStories.sort((a, b) => b.chapterNumber.compareTo(a.chapterNumber));
+    return _TimelineBlock(stories: seriesStories, isSeries: true);
+  }).toList();
+
+  final merged = [...seriesBlocks, ...blocks];
+  merged.sort((a, b) => b.stories.first.dateKey.compareTo(a.stories.first.dateKey));
+  return merged;
 }
 
 class _HistoryStoryTile extends StatelessWidget {
@@ -201,6 +239,88 @@ class _HistoryStoryTile extends StatelessWidget {
             ],
           ),
         ),
+      ),
+    );
+  }
+}
+
+class _SeriesTimelineTile extends StatelessWidget {
+  const _SeriesTimelineTile({
+    required this.stories,
+    required this.onResume,
+  });
+
+  final List<Story> stories;
+  final VoidCallback onResume;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final latest = stories.first;
+    final current = latest.chapterNumber;
+    final total = latest.totalChapters;
+    final ratio = total <= 0 ? 0.0 : (current / total).clamp(0.0, 1.0);
+
+    return Container(
+      padding: const EdgeInsets.all(LunoraSpacing.md),
+      decoration: BoxDecoration(
+        borderRadius: LunoraSpacing.radiusLg,
+        gradient: const LinearGradient(
+          colors: [Color(0xFF1A3052), Color(0xFF122546)],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        border: Border.all(color: LunoraColors.mist.withValues(alpha: 0.14)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(Icons.auto_stories_rounded, color: LunoraColors.starGoldSoft),
+              const SizedBox(width: LunoraSpacing.xs),
+              Expanded(
+                child: Text(
+                  latest.title,
+                  style: theme.textTheme.titleSmall?.copyWith(
+                    color: LunoraColors.warmBeige,
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: LunoraSpacing.xs),
+          Text(
+            'Série en chapitres · progression $current/$total',
+            style: theme.textTheme.bodySmall?.copyWith(
+              color: LunoraColors.mist.withValues(alpha: 0.8),
+            ),
+          ),
+          const SizedBox(height: LunoraSpacing.sm),
+          ClipRRect(
+            borderRadius: BorderRadius.circular(999),
+            child: LinearProgressIndicator(
+              value: ratio,
+              minHeight: 8,
+              backgroundColor: LunoraColors.nightBlueDeep.withValues(alpha: 0.5),
+              color: LunoraColors.starGold.withValues(alpha: 0.88),
+            ),
+          ),
+          const SizedBox(height: LunoraSpacing.md),
+          Align(
+            alignment: Alignment.centerLeft,
+            child: OutlinedButton.icon(
+              onPressed: onResume,
+              icon: const Icon(Icons.play_arrow_rounded),
+              label: const Text('Reprendre la série'),
+              style: OutlinedButton.styleFrom(
+                foregroundColor: LunoraColors.warmBeige,
+                side: BorderSide(color: LunoraColors.mist.withValues(alpha: 0.3)),
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }

@@ -3,10 +3,14 @@ import '../../shared/models/enums/story_format.dart';
 import '../../shared/models/enums/story_tone.dart';
 import '../../shared/models/enums/universe_type.dart';
 import 'models/story_generation_request.dart';
+import 'story_adaptation_engine.dart';
 
 /// Prompt structuré pour le LLM — modèle éditorial + contraintes + JSON.
 class StoryPromptBuilder {
-  const StoryPromptBuilder();
+  const StoryPromptBuilder({StoryAdaptationEngine adaptationEngine = const StoryAdaptationEngine()})
+    : _adaptationEngine = adaptationEngine;
+
+  final StoryAdaptationEngine _adaptationEngine;
 
   String buildSystemPreamble() {
     return '''
@@ -58,8 +62,9 @@ Regle de sortie :
     final isSerialized = child.storyFormat == StoryFormat.serializedChapters;
     final isLastChapter =
         request.chapterIndex >= request.totalChapters && request.totalChapters > 0;
-    final wordRange = _wordCountGuidance(child.storyLengthMinutes);
-    final minWords = _minWordsForMinutes(child.storyLengthMinutes, ageYears: age);
+    final adaptation = _adaptationEngine.fromChildProfile(child);
+    final wordRange = _wordCountGuidance(adaptation);
+    final minWords = adaptation.targetWordsMin;
     final displayName =
         child.firstName.trim().isEmpty ? 'l’enfant' : child.firstName.trim();
 
@@ -116,7 +121,7 @@ Regle de sortie :
     if (memory != null) {
       buffer
         ..writeln('==================================================')
-        ..writeln('MÉMOIRE NARRATIVE (Lunora)')
+        ..writeln('MÉMOIRE NARRATIVE (Elunai)')
         ..writeln('==================================================')
         ..writeln()
         ..writeln(memory.buildPromptBlock())
@@ -149,6 +154,23 @@ Regle de sortie :
       ..writeln('${request.chapterIndex} / ${request.totalChapters}')
       ..writeln()
       ..writeln('Référence calendrier (ne pas citer mot pour mot si artificiel) : ${request.dateKey}')
+      ..writeln();
+
+    buffer
+      ..writeln('==================================================')
+      ..writeln('ADAPTATION INTELLIGENTE PAR AGE (AUTO)')
+      ..writeln('==================================================')
+      ..writeln()
+      ..writeln('Tranche d age detectee : ${_ageBandLabel(adaptation.ageBand)} (${adaptation.ageYears} ans)')
+      ..writeln('Longueur cible auto : $wordRange mots')
+      ..writeln('Vocabulaire : ${adaptation.vocabularyGuidance}')
+      ..writeln('Complexite narrative : ${adaptation.narrativeComplexity}')
+      ..writeln('Rythme : ${adaptation.pacingGuidance}')
+      ..writeln('Lecture parent : ${adaptation.parentInteractionHint}')
+      ..writeln()
+      ..writeln(
+        'IMPORTANT: l utilisateur configure peu de choses. L adaptation doit etre automatique selon l age.',
+      )
       ..writeln();
 
     final fil = request.memoryContext == null
@@ -231,17 +253,15 @@ Regle de sortie :
         ..writeln();
     }
 
+    final isPreteen = adaptation.ageBand == StoryAgeBand.preteen;
+
     buffer
       ..writeln('==================================================')
       ..writeln('INSTRUCTIONS NARRATIVES')
       ..writeln('==================================================')
       ..writeln()
-      ..writeln('STRUCTURE NARRATIVE OBLIGATOIRE :')
-      ..writeln('1. introduction calme')
-      ..writeln('2. élément perturbateur doux (micro-tension adaptée à l’âge)')
-      ..writeln('3. exploration / interaction')
-      ..writeln('4. résolution rassurante')
-      ..writeln('5. retour au calme et endormissement')
+      ..writeln('STRUCTURE NARRATIVE OBLIGATOIRE (dans cet ordre) :')
+      ..writeln(_numberedList(adaptation.requiredStructure))
       ..writeln()
       ..writeln('REGLES DE STYLE :')
       ..writeln(
@@ -251,10 +271,18 @@ Regle de sortie :
       ..writeln('- utiliser reellement les themes donnes dans le recit')
       ..writeln('- privilegier des transitions fluides')
       ..writeln('- faire ralentir progressivement le rythme vers la fin')
+      ..writeln(
+        '- a partir de 70% du recit: ralentissement net du rythme, phrases plus courtes, pauses plus frequentes',
+      )
+      ..writeln(
+        '- en fin d histoire: repetitions apaisantes naturelles (ex: respiration, silence, douceur), sans effet mecanique',
+      )
       ..writeln('- finir avec une sensation de securite, de calme et de repos')
       ..writeln('- content doit contenir uniquement l’histoire (pas de meta-commentaire)')
       ..writeln('- inclure au moins un court dialogue naturel')
       ..writeln('- montrer une transformation émotionnelle entre début et fin')
+      ..writeln('- style Elunai: fluide, naturel, immersif, adapte strictement a l age')
+      ..writeln('- ne jamais infantiliser la narration pour 9-12 ans')
       ..writeln()
       ..writeln('VARIATION (anti repetition) :')
       ..writeln(
@@ -271,6 +299,14 @@ Regle de sortie :
       ..writeln(
         'Evite de réutiliser les mêmes scènes d’ouverture, les mêmes métaphores et les mêmes formulations émotionnelles.',
       )
+      ..writeln(
+        'Ne t’appuie pas systématiquement sur les mêmes images (ex: etoiles/ciel/lumiere douce). '
+        'Renouvelle les motifs sensoriels et narratifs d’une histoire à l’autre.',
+      )
+      ..writeln(
+        'Si un motif classique est utilisé, compense avec au moins deux motifs différents et concrets '
+        '(objets familiers, lieux du quotidien, sons, textures, odeurs, micro-rituels).',
+      )
       ..writeln()
       ..writeln('EXPERIENCE EMOTIONNELLE :')
       ..writeln(
@@ -278,13 +314,8 @@ Regle de sortie :
       )
       ..writeln('Creer une connexion emotionnelle avec l’enfant.')
       ..writeln()
-      ..writeln('RITUEL DU COUCHER :')
-      ..writeln(
-        'Le rythme de l’histoire doit ralentir progressivement.',
-      )
-      ..writeln(
-        'La fin doit etre apaisante et favoriser l’endormissement.',
-      )
+      ..writeln('COMPOSANTS OBLIGATOIRES (tranche d age) :')
+      ..writeln(_bulletedList(adaptation.requiredComponents))
       ..writeln()
       ..writeln('VARIATION DU RYTHME :')
       ..writeln(
@@ -293,8 +324,23 @@ Regle de sortie :
       ..writeln()
       ..writeln('IMMERSION SENSORIELLE :')
       ..writeln(
-        'Ajoute de petits détails sensoriels (sons, lumière douce, sensations) pour rendre l’histoire vivante sans l’alourdir.',
+        'Ajoute systematiquement des details sensoriels: sons (vent, etoiles, silence), sensations (chaleur, douceur, respiration), visuels poetiques simples.',
       )
+      ..writeln()
+      ..writeln('PERSONNAGE SECONDAIRE (obligatoire) :')
+      ..writeln(
+        'Ajoute un personnage secondaire attachant avec une mini personnalite identifiable et un lien emotionnel avec l enfant.',
+      )
+      ..writeln()
+      ..writeln('ENJEU NARRATIF (obligatoire) :')
+      ..writeln(
+        isPreteen
+            ? 'Integre un probleme concret avec tension legere mais reelle, puis une decision du heros.'
+            : 'Integre toujours une mission simple et concrete (aider, retrouver, transmettre, rassurer).',
+      )
+      ..writeln()
+      ..writeln('FIN (obligatoire) :')
+      ..writeln('- ${adaptation.endingGuidance}')
       ..writeln()
       ..writeln('IMPORTANT :')
       ..writeln()
@@ -354,9 +400,10 @@ Regle de sortie :
       ..writeln('- jamais violent')
       ..writeln()
       ..writeln('5. Adaptation à l’âge :')
-      ..writeln('- vocabulaire simple')
-      ..writeln('- concepts compréhensibles')
-      ..writeln('- phrases courtes à moyennes')
+      ..writeln('- respecter strictement la tranche d age detectee')
+      ..writeln('- vocabulaire : ${adaptation.vocabularyGuidance}')
+      ..writeln('- complexite narrative : ${adaptation.narrativeComplexity}')
+      ..writeln('- rythme : ${adaptation.pacingGuidance}')
       ..writeln()
       ..writeln('6. Gestion des peurs :')
       ..writeln('- si une peur est mentionnée, elle doit être abordée avec douceur')
@@ -368,12 +415,12 @@ Regle de sortie :
       ..writeln('- ajouter au moins un mini-apprentissage utile pour le quotidien')
       ..writeln()
       ..writeln('8. Fin :')
-      ..writeln('- toujours positive')
-      ..writeln('- apaisante')
-      ..writeln('- adaptée au coucher')
+      ..writeln('- ${adaptation.endingGuidance}')
+      ..writeln('- coherent avec la tranche d age')
       ..writeln()
       ..writeln('9. Longueur (obligatoire) :')
       ..writeln('- content doit contenir AU MOINS $minWords mots')
+      ..writeln('- respecter la cible de longueur de la duree choisie')
       ..writeln('- ne fournis jamais une version resumee')
       ..writeln(
         '- avant de repondre, verifie la longueur: si trop court, etends l\'histoire avec des scenes supplementaires douces',
@@ -399,11 +446,11 @@ Regle de sortie :
         '- tenir compte explicitement de l’objectif du soir dans l’arc émotionnel (ex: se rassurer, s’endormir calmement)',
       )
       ..writeln()
-      ..writeln('12. Rythme narratif du coucher (obligatoire) :')
-      ..writeln('- début calme')
-      ..writeln('- léger pic émotionnel')
-      ..writeln('- résolution douce')
-      ..writeln('- descente progressive vers le sommeil')
+      ..writeln('12. Rythme narratif (obligatoire) :')
+      ..writeln('- alterner narration / action / dialogue')
+      ..writeln('- eviter la monotonie')
+      ..writeln('- respecter: ${adaptation.pacingGuidance}')
+      ..writeln('- pour 9-12: pas de fin "bebe sommeil", pas de repetitions excessives')
       ..writeln()
       ..writeln('==================================================')
       ..writeln('CONTRAINTES STRICTES')
@@ -411,11 +458,15 @@ Regle de sortie :
       ..writeln()
       ..writeln('INTERDIT :')
       ..writeln('- violence forte')
+      ..writeln('- tension forte')
+      ..writeln('- action rapide / scenes brusques')
       ..writeln('- horreur')
       ..writeln('- mort')
       ..writeln('- contenu anxiogène')
       ..writeln('- sexualisation')
       ..writeln('- vocabulaire inadapté')
+      ..writeln('- vocabulaire complexe')
+      ..writeln(_bulletedList(adaptation.forbiddenElements))
       ..writeln('- histoire trop courte (moins de $minWords mots)')
       ..writeln('- histoire purement descriptive sans progression')
       ..writeln()
@@ -424,34 +475,36 @@ Regle de sortie :
     return buffer.toString().trim();
   }
 
-  /// Plage indicative alignée sur la durée (minutes).
-  static String _wordCountGuidance(int minutes) {
-    switch (minutes) {
-      case 5:
-        return '260 à 520';
-      case 15:
-        return '620 à 1150';
-      case 10:
-      default:
-        return '380 à 760';
+  static String _wordCountGuidance(StoryAdaptationProfile profile) {
+    if (profile.targetWordsMin == profile.targetWordsMax) {
+      return '${profile.targetWordsMin}';
     }
+    return '${profile.targetWordsMin} à ${profile.targetWordsMax}';
   }
 
-  static int _minWordsForMinutes(int minutes, {required int ageYears}) {
-    switch (minutes) {
-      case 5:
-        if (ageYears <= 4) return 220;
-        if (ageYears <= 6) return 260;
-        return 300;
-      case 15:
-        if (ageYears <= 4) return 520;
-        if (ageYears <= 6) return 620;
-        return 720;
-      case 10:
-      default:
-        if (ageYears <= 4) return 320;
-        if (ageYears <= 6) return 380;
-        return 460;
+  static String _numberedList(List<String> items) {
+    final b = StringBuffer();
+    for (var i = 0; i < items.length; i++) {
+      b.writeln('${i + 1}. ${items[i]}');
+    }
+    return b.toString().trimRight();
+  }
+
+  static String _bulletedList(List<String> items) {
+    if (items.isEmpty) return '- (aucun)';
+    return items.map((e) => '- $e').join('\n');
+  }
+
+  static String _ageBandLabel(StoryAgeBand band) {
+    switch (band) {
+      case StoryAgeBand.infant:
+        return '0-2';
+      case StoryAgeBand.earlyChildhood:
+        return '3-5';
+      case StoryAgeBand.middleChildhood:
+        return '6-8';
+      case StoryAgeBand.preteen:
+        return '9-12';
     }
   }
 

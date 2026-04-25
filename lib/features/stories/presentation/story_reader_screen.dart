@@ -1,10 +1,14 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import '../../../core/constants/app_sizes.dart';
 import '../../../core/theme/colors.dart';
 import '../../../core/theme/spacing.dart';
+import '../../../features/child_profile/presentation/providers/child_profile_providers.dart';
+import '../../../services/story_generation/story_adaptation_engine.dart';
 import '../../../shared/widgets/lunora_badge.dart';
 import '../../../shared/widgets/lunora_fade_in.dart';
 import '../../../shared/widgets/lunora_glass_card.dart';
@@ -28,10 +32,18 @@ class _StoryReaderScreenState extends ConsumerState<StoryReaderScreen> {
   double _fontSize = 20;
   static const double _minReaderFontSize = 18;
   static const double _maxReaderFontSize = 24;
+  static const StoryAdaptationEngine _adaptationEngine = StoryAdaptationEngine();
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final childProfile = ref.watch(childProfileProvider);
+    final adaptation = childProfile == null
+        ? null
+        : _adaptationEngine.fromChildProfile(childProfile);
+    final readerScale = adaptation?.readerFontScale ?? 1.0;
+    final effectiveFontSize = (_fontSize * readerScale).clamp(17.0, 28.0);
+    final contentMaxWidth = (adaptation?.preferPagination ?? false) ? 680.0 : 760.0;
 
     final id = widget.storyId;
     final asyncStory = id == null
@@ -53,7 +65,7 @@ class _StoryReaderScreenState extends ConsumerState<StoryReaderScreen> {
           onPressed: () => context.pop(),
         ),
         title: Text(
-          'Bonne lecture',
+          'Lecture',
           style: theme.textTheme.titleMedium?.copyWith(
             color: LunoraColors.warmBeige,
             fontWeight: FontWeight.w800,
@@ -74,7 +86,7 @@ class _StoryReaderScreenState extends ConsumerState<StoryReaderScreen> {
                         mainAxisSize: MainAxisSize.min,
                         children: [
                           Text(
-                            'Aucune histoire disponible pour ce soir.',
+                            'Aucune histoire disponible pour le moment.',
                             textAlign: TextAlign.center,
                             style: theme.textTheme.titleMedium?.copyWith(
                               color: LunoraColors.warmBeige,
@@ -83,13 +95,13 @@ class _StoryReaderScreenState extends ConsumerState<StoryReaderScreen> {
                           const SizedBox(height: LunoraSpacing.lg),
                           if (id == null)
                             LunoraPrimaryButton(
-                              label: 'Préparer l\'histoire de ce soir',
+                              label: 'Générer une histoire',
                               icon: Icons.auto_stories_outlined,
                               onPressed: () => ref.invalidate(todayStoryProvider),
                             )
                           else
                             LunoraPrimaryButton(
-                              label: 'Ouvrir l\'histoire de ce soir',
+                              label: 'Ouvrir la dernière histoire',
                               icon: Icons.nights_stay_rounded,
                               onPressed: () => context.go('/story'),
                             ),
@@ -113,7 +125,7 @@ class _StoryReaderScreenState extends ConsumerState<StoryReaderScreen> {
                     ),
                     child: Center(
                       child: ConstrainedBox(
-                        constraints: const BoxConstraints(maxWidth: 700),
+                        constraints: BoxConstraints(maxWidth: contentMaxWidth),
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.stretch,
                           children: [
@@ -121,7 +133,7 @@ class _StoryReaderScreenState extends ConsumerState<StoryReaderScreen> {
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
-                                  const LunoraSectionTitle('Ce soir'),
+                                  const LunoraSectionTitle('Histoire'),
                                   const SizedBox(height: LunoraSpacing.sm),
                                   Text(
                                     'Générée avec ${storyModelLabel(story.generationSource)}',
@@ -163,6 +175,74 @@ class _StoryReaderScreenState extends ConsumerState<StoryReaderScreen> {
                                         icon: Icons.auto_awesome_rounded,
                                         label: storySourceLabel(
                                           story.generationSource,
+                                        ),
+                                      ),
+                                      if (adaptation != null)
+                                        LunoraBadge(
+                                          icon: Icons.tune_rounded,
+                                          label: 'Lecture ${adaptation.ageYears} ans',
+                                        ),
+                                      InkWell(
+                                        borderRadius: BorderRadius.circular(999),
+                                        onTap: () async {
+                                          final plainText =
+                                              '${story.title}\n\n${story.content}';
+                                          await Clipboard.setData(
+                                            ClipboardData(text: plainText),
+                                          );
+                                          if (!context.mounted) return;
+                                          ScaffoldMessenger.of(context)
+                                            ..hideCurrentSnackBar()
+                                            ..showSnackBar(
+                                              const SnackBar(
+                                                content: Text(
+                                                  'Histoire copiée dans le presse-papiers',
+                                                ),
+                                              ),
+                                            );
+                                        },
+                                        child: Container(
+                                          padding: const EdgeInsets.symmetric(
+                                            horizontal: LunoraSpacing.sm,
+                                            vertical: LunoraSpacing.xxs,
+                                          ),
+                                          decoration: BoxDecoration(
+                                            color: LunoraColors.nightBlueLift
+                                                .withValues(alpha: 0.42),
+                                            borderRadius: BorderRadius.circular(
+                                              999,
+                                            ),
+                                            border: Border.all(
+                                              color: LunoraColors.mist
+                                                  .withValues(alpha: 0.2),
+                                            ),
+                                          ),
+                                          child: Row(
+                                            mainAxisSize: MainAxisSize.min,
+                                            children: [
+                                              Icon(
+                                                Icons.content_copy_rounded,
+                                                size: 14,
+                                                color: LunoraColors.warmBeige
+                                                    .withValues(alpha: 0.94),
+                                              ),
+                                              const SizedBox(
+                                                width: LunoraSpacing.xxs,
+                                              ),
+                                              Text(
+                                                'Copier',
+                                                style: theme
+                                                    .textTheme
+                                                    .labelSmall
+                                                    ?.copyWith(
+                                                      color:
+                                                          LunoraColors.warmBeige,
+                                                      fontWeight:
+                                                          FontWeight.w700,
+                                                    ),
+                                              ),
+                                            ],
+                                          ),
                                         ),
                                       ),
                                     ],
@@ -212,7 +292,81 @@ class _StoryReaderScreenState extends ConsumerState<StoryReaderScreen> {
                                           ),
                                     ),
                                     const SizedBox(height: LunoraSpacing.md),
-                                    ..._paragraphWidgets(context, story.content),
+                                    ..._paragraphWidgets(
+                                      context,
+                                      story.content,
+                                      effectiveFontSize: effectiveFontSize,
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                            const SizedBox(height: LunoraSpacing.md),
+                            LunoraFadeIn(
+                              delay: const Duration(milliseconds: 160),
+                              child: LunoraGlassCard(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      'Partager un extrait',
+                                      style: theme.textTheme.titleSmall?.copyWith(
+                                        color: LunoraColors.warmBeige,
+                                        fontWeight: FontWeight.w700,
+                                      ),
+                                    ),
+                                    const SizedBox(height: LunoraSpacing.xs),
+                                    Text(
+                                      'On partage uniquement 1/4 de l’histoire.',
+                                      style: theme.textTheme.bodySmall?.copyWith(
+                                        color: LunoraColors.mist.withValues(alpha: 0.84),
+                                      ),
+                                    ),
+                                    const SizedBox(height: LunoraSpacing.sm),
+                                    Wrap(
+                                      spacing: LunoraSpacing.xs,
+                                      runSpacing: LunoraSpacing.xs,
+                                      children: [
+                                        _socialShareButton(
+                                          context,
+                                          label: 'WhatsApp',
+                                          icon: Icons.chat_bubble_outline_rounded,
+                                          onTap: () => _shareOnWhatsApp(
+                                            context,
+                                            title: story.title,
+                                            content: story.content,
+                                          ),
+                                        ),
+                                        _socialShareButton(
+                                          context,
+                                          label: 'X',
+                                          icon: Icons.alternate_email_rounded,
+                                          onTap: () => _shareOnX(
+                                            context,
+                                            title: story.title,
+                                            content: story.content,
+                                          ),
+                                        ),
+                                        _socialShareButton(
+                                          context,
+                                          label: 'Facebook',
+                                          icon: Icons.thumb_up_alt_outlined,
+                                          onTap: () => _shareOnFacebook(
+                                            context,
+                                            title: story.title,
+                                            content: story.content,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                    const SizedBox(height: LunoraSpacing.sm),
+                                    Text(
+                                      'Connecte-toi à Elunai pour plus d’histoires.',
+                                      style: theme.textTheme.bodySmall?.copyWith(
+                                        color: LunoraColors.starGoldSoft.withValues(alpha: 0.94),
+                                        fontWeight: FontWeight.w600,
+                                      ),
+                                    ),
                                   ],
                                 ),
                               ),
@@ -304,18 +458,22 @@ class _StoryReaderScreenState extends ConsumerState<StoryReaderScreen> {
     );
   }
 
-  List<Widget> _paragraphWidgets(BuildContext context, String content) {
+  List<Widget> _paragraphWidgets(
+    BuildContext context,
+    String content, {
+    required double effectiveFontSize,
+  }) {
     final paragraphs = content
         .split(RegExp(r'\n\s*\n'))
         .map((p) => p.trim())
         .where((p) => p.isNotEmpty)
         .toList();
     final style = Theme.of(context).textTheme.bodyLarge?.copyWith(
-          fontSize: _fontSize,
-          height: _lineHeightForFontSize(_fontSize),
+          fontSize: effectiveFontSize,
+          height: _lineHeightForFontSize(effectiveFontSize),
           color: LunoraColors.warmBeige.withValues(alpha: 0.97),
         );
-    final paragraphGap = _paragraphGapForFontSize(_fontSize);
+    final paragraphGap = _paragraphGapForFontSize(effectiveFontSize);
     return [
       for (var i = 0; i < paragraphs.length; i++) ...[
         Text(paragraphs[i], style: style),
@@ -323,6 +481,103 @@ class _StoryReaderScreenState extends ConsumerState<StoryReaderScreen> {
           SizedBox(height: paragraphGap),
       ],
     ];
+  }
+
+  Widget _socialShareButton(
+    BuildContext context, {
+    required String label,
+    required IconData icon,
+    required VoidCallback onTap,
+  }) {
+    return InkWell(
+      borderRadius: BorderRadius.circular(999),
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.symmetric(
+          horizontal: LunoraSpacing.sm,
+          vertical: LunoraSpacing.xxs + 2,
+        ),
+        decoration: BoxDecoration(
+          color: LunoraColors.nightBlueLift.withValues(alpha: 0.5),
+          borderRadius: BorderRadius.circular(999),
+          border: Border.all(
+            color: LunoraColors.mist.withValues(alpha: 0.24),
+          ),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              icon,
+              size: 14,
+              color: LunoraColors.warmBeige,
+            ),
+            const SizedBox(width: LunoraSpacing.xxs),
+            Text(
+              label,
+              style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                color: LunoraColors.warmBeige,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  String _shareSnippet(String title, String content) {
+    final words = content
+        .split(RegExp(r'\s+'))
+        .map((e) => e.trim())
+        .where((e) => e.isNotEmpty)
+        .toList();
+    final targetCount = (words.length / 4).ceil().clamp(35, 240);
+    final excerpt = words.take(targetCount).join(' ');
+    return '✨ Extrait de "$title"\n\n$excerpt\n\nConnecte-toi à Elunai pour plus d’histoires.';
+  }
+
+  Future<void> _shareOnWhatsApp(
+    BuildContext context, {
+    required String title,
+    required String content,
+  }) async {
+    final text = _shareSnippet(title, content);
+    final uri = Uri.parse('https://wa.me/?text=${Uri.encodeComponent(text)}');
+    await _launchShare(context, uri);
+  }
+
+  Future<void> _shareOnX(
+    BuildContext context, {
+    required String title,
+    required String content,
+  }) async {
+    final text = _shareSnippet(title, content);
+    final uri = Uri.parse('https://twitter.com/intent/tweet?text=${Uri.encodeComponent(text)}');
+    await _launchShare(context, uri);
+  }
+
+  Future<void> _shareOnFacebook(
+    BuildContext context, {
+    required String title,
+    required String content,
+  }) async {
+    final quote = _shareSnippet(title, content);
+    final uri = Uri.parse(
+      'https://www.facebook.com/sharer/sharer.php?u=${Uri.encodeComponent("https://lunora.app")}&quote=${Uri.encodeComponent(quote)}',
+    );
+    await _launchShare(context, uri);
+  }
+
+  Future<void> _launchShare(BuildContext context, Uri uri) async {
+    final ok = await launchUrl(uri, mode: LaunchMode.externalApplication);
+    if (!ok && context.mounted) {
+      ScaffoldMessenger.of(context)
+        ..hideCurrentSnackBar()
+        ..showSnackBar(
+          const SnackBar(content: Text('Partage indisponible pour le moment.')),
+        );
+    }
   }
 
   double _lineHeightForFontSize(double fontSize) {

@@ -94,7 +94,7 @@ class OpenAiChatClient {
 
     if (AiGenerationConfig.logOpenAiPrompts) {
       debugPrint(
-        '\n════════ Lunora OpenAI (avant envoi) ════════\n'
+        '\n════════ Elunai OpenAI (avant envoi) ════════\n'
         'model: $resolvedModel (${modelKindLabel(resolvedModel)})\n'
         '--- system ---\n$systemMessage\n'
         '--- user ---\n$userMessage\n'

@@ -42,6 +42,7 @@ class _ChildProfileSetupScreenState
   int _birthMonth = 6;
   int _birthYear = 2019;
   int _storyMinutes = 10;
+  String _storyType = 'soir';
   StoryFormat _format = StoryFormat.dailyStandalone;
   int _seriesDays = 7;
   StoryTone _tone = ChildProfileRules.defaultTone();
@@ -77,6 +78,7 @@ class _ChildProfileSetupScreenState
   ];
 
   var _loading = false;
+  var _showAdvanced = false;
 
   @override
   void initState() {
@@ -94,6 +96,7 @@ class _ChildProfileSetupScreenState
             ? 7
             : existing.seriesDurationDays;
         _tone = existing.preferredTone;
+        _storyType = _storyTypeFromTone(existing.preferredTone);
         _universe = existing.universeType;
         _language = existing.language == 'en' ? 'en' : 'fr';
         _magicLevel = _coerceOption(
@@ -184,11 +187,43 @@ class _ChildProfileSetupScreenState
         .trim();
   }
 
+  void _appendChipValue(TextEditingController controller, String value) {
+    final current = _splitList(controller.text);
+    final normalized = current.map(_normalizeKey).toSet();
+    if (normalized.contains(_normalizeKey(value))) return;
+    final updated = [...current, value];
+    setState(() => controller.text = updated.join(', '));
+  }
+
   void _showError(String message) {
     if (!mounted) return;
     ScaffoldMessenger.of(
       context,
     ).showSnackBar(SnackBar(content: Text(message)));
+  }
+
+  StoryTone _toneFromStoryType(String type) {
+    switch (type) {
+      case 'aventure':
+        return StoryTone.gentleAdventure;
+      case 'educatif':
+        return StoryTone.poetic;
+      case 'soir':
+      default:
+        return StoryTone.reassuring;
+    }
+  }
+
+  String _storyTypeFromTone(StoryTone tone) {
+    switch (tone) {
+      case StoryTone.gentleAdventure:
+        return 'aventure';
+      case StoryTone.poetic:
+        return 'educatif';
+      case StoryTone.playfulSoft:
+      case StoryTone.reassuring:
+        return 'soir';
+    }
   }
 
   Future<void> _submit() async {
@@ -263,13 +298,16 @@ class _ChildProfileSetupScreenState
       );
 
       final normalized = ChildProfileRules.normalize(draft);
-      final businessErr = ChildProfileRules.validate(normalized);
+      final normalizedWithTypeTone = normalized.copyWith(
+        preferredTone: _toneFromStoryType(_storyType),
+      );
+      final businessErr = ChildProfileRules.validate(normalizedWithTypeTone);
       if (businessErr != null) {
         _showError(businessErr);
         return;
       }
 
-      await ref.read(childProfileProvider.notifier).upsert(normalized);
+      await ref.read(childProfileProvider.notifier).upsert(normalizedWithTypeTone);
       ref.invalidate(todayStoryProvider);
       ref.invalidate(storyHistoryProvider);
       if (!mounted) return;
@@ -319,7 +357,7 @@ class _ChildProfileSetupScreenState
                       const SizedBox(height: AppSizes.lg),
                     ],
                     Text(
-                      'Quelques repères pour personnaliser les histoires du soir.',
+                      'Renseigne le minimum. Elunai adapte automatiquement selon l’âge.',
                       style: theme.textTheme.bodyMedium?.copyWith(
                         color: LunoraColors.mist.withValues(alpha: 0.78),
                       ),
@@ -327,7 +365,7 @@ class _ChildProfileSetupScreenState
                     const SizedBox(height: AppSizes.lg),
                     _SectionCard(
                       title: 'Profil enfant',
-                      subtitle: 'Chaque détail aide Lunora à créer une histoire plus juste.',
+                      subtitle: 'Obligatoire : prénom + âge.',
                       child: Column(
                         children: [
                           LunoraTextField(
@@ -377,10 +415,58 @@ class _ChildProfileSetupScreenState
                     ),
                     const SizedBox(height: AppSizes.md),
                     _SectionCard(
-                      title: 'Format de lecture',
-                      subtitle: 'Vous pourrez modifier ces préférences à tout moment.',
+                      title: 'Centres d interet',
+                      subtitle: 'Optionnel',
                       child: Column(
                         children: [
+                          LunoraTextField(
+                            controller: _preferredThemes,
+                            label: 'Interets (optionnel)',
+                            hint: 'animaux, nature, espace',
+                          ),
+                          const SizedBox(height: AppSizes.sm),
+                          _ChipSuggestions(
+                            options: const [
+                              'animaux',
+                              'nature',
+                              'espace',
+                              'amitie',
+                              'musique',
+                              'dinosaures',
+                            ],
+                            onSelected: (value) => _appendChipValue(_preferredThemes, value),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: AppSizes.md),
+                    OutlinedButton.icon(
+                      onPressed: () => setState(() => _showAdvanced = !_showAdvanced),
+                      icon: Icon(
+                        _showAdvanced ? Icons.expand_less_rounded : Icons.tune_rounded,
+                      ),
+                      label: Text(
+                        _showAdvanced ? 'Masquer les options avancees' : 'Afficher les options avancees',
+                      ),
+                    ),
+                    const SizedBox(height: AppSizes.md),
+                    if (_showAdvanced) ...[
+                    _SectionCard(
+                      title: 'Options avancees',
+                      subtitle: 'Type, duree, ambiance et parametrage fin.',
+                      child: Column(
+                        children: [
+                          DropdownButtonFormField<String>(
+                            value: _storyType,
+                            decoration: const InputDecoration(labelText: 'Type d histoire'),
+                            items: const [
+                              DropdownMenuItem(value: 'soir', child: Text('Soir')),
+                              DropdownMenuItem(value: 'aventure', child: Text('Aventure')),
+                              DropdownMenuItem(value: 'educatif', child: Text('Educatif')),
+                            ],
+                            onChanged: (v) => setState(() => _storyType = v ?? _storyType),
+                          ),
+                          const SizedBox(height: AppSizes.md),
                           DropdownButtonFormField<StoryFormat>(
                             value: _format,
                             decoration: const InputDecoration(labelText: 'Format narratif'),
@@ -420,7 +506,7 @@ class _ChildProfileSetupScreenState
                     const SizedBox(height: AppSizes.md),
                     _SectionCard(
                       title: 'Univers & ambiance',
-                      subtitle: 'Un univers où votre enfant se sent bien.',
+                      subtitle: 'Option avancee',
                       child: Column(
                         children: [
                           DropdownButtonFormField<StoryTone>(
@@ -464,18 +550,60 @@ class _ChildProfileSetupScreenState
                     const SizedBox(height: AppSizes.md),
                     _SectionCard(
                       title: 'Préférences émotionnelles',
-                      subtitle: 'Petites peurs à accompagner',
+                      subtitle: 'Option avancee',
                       child: Column(
                         children: [
-                          LunoraTextField(controller: _preferredThemes, label: 'Thèmes préférés', hint: 'amitié, nature, humour'),
-                          const SizedBox(height: AppSizes.md),
                           LunoraTextField(controller: _avoidThemes, label: 'Ce que vous préférez éviter', hint: 'monstres, danger'),
+                          const SizedBox(height: AppSizes.sm),
+                          _ChipSuggestions(
+                            options: const [
+                              'monstres',
+                              'noir',
+                              'séparation',
+                              'danger',
+                              'orage',
+                            ],
+                            onSelected: (value) => _appendChipValue(_avoidThemes, value),
+                          ),
                           const SizedBox(height: AppSizes.md),
                           LunoraTextField(controller: _personalityTraits, label: 'Traits de personnalité', hint: 'curieux, sensible'),
+                          const SizedBox(height: AppSizes.sm),
+                          _ChipSuggestions(
+                            options: const [
+                              'curieux',
+                              'timide',
+                              'sensible',
+                              'rêveur',
+                              'créatif',
+                              'drôle',
+                            ],
+                            onSelected: (value) => _appendChipValue(_personalityTraits, value),
+                          ),
                           const SizedBox(height: AppSizes.md),
                           LunoraTextField(controller: _fears, label: 'Petites peurs à accompagner', hint: 'peur du noir, séparation'),
+                          const SizedBox(height: AppSizes.sm),
+                          _ChipSuggestions(
+                            options: const [
+                              'peur du noir',
+                              'peur de dormir seul',
+                              'peur de l’école',
+                              'peur de la séparation',
+                            ],
+                            onSelected: (value) => _appendChipValue(_fears, value),
+                          ),
                           const SizedBox(height: AppSizes.md),
                           LunoraTextField(controller: _values, label: 'Valeurs à transmettre', hint: 'gentillesse, confiance'),
+                          const SizedBox(height: AppSizes.sm),
+                          _ChipSuggestions(
+                            options: const [
+                              'gentillesse',
+                              'patience',
+                              'autonomie',
+                              'confiance',
+                              'partage',
+                            ],
+                            onSelected: (value) => _appendChipValue(_values, value),
+                          ),
                           const SizedBox(height: AppSizes.md),
                           DropdownButtonFormField<String>(
                             value: _bedtimeEnergyLevel,
@@ -494,6 +622,17 @@ class _ChildProfileSetupScreenState
                             label: 'Éléments familiers à intégrer',
                             hint: 'maman, doudou, maison',
                           ),
+                          const SizedBox(height: AppSizes.sm),
+                          _ChipSuggestions(
+                            options: const [
+                              'maman',
+                              'papa',
+                              'doudou',
+                              'animal de compagnie',
+                              'maison',
+                            ],
+                            onSelected: (value) => _appendChipValue(_familiarElements, value),
+                          ),
                           const SizedBox(height: AppSizes.md),
                           DropdownButtonFormField<String>(
                             value: _tonightGoal,
@@ -510,6 +649,7 @@ class _ChildProfileSetupScreenState
                         ],
                       ),
                     ),
+                    ],
                     const SizedBox(height: AppSizes.lg),
                     if (_loading)
                       const Center(
@@ -577,6 +717,40 @@ class _SectionCard extends StatelessWidget {
           child,
         ],
       ),
+    );
+  }
+}
+
+class _ChipSuggestions extends StatelessWidget {
+  const _ChipSuggestions({
+    required this.options,
+    required this.onSelected,
+  });
+
+  final List<String> options;
+  final ValueChanged<String> onSelected;
+
+  @override
+  Widget build(BuildContext context) {
+    return Wrap(
+      spacing: AppSizes.sm,
+      runSpacing: AppSizes.xs,
+      children: [
+        for (final option in options)
+          ActionChip(
+            label: Text(option),
+            onPressed: () => onSelected(option),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(999),
+              side: BorderSide(color: LunoraColors.mist.withValues(alpha: 0.2)),
+            ),
+            backgroundColor: LunoraColors.nightBlue.withValues(alpha: 0.45),
+            labelStyle: Theme.of(context).textTheme.labelSmall?.copyWith(
+              color: LunoraColors.warmBeige,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+      ],
     );
   }
 }

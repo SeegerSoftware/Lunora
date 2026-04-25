@@ -62,7 +62,7 @@ class AudioPlayerWidget extends StatelessWidget {
                       ),
                     ),
                     Text(
-                      enabled ? 'Appuie pour lancer' : 'Bientôt dans Lunora',
+                      enabled ? 'Appuie pour lancer' : 'Bientôt dans Elunai',
                       style: theme.textTheme.bodySmall?.copyWith(
                         color: LunoraColors.mist.withValues(alpha: 0.72),
                       ),

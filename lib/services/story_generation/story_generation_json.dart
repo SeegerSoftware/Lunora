@@ -6,6 +6,7 @@ import '../../shared/models/enums/story_tone.dart';
 import '../../shared/models/series_state.dart';
 import 'models/story_generation_request.dart';
 import 'models/story_generation_result.dart';
+import 'story_adaptation_engine.dart';
 
 /// Données brutes extraites du JSON modèle (champs optionnels pour robustesse).
 class ParsedStoryJson {
@@ -139,6 +140,7 @@ abstract final class StoryGenerationJsonParser {
 
 abstract final class StoryGenerationResultNormalizer {
   static const int _minContentLength = 220;
+  static const StoryAdaptationEngine _adaptationEngine = StoryAdaptationEngine();
 
   /// Valeurs de chapitre / série : la source de vérité est la requête produit (pas le modèle).
   static StoryGenerationResult normalize({
@@ -166,14 +168,14 @@ abstract final class StoryGenerationResultNormalizer {
       birthMonth: child.birthMonth,
       birthYear: child.birthYear,
     );
-    final minWords = _minWordsForMinutes(
-      child.storyLengthMinutes,
+    final minWords = _adaptationEngine.minWordsForValidation(
       ageYears: ageYears,
+      requestedMinutes: child.storyLengthMinutes,
     );
     final words = _wordCount(rawContent);
-    // Politique de validation plus tolérante:
-    // on n'invalide que si le contenu est vraiment trop court.
-    final hardMinWords = (minWords * 0.6).round();
+    // Politique qualité: pour coller a la promesse de duree, on impose un minimum
+    // plus exigeant avant d'accepter la reponse.
+    final hardMinWords = (minWords * 0.85).round();
     if (words < hardMinWords) {
       throw FormatException(
         'content trop court ($words mots, min dur $hardMinWords)',
@@ -222,24 +224,6 @@ abstract final class StoryGenerationResultNormalizer {
         .split(RegExp(r'\s+'))
         .where((w) => w.isNotEmpty)
         .length;
-  }
-
-  static int _minWordsForMinutes(int minutes, {required int ageYears}) {
-    switch (minutes) {
-      case 5:
-        if (ageYears <= 4) return 220;
-        if (ageYears <= 6) return 260;
-        return 300;
-      case 15:
-        if (ageYears <= 4) return 520;
-        if (ageYears <= 6) return 620;
-        return 720;
-      case 10:
-      default:
-        if (ageYears <= 4) return 320;
-        if (ageYears <= 6) return 380;
-        return 460;
-    }
   }
 
   static int _nearestAllowedMinutes(int value, int preferred) {

@@ -51,12 +51,29 @@ class StoryGenerationOrchestrator {
     final childName = request.child.firstName;
     final targetMinutes = request.child.storyLengthMinutes;
 
-    var best = await _generateWithLengthRetries(
-      system: system,
-      baseUser: baseUser,
-      request: request,
-      model: _miniModel,
-    );
+    StoryGenerationResult best;
+    try {
+      best = await _generateWithLengthRetries(
+        system: system,
+        baseUser: baseUser,
+        request: request,
+        model: _miniModel,
+      );
+    } on FormatException catch (e) {
+      if (!_isLengthTooShortError(e)) rethrow;
+      developer.log(
+        'mini model too short, forcing premium escalation: ${e.message}',
+        name: 'elunai.ai.quality',
+      );
+      final premiumForced = await _generateWithLengthRetries(
+        system: system,
+        baseUser: baseUser,
+        request: request,
+        model: _premiumModel,
+        mandatoryHint: _premiumLengthEscalationHint(e.message),
+      );
+      return premiumForced.copyWith(generationSource: 'remote-ai-gpt-4o');
+    }
     var bestQ = _evaluate(best, childName, targetMinutes);
     _logStage('mini-1', _miniModel, bestQ);
 
@@ -91,6 +108,7 @@ class StoryGenerationOrchestrator {
       baseUser: baseUser,
       request: request,
       model: _premiumModel,
+      mandatoryHint: _premiumLengthEscalationHint(null),
     );
     final qPremium = _evaluate(premium, childName, targetMinutes);
     _logStage('premium', _premiumModel, qPremium);
@@ -121,7 +139,7 @@ class StoryGenerationOrchestrator {
       'F=${q.fluencyPoints} T=${q.tonePoints} E=${q.endingPoints} '
       'NR=${q.narrativePoints} P=${q.profilePoints} '
       'guard=${q.narrativeGuardPassed} valid=${q.isValid}',
-      name: 'lunora.ai.quality',
+      name: 'elunai.ai.quality',
     );
   }
 
@@ -130,6 +148,7 @@ class StoryGenerationOrchestrator {
     required String baseUser,
     required StoryGenerationRequest request,
     required String model,
+    String? mandatoryHint,
   }) async {
     StoryGenerationResult? result;
     Object? lastLengthError;
@@ -145,9 +164,10 @@ REESSAI OBLIGATOIRE (LONGUEUR INSUFFISANTE)
 Ta reponse precedente etait trop courte.
 - etends nettement le champ "content"
 - ajoute des scenes douces et fluides (pas de repetition artificielle)
+- respecte strictement une longueur elevee en mots
 - conserve strictement le meme format JSON attendu
 ''';
-      final user = '$baseUser$retryHint';
+      final user = '$baseUser${mandatoryHint ?? ''}$retryHint';
 
       final raw = await _client.completeJsonChat(
         systemMessage: system,
@@ -176,5 +196,29 @@ Ta reponse precedente etait trop courte.
           const FormatException('Generation invalide: resultat manquant');
     }
     return result;
+  }
+
+  bool _isLengthTooShortError(FormatException e) {
+    return e.message.contains('content trop court');
+  }
+
+  String _premiumLengthEscalationHint(String? previousErrorMessage) {
+    final minFromError = previousErrorMessage == null
+        ? null
+        : RegExp(r'min dur (\d+)').firstMatch(previousErrorMessage)?.group(1);
+    final hardMinLine = minFromError == null
+        ? '- ne rends jamais une version courte: longueur premium obligatoire'
+        : '- longueur minimale obligatoire: au moins $minFromError mots dans "content"';
+
+    return '''
+
+==================================================
+ESCALADE PREMIUM OBLIGATOIRE
+==================================================
+Le draft precedent etait insuffisant en longueur.
+$hardMinLine
+- si besoin, ajoute des scenes douces supplementaires pour atteindre la longueur
+- n abrege jamais la fin: garde la descente vers le sommeil complete
+''';
   }
 }

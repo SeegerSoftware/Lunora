@@ -29,7 +29,6 @@ class HomeScreen extends ConsumerWidget {
     final user = ref.watch(authSessionProvider);
     final child = ref.watch(childProfileProvider);
     final todayStoryAsync = ref.watch(todayStoryProvider);
-    final historyAsync = ref.watch(storyHistoryProvider);
 
     if (user == null) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -78,7 +77,7 @@ class HomeScreen extends ConsumerWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'Bonsoir',
+                  'Elunai Histoires Intelligentes',
                   style: Theme.of(context).textTheme.headlineSmall?.copyWith(
                         color: LunoraColors.warmBeige,
                         fontWeight: FontWeight.w900,
@@ -87,7 +86,7 @@ class HomeScreen extends ConsumerWidget {
                 ),
                 const SizedBox(height: LunoraSpacing.xs),
                 Text(
-                  'Ce soir pour $childName',
+                  'Pour $childName',
                   style: Theme.of(context).textTheme.titleLarge?.copyWith(
                         color: LunoraColors.mist,
                         fontWeight: FontWeight.w800,
@@ -95,7 +94,7 @@ class HomeScreen extends ConsumerWidget {
                 ),
                 const SizedBox(height: LunoraSpacing.sm),
                 Text(
-                  'Un moment doux à partager avant de dormir.',
+                  'Une seule action. Elunai adapte automatiquement l’histoire à son âge.',
                   style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                         color: LunoraColors.mist.withValues(alpha: 0.82),
                       ),
@@ -103,17 +102,17 @@ class HomeScreen extends ConsumerWidget {
               ],
             ),
           ),
-          const SizedBox(height: LunoraSpacing.xl),
+          const SizedBox(height: LunoraSpacing.lg),
           LunoraFadeIn(
             delay: const Duration(milliseconds: 120),
-            child: _TodayHeroCard(
+            child: _StoryHubCard(
               user: user,
               childProfile: child,
               asyncStory: todayStoryAsync,
               onRead: (story) => context.push(
                 '/story?id=${Uri.encodeComponent(story.id)}',
               ),
-              onGenerate: () => ref.invalidate(todayStoryProvider),
+              onGenerate: () => context.push('/generate'),
               onAdminRegenerate: () => _runAdminStoryRegeneration(
                 context,
                 ref,
@@ -122,77 +121,19 @@ class HomeScreen extends ConsumerWidget {
               ),
             ),
           ),
-          const SizedBox(height: LunoraSpacing.xxl),
-          LunoraSectionTitle('Dernières histoires'),
-          const SizedBox(height: LunoraSpacing.sm),
-          LunoraFadeIn(
-            delay: const Duration(milliseconds: 200),
-            child: historyAsync.when(
-              skipLoadingOnReload: true,
-              loading: () => const Padding(
-                padding: EdgeInsets.symmetric(vertical: LunoraSpacing.lg),
-                child: Center(child: LunoraProgressBar()),
-              ),
-              error: (error, stackTrace) => const SizedBox.shrink(),
-              data: (stories) {
-                final others = _otherStories(stories, todayStoryAsync.valueOrNull)
-                    .take(3)
-                    .toList();
-                if (others.isEmpty) {
-                  return Padding(
-                    padding: const EdgeInsets.symmetric(vertical: LunoraSpacing.md),
-                    child: Text(
-                      'Les prochaines histoires apparaîtront ici.',
-                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                            color: LunoraColors.mist.withValues(alpha: 0.74),
-                          ),
-                    ),
-                  );
-                }
-                return Column(
-                  children: others
-                      .map(
-                        (story) => Padding(
-                          padding: const EdgeInsets.only(bottom: LunoraSpacing.sm),
-                          child: _HistoryItem(
-                            story: story,
-                            onTap: () => context.push(
-                              '/story?id=${Uri.encodeComponent(story.id)}',
-                            ),
-                          ),
-                        ),
-                      )
-                      .toList(),
-                );
-              },
-            ),
-          ),
-          const SizedBox(height: LunoraSpacing.xxl),
-          LunoraSectionTitle('Accès rapides'),
-          const SizedBox(height: LunoraSpacing.sm),
-          Wrap(
-            spacing: LunoraSpacing.sm,
-            runSpacing: LunoraSpacing.sm,
+          const SizedBox(height: LunoraSpacing.xl),
+          Row(
             children: [
-              _QuickAction(
-                icon: Icons.family_restroom_rounded,
-                label: 'Espace parent',
-                onTap: () => context.push('/parent'),
+              _InlineAction(
+                icon: Icons.child_care_rounded,
+                label: 'Profil',
+                onTap: () => context.push('/setup-child'),
               ),
-              _QuickAction(
+              const SizedBox(width: LunoraSpacing.sm),
+              _InlineAction(
                 icon: Icons.history_rounded,
                 label: 'Historique',
                 onTap: () => context.push('/history'),
-              ),
-              _QuickAction(
-                icon: Icons.child_care_rounded,
-                label: 'Profil enfant',
-                onTap: () => context.push('/setup-child'),
-              ),
-              _QuickAction(
-                icon: Icons.workspace_premium_rounded,
-                label: 'Abonnement',
-                onTap: () => context.push('/subscription'),
               ),
             ],
           ),
@@ -201,11 +142,6 @@ class HomeScreen extends ConsumerWidget {
       ),
     );
   }
-}
-
-List<Story> _otherStories(List<Story> all, Story? today) {
-  if (today == null) return all.take(12).toList();
-  return all.where((s) => s.id != today.id).take(12).toList();
 }
 
 Future<void> _runAdminStoryRegeneration(
@@ -261,8 +197,8 @@ Future<void> _runAdminStoryRegeneration(
   }
 }
 
-class _TodayHeroCard extends StatelessWidget {
-  const _TodayHeroCard({
+class _StoryHubCard extends StatelessWidget {
+  const _StoryHubCard({
     required this.user,
     required this.childProfile,
     required this.asyncStory,
@@ -290,17 +226,17 @@ class _TodayHeroCard extends StatelessWidget {
         error: (err, _) => Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const LunoraSectionTitle('Histoire du jour'),
+            const LunoraSectionTitle('Histoire'),
             const SizedBox(height: LunoraSpacing.sm),
             Text(
-              'Impossible de préparer l\'histoire de ce soir.',
+              'Impossible de préparer une histoire pour le moment.',
               style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                     color: LunoraColors.warmBeige,
                   ),
             ),
             const SizedBox(height: LunoraSpacing.md),
             LunoraPrimaryButton(
-              label: 'Préparer l\'histoire de ce soir',
+              label: 'Nouvelle histoire',
               icon: Icons.auto_stories_outlined,
               onPressed: onGenerate,
             ),
@@ -319,17 +255,17 @@ class _TodayHeroCard extends StatelessWidget {
             return Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const LunoraSectionTitle('Histoire du jour'),
+                const LunoraSectionTitle('Histoire'),
                 const SizedBox(height: LunoraSpacing.sm),
                 Text(
-                  'Aucune histoire prête pour ce soir.',
+                  'Aucune histoire prête pour le moment.',
                   style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                         color: LunoraColors.mist.withValues(alpha: 0.86),
                       ),
                 ),
                 const SizedBox(height: LunoraSpacing.md),
                 LunoraPrimaryButton(
-                  label: 'Créer l\'histoire de ce soir',
+                  label: 'Nouvelle histoire',
                   icon: Icons.bedtime_rounded,
                   onPressed: onGenerate,
                 ),
@@ -355,7 +291,7 @@ class _TodayHeroCard extends StatelessWidget {
               ),
               const SizedBox(height: LunoraSpacing.sm),
               Text(
-                'Créée spécialement pour $childName.',
+                'Prête pour $childName. Un tap pour commencer.',
                 style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                       color: LunoraColors.mist.withValues(alpha: 0.86),
                     ),
@@ -386,7 +322,7 @@ class _TodayHeroCard extends StatelessWidget {
               ),
               const SizedBox(height: LunoraSpacing.lg),
               LunoraPrimaryButton(
-                label: 'Lire l\'histoire',
+                label: 'Continuer l’histoire',
                 icon: Icons.play_arrow_rounded,
                 onPressed: () => onRead(story),
               ),
@@ -398,69 +334,8 @@ class _TodayHeroCard extends StatelessWidget {
   }
 }
 
-class _HistoryItem extends StatelessWidget {
-  const _HistoryItem({required this.story, required this.onTap});
-
-  final Story story;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    return Material(
-      color: Colors.transparent,
-      child: InkWell(
-        borderRadius: BorderRadius.circular(20),
-        onTap: onTap,
-        child: Ink(
-          decoration: BoxDecoration(
-            color: LunoraColors.nightBlueLift.withValues(alpha: 0.55),
-            borderRadius: BorderRadius.circular(20),
-            border: Border.all(
-              color: LunoraColors.mist.withValues(alpha: 0.12),
-            ),
-          ),
-          child: Padding(
-            padding: const EdgeInsets.all(LunoraSpacing.md),
-            child: Row(
-              children: [
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        story.title,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                              color: LunoraColors.warmBeige,
-                              fontWeight: FontWeight.w700,
-                            ),
-                      ),
-                      const SizedBox(height: LunoraSpacing.xxs),
-                      Text(
-                        '${story.dateKey} · ${readingDurationLabel(story.estimatedReadingMinutes)}',
-                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                              color: LunoraColors.mist.withValues(alpha: 0.78),
-                            ),
-                      ),
-                    ],
-                  ),
-                ),
-                Icon(
-                  Icons.chevron_right_rounded,
-                  color: LunoraColors.mist.withValues(alpha: 0.72),
-                ),
-              ],
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class _QuickAction extends StatelessWidget {
-  const _QuickAction({
+class _InlineAction extends StatelessWidget {
+  const _InlineAction({
     required this.icon,
     required this.label,
     required this.onTap,
@@ -472,53 +347,33 @@ class _QuickAction extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        final width = ((constraints.maxWidth - LunoraSpacing.sm) / 2)
-            .clamp(140.0, 240.0);
-        return SizedBox(
-          width: width,
-          child: Material(
-            color: Colors.transparent,
-            child: InkWell(
-              borderRadius: BorderRadius.circular(18),
-              onTap: onTap,
-              child: Ink(
-                decoration: BoxDecoration(
-                  color: LunoraColors.nightBlue.withValues(alpha: 0.5),
-                  borderRadius: BorderRadius.circular(18),
-                  border: Border.all(
-                    color: LunoraColors.mist.withValues(alpha: 0.14),
-                  ),
-                ),
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: LunoraSpacing.md,
-                    vertical: LunoraSpacing.sm + 2,
-                  ),
-                  child: Row(
-                    children: [
-                      Icon(icon, color: LunoraColors.starGoldSoft, size: 18),
-                      const SizedBox(width: LunoraSpacing.xs),
-                      Expanded(
-                        child: Text(
-                          label,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: Theme.of(context).textTheme.labelMedium?.copyWith(
-                                color: LunoraColors.warmBeige,
-                                fontWeight: FontWeight.w700,
-                              ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            ),
+    return Material(
+      color: LunoraColors.nightBlueLift.withValues(alpha: 0.48),
+      borderRadius: BorderRadius.circular(14),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(14),
+        onTap: onTap,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(
+            horizontal: LunoraSpacing.md,
+            vertical: LunoraSpacing.sm,
           ),
-        );
-      },
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(icon, size: 16, color: LunoraColors.starGoldSoft),
+              const SizedBox(width: LunoraSpacing.xs),
+              Text(
+                label,
+                style: Theme.of(context).textTheme.labelMedium?.copyWith(
+                      color: LunoraColors.warmBeige,
+                      fontWeight: FontWeight.w700,
+                    ),
+              ),
+            ],
+          ),
+        ),
+      ),
     );
   }
 }

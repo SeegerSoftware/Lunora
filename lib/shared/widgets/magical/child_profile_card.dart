@@ -3,12 +3,12 @@ import 'package:flutter/material.dart';
 import '../../../core/theme/colors.dart';
 import '../../../core/theme/spacing.dart';
 
-/// Avatar + prénom (rituel enfant).
+/// Avatar + prénom (profil enfant).
 class ChildProfileCard extends StatelessWidget {
   const ChildProfileCard({
     super.key,
     required this.firstName,
-    this.caption = 'Profil du petit lecteur',
+    this.caption = 'Profil enfant personnalisé',
   });
 
   final String firstName;
