@@ -46,13 +46,19 @@ class FirebaseChildProfileRepository implements ChildProfileRepository {
           );
 
       if (profile.storyFormat == StoryFormat.dailyStandalone) {
-        await _db
-            .collection(FirestorePaths.childSeriesState)
-            .doc(profile.id)
-            .delete();
+        await _safeDeleteSeriesStateDoc(profile.id);
+        await _safeDeleteSeriesStateDoc('${profile.id}_${profile.userId}');
       }
     } catch (e) {
       throw Exception(FirebaseErrors.firestoreMessage(e));
+    }
+  }
+
+  Future<void> _safeDeleteSeriesStateDoc(String docId) async {
+    try {
+      await _db.collection(FirestorePaths.childSeriesState).doc(docId).delete();
+    } catch (_) {
+      // Tolérance legacy: on n'empêche pas la sauvegarde du profil.
     }
   }
 }

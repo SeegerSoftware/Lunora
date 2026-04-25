@@ -23,7 +23,7 @@ abstract final class LunoraSpacing {
   static const BorderRadius radiusLg = BorderRadius.all(Radius.circular(24));
   static const BorderRadius radiusXl = BorderRadius.all(Radius.circular(32));
 
-  static const double readerMaxWidth = 640;
+  static const double readerMaxWidth = 560;
   static const double storyCardWidth = 196;
   static const double storyCardImageHeight = 112;
 }

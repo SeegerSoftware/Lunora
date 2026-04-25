@@ -3,5 +3,13 @@
   "USE_REAL_AI": "true",
   "OPENAI_API_KEY": "sk-remplace-par-ta-cle",
   "OPENAI_MODEL": "gpt-4o-mini",
-  "OPENAI_TIMEOUT_SECONDS": "120"
+  "OPENAI_MODEL_PREMIUM": "gpt-4o",
+  "OPENAI_TIMEOUT_SECONDS": "120",
+  "OPENAI_LOG_PROMPTS": "true",
+  "OPENAI_LOG_CALLS": "true",
+  "GOOGLE_SIGN_IN_SERVER_CLIENT_ID": "xxx.apps.googleusercontent.com",
+  "GOOGLE_SIGN_IN_WEB_CLIENT_ID": "xxx.apps.googleusercontent.com",
+  "APPLE_SIGN_IN_SERVICE_ID": "com.example.web",
+  "APPLE_SIGN_IN_REDIRECT_URI": "https://xxx.firebaseapp.com/__/auth/handler",
+  "STRIPE_PUBLISHABLE_KEY": "pk_test_remplace"
 }

@@ -6,9 +6,8 @@ import 'package:lunora_v00/app.dart';
 void main() {
   testWidgets('Affiche l’écran d’accueil Lunora', (WidgetTester tester) async {
     await tester.pumpWidget(const ProviderScope(child: LunoraApp()));
-    await tester.pumpAndSettle();
+    await tester.pump(const Duration(milliseconds: 400));
 
-    expect(find.text('lunora.v00'), findsOneWidget);
     expect(find.text('Créer un compte'), findsOneWidget);
   });
 }

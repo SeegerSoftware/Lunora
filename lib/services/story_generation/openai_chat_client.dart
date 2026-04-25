@@ -1,5 +1,7 @@
 import 'dart:convert';
+import 'dart:developer' as developer;
 
+import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 
 import '../../core/config/ai_generation_config.dart';
@@ -37,15 +39,50 @@ class OpenAiChatClient {
 
   Uri get _completionsUri => Uri.parse('$_baseUrl/v1/chat/completions');
 
+  /// Libellé lisible pour logs (mini vs 4o vs autre).
+  static String modelKindLabel(String model) {
+    final m = model.trim().toLowerCase();
+    if (m.contains('mini')) return 'mini (économique)';
+    if (m.contains('gpt-4o')) return 'gpt-4o (premium / famille)';
+    if (m.startsWith('gpt-4')) return 'gpt-4 ($model)';
+    if (m.startsWith('o1') || m.startsWith('o3')) return 'reasoning ($model)';
+    return 'autre ($model)';
+  }
+
+  static void _logOutgoingCall({
+    required String resolvedModel,
+    required int systemChars,
+    required int userChars,
+  }) {
+    final kind = modelKindLabel(resolvedModel);
+    final msg =
+        'OpenAI chat/completions → ce prompt part sur le modèle '
+        '"$resolvedModel" ($kind) | system $systemChars car., user $userChars car.';
+    developer.log(msg, name: 'lunora.openai');
+    debugPrint('[lunora.openai] $msg');
+  }
+
   /// Corps brut du message assistant (JSON attendu).
+  ///
+  /// [modelOverride] permet d’appeler un autre modèle sans dupliquer le client.
   Future<String> completeJsonChat({
     required String systemMessage,
     required String userMessage,
+    String? modelOverride,
     double temperature = 0.55,
     int maxTokens = 4500,
   }) async {
+    final resolvedModel = (modelOverride ?? _model).trim();
+    if (kDebugMode || AiGenerationConfig.logOpenAiCalls) {
+      _logOutgoingCall(
+        resolvedModel: resolvedModel,
+        systemChars: systemMessage.length,
+        userChars: userMessage.length,
+      );
+    }
+
     final payload = <String, dynamic>{
-      'model': _model,
+      'model': resolvedModel,
       'temperature': temperature,
       'max_tokens': maxTokens,
       'response_format': const {'type': 'json_object'},
@@ -54,6 +91,16 @@ class OpenAiChatClient {
         {'role': 'user', 'content': userMessage},
       ],
     };
+
+    if (AiGenerationConfig.logOpenAiPrompts) {
+      debugPrint(
+        '\n════════ Lunora OpenAI (avant envoi) ════════\n'
+        'model: $resolvedModel (${modelKindLabel(resolvedModel)})\n'
+        '--- system ---\n$systemMessage\n'
+        '--- user ---\n$userMessage\n'
+        '════════════════════════════════════════════\n',
+      );
+    }
 
     final response = await _http
         .post(

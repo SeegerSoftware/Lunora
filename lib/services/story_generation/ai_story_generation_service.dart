@@ -3,30 +3,35 @@ import 'dart:developer' as developer;
 import 'package:flutter/foundation.dart';
 
 import '../../core/config/ai_generation_config.dart';
+import '../../shared/models/series_state.dart';
 import 'content_safety_policy.dart';
 import 'models/story_generation_request.dart';
 import 'models/story_generation_result.dart';
 import 'openai_chat_client.dart';
-import 'story_generation_json.dart';
+import 'story_generation_orchestrator.dart';
 import 'story_generation_service.dart';
 import 'story_prompt_builder.dart';
+import 'story_generation_json.dart';
 
-/// Génération via LLM (OpenAI Chat Completions JSON) avec repli sur [fallback].
+/// Génération via LLM (mini + secours qualité premium) avec repli sur [fallback].
 class AiStoryGenerationService implements StoryGenerationService {
   AiStoryGenerationService({
-    required OpenAiChatClient client,
+    required StoryGenerationOrchestrator orchestrator,
+    required OpenAiChatClient chatClient,
     required StoryGenerationService fallback,
-    StoryPromptBuilder promptBuilder = const StoryPromptBuilder(),
     ContentSafetyPolicy safetyPolicy = const LocalContentSafetyPolicy(),
-  })  : _client = client,
+    StoryPromptBuilder promptBuilder = const StoryPromptBuilder(),
+  })  : _orchestrator = orchestrator,
+        _chatClient = chatClient,
         _fallback = fallback,
-        _promptBuilder = promptBuilder,
-        _safetyPolicy = safetyPolicy;
+        _safetyPolicy = safetyPolicy,
+        _promptBuilder = promptBuilder;
 
-  final OpenAiChatClient _client;
+  final StoryGenerationOrchestrator _orchestrator;
+  final OpenAiChatClient _chatClient;
   final StoryGenerationService _fallback;
-  final StoryPromptBuilder _promptBuilder;
   final ContentSafetyPolicy _safetyPolicy;
+  final StoryPromptBuilder _promptBuilder;
 
   @override
   Future<StoryGenerationResult> generate(StoryGenerationRequest request) async {
@@ -36,20 +41,7 @@ class AiStoryGenerationService implements StoryGenerationService {
     }
 
     try {
-      final system = _promptBuilder.buildSystemPreamble();
-      final user = _promptBuilder.buildUserPrompt(request);
-
-      final raw = await _client.completeJsonChat(
-        systemMessage: system,
-        userMessage: user,
-      );
-
-      final map = StoryGenerationJsonParser.extractObject(raw);
-      final parsed = StoryGenerationJsonParser.parseMap(map);
-      final result = StoryGenerationResultNormalizer.normalize(
-        parsed: parsed,
-        request: request,
-      );
+      final result = await _orchestrator.generate(StoryBrief(request));
 
       final draft = StoryGenerationDraft(
         title: result.title,
@@ -79,6 +71,31 @@ class AiStoryGenerationService implements StoryGenerationService {
       }
       final fallback = await _fallback.generate(request);
       return fallback.copyWith(generationSource: 'fallback-error');
+    }
+  }
+
+  @override
+  Future<SeriesBible> generateSeriesBible(StoryGenerationRequest request) async {
+    if (!AiGenerationConfig.canUseRemoteAi) {
+      return _fallback.generateSeriesBible(request);
+    }
+    try {
+      final system = _promptBuilder.buildSystemPreamble();
+      final user = _promptBuilder.buildSeriesBiblePrompt(request);
+      final raw = await _chatClient.completeJsonChat(
+        systemMessage: system,
+        userMessage: user,
+      );
+      final obj = StoryGenerationJsonParser.extractObject(raw);
+      return SeriesBible.fromMap(obj);
+    } catch (e, st) {
+      developer.log(
+        'AiSeriesBibleGeneration: $e',
+        name: 'lunora.ai',
+        error: e,
+        stackTrace: st,
+      );
+      return _fallback.generateSeriesBible(request);
     }
   }
 }

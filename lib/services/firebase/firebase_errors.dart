@@ -4,6 +4,16 @@ abstract final class FirebaseErrors {
   static String authMessage(Object error) {
     if (error is FirebaseAuthException) {
       switch (error.code) {
+        case 'operation-not-allowed':
+          return 'Provider Email/Password non active dans Firebase Auth.';
+        case 'invalid-api-key':
+          return 'Cle API Firebase invalide pour ce projet.';
+        case 'app-not-authorized':
+          return 'Application/domaine non autorise dans Firebase.';
+        case 'internal-error':
+          return 'Erreur interne Firebase Auth (verifier configuration projet/auth).';
+        case 'too-many-requests':
+          return 'Trop de tentatives. Reessaie dans quelques minutes.';
         case 'invalid-email':
           return 'Adresse email invalide.';
         case 'user-disabled':
@@ -18,12 +28,15 @@ abstract final class FirebaseErrors {
           return 'Mot de passe trop faible.';
         case 'invalid-credential':
           return 'Identifiants incorrects.';
+        case 'account-exists-with-different-credential':
+          return 'Ce compte existe déjà avec une autre méthode de connexion '
+              '(Google, Apple, etc.). Utilisez la même méthode qu’à l’inscription.';
         case 'network-request-failed':
           return 'Problème de connexion réseau.';
         default:
-          return error.message?.trim().isNotEmpty == true
-              ? error.message!.trim()
-              : 'Authentification impossible.';
+          final msg = error.message?.trim() ?? '';
+          if (msg.isNotEmpty && msg.toLowerCase() != 'error') return msg;
+          return 'Authentification impossible [${error.code}].';
       }
     }
     return 'Une erreur est survenue.';

@@ -19,6 +19,25 @@ abstract final class LunoraColors {
   static const Color moonIvory = Color(0xFFFFF8ED);
   static const Color mist = Color(0xFFE8E4F8);
 
+  /// Fonds lecture coucher : jamais noir pur, chaleur légère.
+  static const Color readerInk = Color(0xFF121A28);
+  static const Color readerInkDeep = Color(0xFF0C1018);
+  static const Color readerCard = Color(0xFF1C2636);
+  static const Color readerCardBorder = Color(0xFF2A3548);
+  static const Color readerTextPrimary = Color(0xFFF3E8D4);
+  static const Color readerTextSecondary = Color(0xFFC9B8A8);
+
+  static const LinearGradient readerCanvasVertical = LinearGradient(
+    begin: Alignment.topCenter,
+    end: Alignment.bottomCenter,
+    colors: [
+      Color(0xFF1A2436),
+      readerInk,
+      readerInkDeep,
+    ],
+    stops: [0.0, 0.5, 1.0],
+  );
+
   static const LinearGradient nightSkyVertical = LinearGradient(
     begin: Alignment.topCenter,
     end: Alignment.bottomCenter,

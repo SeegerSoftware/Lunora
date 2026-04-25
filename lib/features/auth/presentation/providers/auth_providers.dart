@@ -80,6 +80,24 @@ class AuthSessionNotifier extends Notifier<UserModel?> {
     state = user;
   }
 
+  Future<void> signInWithGoogle() async {
+    final user = await ref.read(authRepositoryProvider).signInWithGoogle();
+    await _afterAuthChanged(user.id);
+    state = user;
+  }
+
+  Future<void> signInWithApple() async {
+    final user = await ref.read(authRepositoryProvider).signInWithApple();
+    await _afterAuthChanged(user.id);
+    state = user;
+  }
+
+  Future<void> signInWithFacebook() async {
+    final user = await ref.read(authRepositoryProvider).signInWithFacebook();
+    await _afterAuthChanged(user.id);
+    state = user;
+  }
+
   Future<void> signOut() async {
     await ref.read(authRepositoryProvider).signOut();
     syncSignedOutFromFirebase();

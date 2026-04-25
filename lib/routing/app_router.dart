@@ -12,7 +12,9 @@ import '../features/home/presentation/home_screen.dart';
 import '../features/parent/presentation/parent_area_screen.dart';
 import '../features/stories/presentation/story_history_screen.dart';
 import '../features/stories/presentation/story_reader_screen.dart';
+import '../features/subscription/presentation/stripe_checkout_screen.dart';
 import '../features/subscription/presentation/subscription_screen.dart';
+import 'lunora_page_transitions.dart';
 import 'router_refresh.dart';
 
 final goRouterProvider = Provider<GoRouter>((ref) {
@@ -24,57 +26,78 @@ final goRouterProvider = Provider<GoRouter>((ref) {
     routes: <RouteBase>[
       GoRoute(
         path: '/welcome',
-        builder: (BuildContext context, GoRouterState state) {
-          return const WelcomeScreen();
-        },
+        pageBuilder: (context, state) => lunoraFadePage(
+          key: state.pageKey,
+          child: const WelcomeScreen(),
+        ),
       ),
       GoRoute(
         path: '/signin',
-        builder: (BuildContext context, GoRouterState state) {
-          return const SignInScreen();
-        },
+        pageBuilder: (context, state) => lunoraFadePage(
+          key: state.pageKey,
+          child: const SignInScreen(),
+        ),
       ),
       GoRoute(
         path: '/signup',
-        builder: (BuildContext context, GoRouterState state) {
-          return const SignUpScreen();
-        },
+        pageBuilder: (context, state) => lunoraFadePage(
+          key: state.pageKey,
+          child: const SignUpScreen(),
+        ),
       ),
       GoRoute(
         path: '/setup-child',
-        builder: (BuildContext context, GoRouterState state) {
-          return const ChildProfileSetupScreen();
-        },
+        pageBuilder: (context, state) => lunoraFadePage(
+          key: state.pageKey,
+          child: const ChildProfileSetupScreen(),
+        ),
       ),
       GoRoute(
         path: '/home',
-        builder: (BuildContext context, GoRouterState state) {
-          return const HomeScreen();
-        },
+        pageBuilder: (context, state) => lunoraFadePage(
+          key: state.pageKey,
+          child: const HomeScreen(),
+        ),
       ),
       GoRoute(
         path: '/story',
-        builder: (BuildContext context, GoRouterState state) {
+        pageBuilder: (context, state) {
           final id = state.uri.queryParameters['id'];
-          return StoryReaderScreen(storyId: id);
+          return lunoraFadePage(
+            key: state.pageKey,
+            child: StoryReaderScreen(storyId: id),
+          );
         },
       ),
       GoRoute(
         path: '/history',
-        builder: (BuildContext context, GoRouterState state) {
-          return const StoryHistoryScreen();
-        },
+        pageBuilder: (context, state) => lunoraFadePage(
+          key: state.pageKey,
+          child: const StoryHistoryScreen(),
+        ),
       ),
       GoRoute(
         path: '/parent',
-        builder: (BuildContext context, GoRouterState state) {
-          return const ParentAreaScreen();
-        },
+        pageBuilder: (context, state) => lunoraFadePage(
+          key: state.pageKey,
+          child: const ParentAreaScreen(),
+        ),
       ),
       GoRoute(
         path: '/subscription',
-        builder: (BuildContext context, GoRouterState state) {
-          return const SubscriptionScreen();
+        pageBuilder: (context, state) => lunoraFadePage(
+          key: state.pageKey,
+          child: const SubscriptionScreen(),
+        ),
+      ),
+      GoRoute(
+        path: '/stripe-checkout',
+        pageBuilder: (context, state) {
+          final planId = state.uri.queryParameters['planId'] ?? 'plan_10';
+          return lunoraFadePage(
+            key: state.pageKey,
+            child: StripeCheckoutScreen(initialPlanId: planId),
+          );
         },
       ),
     ],
@@ -94,8 +117,6 @@ final goRouterProvider = Provider<GoRouter>((ref) {
         return '/setup-child';
       }
 
-      // Ne pas inclure `/setup-child` ici : le parent doit pouvoir rouvrir le
-      // formulaire pour modifier le profil sans être renvoyé vers `/home`.
       const gateRoutes = <String>{'/welcome', '/signin', '/signup'};
       if (gateRoutes.contains(loc)) return '/home';
 

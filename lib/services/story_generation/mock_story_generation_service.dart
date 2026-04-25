@@ -1,6 +1,7 @@
 import '../../shared/models/enums/story_format.dart';
 import '../../shared/models/enums/story_tone.dart';
 import '../../shared/models/enums/universe_type.dart';
+import '../../shared/models/series_state.dart';
 import 'content_safety_policy.dart';
 import 'models/story_generation_request.dart';
 import 'models/story_generation_result.dart';
@@ -117,7 +118,88 @@ et une fin douce : « Dors bien, tout est tranquille. »
       chapterNumber: request.chapterIndex,
       totalChapters: request.totalChapters,
       seriesId: seriesId,
+      continuityUpdate: isSerialized
+          ? ChapterContinuityUpdate(
+              chapterSummary: summary,
+              importantEvents: ['Un rituel du soir est consolidé'],
+              charactersMet: [firstName],
+              objectsIntroduced: ['Une lanterne douce'],
+              resolvedLoops: ch >= request.totalChapters
+                  ? ['La quête de sérénité est accomplie']
+                  : const [],
+              openLoops: ch < request.totalChapters
+                  ? ['Découvrir un nouveau repère apaisant demain']
+                  : const [],
+              emotionalStep: 'Apaisement progressif',
+              thingsToRemember: [
+                '$firstName aime $primaryTheme',
+                'Le ton reste calme et rassurant',
+              ],
+              thingsToAvoidRepeating: const [
+                'Même ouverture mot pour mot',
+                'Réintroduction des mêmes personnages',
+              ],
+              nextChapterGoal: ch < request.totalChapters
+                  ? 'Approfondir la confiance du soir avec un élément nouveau'
+                  : 'Clore en douceur toutes les boucles ouvertes',
+            )
+          : null,
       generationSource: 'fallback-mock',
+    );
+  }
+
+  @override
+  Future<SeriesBible> generateSeriesBible(StoryGenerationRequest request) async {
+    final child = request.child;
+    final theme = child.preferredThemes.isNotEmpty
+        ? child.preferredThemes.first
+        : 'douceur du soir';
+    final total = request.totalChapters <= 0 ? 7 : request.totalChapters;
+    final plan = List<ChapterPlanItem>.generate(total, (index) {
+      final chapter = index + 1;
+      final isLast = chapter == total;
+      return ChapterPlanItem(
+        chapterIndex: chapter,
+        title: isLast
+            ? 'Le soir des retrouvailles calmes'
+            : 'Les petites lanternes - chapitre $chapter',
+        goal: isLast
+            ? 'Clore les boucles ouvertes avec douceur'
+            : 'Faire progresser la quête calme autour de $theme',
+        emotionalStep: isLast
+            ? 'Sentiment de sécurité profonde'
+            : 'Confiance qui grandit',
+        newElement: isLast
+            ? 'Un rituel final à garder'
+            : 'Un nouveau repère familier',
+        openLoop: isLast ? '' : 'Comment rendre la nuit encore plus sereine ?',
+      );
+    });
+
+    return SeriesBible(
+      seriesTitle: 'Les soirs paisibles de ${child.firstName}',
+      pitch: 'Une série douce où chaque soir apporte un petit pas vers le calme.',
+      universe: child.preferredUniverse.isEmpty
+          ? child.universeType.displayLabel
+          : child.preferredUniverse,
+      tone: child.preferredTone.displayLabel,
+      mainCharacters: [child.firstName],
+      secondaryCharacters: child.familiarElements.isEmpty
+          ? const ['Un petit guide lumineux']
+          : child.familiarElements,
+      recurringPlaces: const ['La chambre apaisée', 'Le sentier des étoiles'],
+      storyArc: 'Installer une routine rassurante et confiante avant le sommeil.',
+      emotionalArc: 'De la détente vers un sentiment stable de sécurité.',
+      chapterPlan: plan,
+      continuityRules: const [
+        'Préserver les repères installés',
+        'Ne pas réintroduire comme nouveau un personnage déjà connu',
+      ],
+      antiRepetitionRules: const [
+        'Varier l’ouverture et les images sensorielles',
+        'Introduire un nouvel élément par chapitre',
+      ],
+      plannedEnding: 'Une clôture douce qui remercie les compagnons et apaise.',
     );
   }
 }

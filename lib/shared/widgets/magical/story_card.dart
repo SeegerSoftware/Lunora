@@ -38,9 +38,14 @@ class StoryCard extends StatelessWidget {
             ),
             boxShadow: [
               BoxShadow(
-                color: LunoraColors.violetSoft.withValues(alpha: 0.12),
-                blurRadius: 16,
-                offset: const Offset(0, 8),
+                color: LunoraColors.violetSoft.withValues(alpha: 0.14),
+                blurRadius: 20,
+                offset: const Offset(0, 10),
+              ),
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.18),
+                blurRadius: 24,
+                offset: const Offset(0, 14),
               ),
             ],
           ),

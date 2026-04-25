@@ -44,7 +44,7 @@ abstract final class ChildProfileRules {
       if (!MockData.seriesDurationDaysAllowed.contains(
         profile.seriesDurationDays,
       )) {
-        return 'Durée de série obligatoire (7, 14, 21 ou 28 jours)';
+        return 'Durée de série obligatoire (3, 5, 7 ou 14 jours)';
       }
     } else if (profile.seriesDurationDays != 0) {
       return 'Incohérence : durée de série sans format sérialisé';

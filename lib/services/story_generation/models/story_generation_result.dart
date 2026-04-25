@@ -2,6 +2,7 @@ import 'package:equatable/equatable.dart';
 
 import '../../../shared/models/enums/story_format.dart';
 import '../../../shared/models/enums/story_tone.dart';
+import '../../../shared/models/series_state.dart';
 
 class StoryGenerationResult extends Equatable {
   const StoryGenerationResult({
@@ -15,6 +16,7 @@ class StoryGenerationResult extends Equatable {
     required this.chapterNumber,
     required this.totalChapters,
     this.seriesId,
+    this.continuityUpdate,
     this.generationSource = 'unknown',
   });
 
@@ -28,6 +30,7 @@ class StoryGenerationResult extends Equatable {
   final int chapterNumber;
   final int totalChapters;
   final String? seriesId;
+  final ChapterContinuityUpdate? continuityUpdate;
   final String generationSource;
 
   StoryGenerationResult copyWith({
@@ -41,6 +44,7 @@ class StoryGenerationResult extends Equatable {
     int? chapterNumber,
     int? totalChapters,
     String? seriesId,
+    ChapterContinuityUpdate? continuityUpdate,
     String? generationSource,
   }) {
     return StoryGenerationResult(
@@ -55,6 +59,7 @@ class StoryGenerationResult extends Equatable {
       chapterNumber: chapterNumber ?? this.chapterNumber,
       totalChapters: totalChapters ?? this.totalChapters,
       seriesId: seriesId ?? this.seriesId,
+      continuityUpdate: continuityUpdate ?? this.continuityUpdate,
       generationSource: generationSource ?? this.generationSource,
     );
   }
@@ -71,6 +76,7 @@ class StoryGenerationResult extends Equatable {
     chapterNumber,
     totalChapters,
     seriesId,
+    continuityUpdate,
     generationSource,
   ];
 }

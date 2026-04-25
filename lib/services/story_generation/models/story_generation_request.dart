@@ -2,6 +2,7 @@ import 'package:equatable/equatable.dart';
 
 import '../../../features/story_memory/domain/story_memory_context.dart';
 import '../../../shared/models/child_profile.dart';
+import '../../../shared/models/series_state.dart';
 import '../../../shared/models/user_model.dart';
 
 class StoryGenerationRequest extends Equatable {
@@ -15,6 +16,9 @@ class StoryGenerationRequest extends Equatable {
     this.continuityContext,
     this.seriesFilRougeBlock,
     this.memoryContext,
+    this.seriesBible,
+    this.seriesState,
+    this.currentChapterPlan,
   });
 
   final UserModel user;
@@ -34,6 +38,9 @@ class StoryGenerationRequest extends Equatable {
 
   /// Mémoire long terme + récente (univers persistant par enfant).
   final StoryMemoryContext? memoryContext;
+  final SeriesBible? seriesBible;
+  final SeriesState? seriesState;
+  final ChapterPlanItem? currentChapterPlan;
 
   @override
   List<Object?> get props => [
@@ -46,5 +53,8 @@ class StoryGenerationRequest extends Equatable {
         continuityContext,
         seriesFilRougeBlock,
         memoryContext,
+        seriesBible,
+        seriesState,
+        currentChapterPlan,
       ];
 }

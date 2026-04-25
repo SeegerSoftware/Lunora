@@ -17,4 +17,7 @@ abstract final class AppTheme {
 
   static TextStyle storyReaderBody(TextTheme textTheme) =>
       LunoraTextStyles.storyReaderBody(textTheme);
+
+  static TextStyle storyReaderMetaOnCard(TextTheme textTheme) =>
+      LunoraTextStyles.storyReaderMetaOnCard(textTheme);
 }

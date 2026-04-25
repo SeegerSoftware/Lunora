@@ -6,12 +6,17 @@ import '../../../core/config/admin_config.dart';
 import '../../../core/di/providers.dart';
 import '../../../core/theme/colors.dart';
 import '../../../core/theme/spacing.dart';
-import '../../../core/theme/text_styles.dart';
 import '../../../shared/models/child_profile.dart';
-import '../../../shared/models/enums/subscription_status.dart';
 import '../../../shared/models/story.dart';
 import '../../../shared/models/user_model.dart';
-import '../../../shared/widgets/magical/magical.dart';
+import '../../../shared/widgets/lunora_badge.dart';
+import '../../../shared/widgets/lunora_fade_in.dart';
+import '../../../shared/widgets/lunora_glass_card.dart';
+import '../../../shared/widgets/lunora_night_scaffold.dart';
+import '../../../shared/widgets/lunora_primary_button.dart';
+import '../../../shared/widgets/lunora_section_title.dart';
+import '../../../shared/widgets/magical/lunora_progress_bar.dart';
+import '../../../shared/widgets/story_ui_labels.dart';
 import '../../auth/presentation/providers/auth_providers.dart';
 import '../../child_profile/presentation/providers/child_profile_providers.dart';
 import '../../stories/presentation/providers/story_providers.dart';
@@ -21,7 +26,6 @@ class HomeScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final theme = Theme.of(context);
     final user = ref.watch(authSessionProvider);
     final child = ref.watch(childProfileProvider);
     final todayStoryAsync = ref.watch(todayStoryProvider);
@@ -41,197 +45,158 @@ class HomeScreen extends ConsumerWidget {
       return const Scaffold(body: Center(child: CircularProgressIndicator()));
     }
 
-    final firstName = child.firstName.trim();
-    final greetingName = firstName.isEmpty ? 'petit lecteur' : firstName;
+    final childName = child.firstName.trim().isEmpty ? 'ton enfant' : child.firstName.trim();
 
-    final planLabel = user.selectedPlan == null
-        ? 'Non abonné'
-        : 'Plan actif : ${user.selectedPlan}';
-
-    final statusLabel = switch (user.subscriptionStatus) {
-      SubscriptionStatus.active => 'Abonnement actif',
-      SubscriptionStatus.none => 'Essai / non abonné',
-      SubscriptionStatus.grace => 'Période de grâce',
-      SubscriptionStatus.canceled => 'Abonnement arrêté',
-    };
-
-    return Scaffold(
-      extendBodyBehindAppBar: true,
+    return LunoraNightScaffold(
+      scrollable: true,
+      starCount: 30,
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
-        automaticallyImplyLeading: false,
-        title: MoonHeader(
-          title: 'Ce soir',
-          subtitle: 'Un moment doux à partager',
-          trailing: IconButton(
-            tooltip: 'Se déconnecter',
-            style: IconButton.styleFrom(
-              backgroundColor: LunoraColors.nightBlueLift.withValues(
-                alpha: 0.55,
+        actions: [
+          Padding(
+            padding: const EdgeInsets.only(right: LunoraSpacing.sm),
+            child: IconButton(
+              tooltip: 'Se déconnecter',
+              onPressed: () async {
+                await ref.read(authSessionProvider.notifier).signOut();
+                if (context.mounted) context.go('/welcome');
+              },
+              icon: Icon(
+                Icons.logout_rounded,
+                color: LunoraColors.warmBeige.withValues(alpha: 0.9),
               ),
             ),
-            onPressed: () async {
-              await ref.read(authSessionProvider.notifier).signOut();
-              if (context.mounted) context.go('/welcome');
-            },
-            icon: Icon(
-              Icons.logout_rounded,
-              color: LunoraColors.warmBeige.withValues(alpha: 0.9),
-            ),
           ),
-        ),
+        ],
       ),
-      body: Stack(
-        fit: StackFit.expand,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const DecoratedBox(
-            decoration: BoxDecoration(gradient: LunoraColors.nightSkyVertical),
+          LunoraFadeIn(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Bonsoir',
+                  style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                        color: LunoraColors.warmBeige,
+                        fontWeight: FontWeight.w900,
+                        letterSpacing: -0.3,
+                      ),
+                ),
+                const SizedBox(height: LunoraSpacing.xs),
+                Text(
+                  'Ce soir pour $childName',
+                  style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                        color: LunoraColors.mist,
+                        fontWeight: FontWeight.w800,
+                      ),
+                ),
+                const SizedBox(height: LunoraSpacing.sm),
+                Text(
+                  'Un moment doux à partager avant de dormir.',
+                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                        color: LunoraColors.mist.withValues(alpha: 0.82),
+                      ),
+                ),
+              ],
+            ),
           ),
-          StarfieldBackground(
-            child: SafeArea(
-              child: CustomScrollView(
-                physics: const BouncingScrollPhysics(),
-                slivers: [
-                  SliverPadding(
-                    padding: LunoraSpacing.screen.copyWith(
-                      top: LunoraSpacing.sm,
-                    ),
-                    sliver: SliverList(
-                      delegate: SliverChildListDelegate([
-                        Text(
-                          'Bonsoir $greetingName,',
-                          style: LunoraTextStyles.greetingNight(
-                            theme.textTheme,
-                          ),
-                        ),
-                        const SizedBox(height: LunoraSpacing.xs),
-                        Text(
-                          'prêt pour une histoire ?',
-                          style: LunoraTextStyles.greetingSub(theme.textTheme),
-                        ),
-                        const SizedBox(height: LunoraSpacing.xl),
-                        _TodayStoryPanel(
-                          user: user,
-                          child: child,
-                          todayStoryAsync: todayStoryAsync,
-                          theme: theme,
-                          ref: ref,
-                        ),
-                        const SizedBox(height: LunoraSpacing.xl),
-                        Row(
-                          children: [
-                            Expanded(
-                              child: Text(
-                                'Autres histoires',
-                                style: LunoraTextStyles.sectionTitle(
-                                  theme.textTheme,
-                                ),
-                              ),
-                            ),
-                            TextButton(
-                              onPressed: () => context.push('/history'),
-                              child: Text(
-                                'Tout voir',
-                                style: theme.textTheme.labelLarge?.copyWith(
-                                  color: LunoraColors.violetGlow,
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: LunoraSpacing.sm),
-                        SizedBox(
-                          height: 268,
-                          child: historyAsync.when(
-                            skipLoadingOnReload: true,
-                            data: (stories) {
-                              final today = todayStoryAsync.valueOrNull;
-                              final others = _otherStories(stories, today);
-                              if (others.isEmpty) {
-                                return Center(
-                                  child: Text(
-                                    'Les histoires passées apparaîtront ici.',
-                                    textAlign: TextAlign.center,
-                                    style: theme.textTheme.bodyMedium?.copyWith(
-                                      color: LunoraColors.mist.withValues(
-                                        alpha: 0.72,
-                                      ),
-                                    ),
-                                  ),
-                                );
-                              }
-                              return ListView.separated(
-                                scrollDirection: Axis.horizontal,
-                                itemCount: others.length,
-                                separatorBuilder: (context, index) =>
-                                    const SizedBox(width: LunoraSpacing.md),
-                                itemBuilder: (context, index) {
-                                  final s = others[index];
-                                  return StoryCard(
-                                    title: s.title,
-                                    subtitle: s.summary,
-                                    readingMinutes: s.estimatedReadingMinutes,
-                                    chapterLabel: s.isSerialized
-                                        ? 'Ch. ${s.chapterNumber}/${s.totalChapters}'
-                                        : null,
-                                    onTap: () => context.push(
-                                      '/story?id=${Uri.encodeComponent(s.id)}',
-                                    ),
-                                  );
-                                },
-                              );
-                            },
-                            loading: () =>
-                                const Center(child: LunoraProgressBar()),
-                            error: (e, _) => Center(
-                              child: Text(
-                                'Historique indisponible.',
-                                style: theme.textTheme.bodyMedium?.copyWith(
-                                  color: theme.colorScheme.error,
-                                ),
-                              ),
-                            ),
-                          ),
-                        ),
-                        const SizedBox(height: LunoraSpacing.xl),
-                        Text(
-                          'Espace parent',
-                          style: LunoraTextStyles.sectionTitle(theme.textTheme),
-                        ),
-                        const SizedBox(height: LunoraSpacing.sm),
-                        _HomeTile(
-                          icon: Icons.family_restroom_rounded,
-                          title: 'Tableau de bord',
-                          subtitle: 'Suivi des lectures et réglages',
-                          onTap: () => context.push('/parent'),
-                        ),
-                        _HomeTile(
-                          icon: Icons.history_rounded,
-                          title: 'Historique',
-                          subtitle: 'Relire les histoires passées',
-                          onTap: () => context.push('/history'),
-                        ),
-                        _HomeTile(
-                          icon: Icons.child_care_rounded,
-                          title: 'Profil enfant',
-                          subtitle: 'Ajuster les préférences',
-                          onTap: () => context.push('/setup-child'),
-                        ),
-                        _HomeTile(
-                          icon: Icons.workspace_premium_rounded,
-                          title: 'Abonnement',
-                          subtitle: '$planLabel · $statusLabel',
-                          onTap: () => context.push('/subscription'),
-                        ),
-                        const SizedBox(height: LunoraSpacing.xxl),
-                      ]),
-                    ),
-                  ),
-                ],
+          const SizedBox(height: LunoraSpacing.xl),
+          LunoraFadeIn(
+            delay: const Duration(milliseconds: 120),
+            child: _TodayHeroCard(
+              user: user,
+              childProfile: child,
+              asyncStory: todayStoryAsync,
+              onRead: (story) => context.push(
+                '/story?id=${Uri.encodeComponent(story.id)}',
+              ),
+              onGenerate: () => ref.invalidate(todayStoryProvider),
+              onAdminRegenerate: () => _runAdminStoryRegeneration(
+                context,
+                ref,
+                user,
+                child,
               ),
             ),
           ),
+          const SizedBox(height: LunoraSpacing.xxl),
+          LunoraSectionTitle('Dernières histoires'),
+          const SizedBox(height: LunoraSpacing.sm),
+          LunoraFadeIn(
+            delay: const Duration(milliseconds: 200),
+            child: historyAsync.when(
+              skipLoadingOnReload: true,
+              loading: () => const Padding(
+                padding: EdgeInsets.symmetric(vertical: LunoraSpacing.lg),
+                child: Center(child: LunoraProgressBar()),
+              ),
+              error: (error, stackTrace) => const SizedBox.shrink(),
+              data: (stories) {
+                final others = _otherStories(stories, todayStoryAsync.valueOrNull)
+                    .take(3)
+                    .toList();
+                if (others.isEmpty) {
+                  return Padding(
+                    padding: const EdgeInsets.symmetric(vertical: LunoraSpacing.md),
+                    child: Text(
+                      'Les prochaines histoires apparaîtront ici.',
+                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                            color: LunoraColors.mist.withValues(alpha: 0.74),
+                          ),
+                    ),
+                  );
+                }
+                return Column(
+                  children: others
+                      .map(
+                        (story) => Padding(
+                          padding: const EdgeInsets.only(bottom: LunoraSpacing.sm),
+                          child: _HistoryItem(
+                            story: story,
+                            onTap: () => context.push(
+                              '/story?id=${Uri.encodeComponent(story.id)}',
+                            ),
+                          ),
+                        ),
+                      )
+                      .toList(),
+                );
+              },
+            ),
+          ),
+          const SizedBox(height: LunoraSpacing.xxl),
+          LunoraSectionTitle('Accès rapides'),
+          const SizedBox(height: LunoraSpacing.sm),
+          Wrap(
+            spacing: LunoraSpacing.sm,
+            runSpacing: LunoraSpacing.sm,
+            children: [
+              _QuickAction(
+                icon: Icons.family_restroom_rounded,
+                label: 'Espace parent',
+                onTap: () => context.push('/parent'),
+              ),
+              _QuickAction(
+                icon: Icons.history_rounded,
+                label: 'Historique',
+                onTap: () => context.push('/history'),
+              ),
+              _QuickAction(
+                icon: Icons.child_care_rounded,
+                label: 'Profil enfant',
+                onTap: () => context.push('/setup-child'),
+              ),
+              _QuickAction(
+                icon: Icons.workspace_premium_rounded,
+                label: 'Abonnement',
+                onTap: () => context.push('/subscription'),
+              ),
+            ],
+          ),
+          const SizedBox(height: LunoraSpacing.xl),
         ],
       ),
     );
@@ -296,316 +261,264 @@ Future<void> _runAdminStoryRegeneration(
   }
 }
 
-class _TodayStoryPanel extends StatelessWidget {
-  const _TodayStoryPanel({
+class _TodayHeroCard extends StatelessWidget {
+  const _TodayHeroCard({
     required this.user,
-    required this.child,
-    required this.todayStoryAsync,
-    required this.theme,
-    required this.ref,
+    required this.childProfile,
+    required this.asyncStory,
+    required this.onRead,
+    required this.onGenerate,
+    required this.onAdminRegenerate,
   });
 
   final UserModel user;
-  final ChildProfile child;
-  final AsyncValue<Story?> todayStoryAsync;
-  final ThemeData theme;
-  final WidgetRef ref;
+  final ChildProfile childProfile;
+  final AsyncValue<Story?> asyncStory;
+  final void Function(Story story) onRead;
+  final VoidCallback onGenerate;
+  final VoidCallback onAdminRegenerate;
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(LunoraSpacing.lg),
-      decoration: BoxDecoration(
-        borderRadius: LunoraSpacing.radiusLg,
-        gradient: LunoraColors.cardAura,
-        border: Border.all(color: LunoraColors.mist.withValues(alpha: 0.14)),
-        boxShadow: LunoraColors.primaryGlow(opacity: 0.22),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Icon(
-                Icons.nights_stay_rounded,
-                color: LunoraColors.starGold.withValues(alpha: 0.85),
-                size: 22,
-              ),
-              const SizedBox(width: LunoraSpacing.sm),
-              Expanded(
-                child: Text(
-                  'Histoire du jour',
-                  style: theme.textTheme.titleMedium?.copyWith(
+    return LunoraGlassCard(
+      child: asyncStory.when(
+        skipLoadingOnReload: true,
+        loading: () => const SizedBox(
+          height: 150,
+          child: Center(child: LunoraProgressBar()),
+        ),
+        error: (err, _) => Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const LunoraSectionTitle('Histoire du jour'),
+            const SizedBox(height: LunoraSpacing.sm),
+            Text(
+              'Impossible de préparer l\'histoire de ce soir.',
+              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                     color: LunoraColors.warmBeige,
-                    fontWeight: FontWeight.w800,
                   ),
-                ),
+            ),
+            const SizedBox(height: LunoraSpacing.md),
+            LunoraPrimaryButton(
+              label: 'Préparer l\'histoire de ce soir',
+              icon: Icons.auto_stories_outlined,
+              onPressed: onGenerate,
+            ),
+            if (AdminConfig.isAdminUser(user)) ...[
+              const SizedBox(height: LunoraSpacing.sm),
+              LunoraPrimaryButton(
+                label: 'Régénérer (admin)',
+                expand: false,
+                onPressed: onAdminRegenerate,
               ),
-              if (AdminConfig.isAdminUser(user))
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: LunoraSpacing.sm,
-                    vertical: LunoraSpacing.xs,
-                  ),
-                  decoration: BoxDecoration(
-                    color: LunoraColors.starGold.withValues(alpha: 0.18),
-                    borderRadius: BorderRadius.circular(8),
-                    border: Border.all(
-                      color: LunoraColors.starGold.withValues(alpha: 0.45),
-                    ),
-                  ),
-                  child: Text(
-                    'Admin',
-                    style: theme.textTheme.labelSmall?.copyWith(
-                      color: LunoraColors.starGold.withValues(alpha: 0.95),
-                      fontWeight: FontWeight.w700,
-                    ),
-                  ),
-                ),
             ],
-          ),
-          const SizedBox(height: LunoraSpacing.md),
-          todayStoryAsync.when(
-            skipLoadingOnReload: true,
-            data: (story) {
-              if (story == null) {
-                return Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    Text(
-                      'Aucune histoire n’est encore disponible pour aujourd’hui.',
-                      style: theme.textTheme.bodyMedium?.copyWith(
-                        color: LunoraColors.mist.withValues(alpha: 0.82),
-                        height: 1.45,
-                      ),
-                    ),
-                    const SizedBox(height: LunoraSpacing.lg),
-                    MagicalAppButton(
-                      label: 'Générer l’histoire',
-                      icon: Icons.auto_stories_outlined,
-                      onPressed: () => ref.invalidate(todayStoryProvider),
-                    ),
-                    if (AdminConfig.isAdminUser(user)) ...[
-                      const SizedBox(height: LunoraSpacing.md),
-                      MagicalAppButton(
-                        variant: MagicalButtonVariant.secondary,
-                        label: 'Générer (admin · ignore le cache)',
-                        icon: Icons.build_circle_outlined,
-                        onPressed: () => _runAdminStoryRegeneration(
-                          context,
-                          ref,
-                          user,
-                          child,
-                        ),
-                      ),
-                    ],
-                  ],
-                );
-              }
-              return Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    story.title,
-                    style: theme.textTheme.titleLarge?.copyWith(
-                      color: LunoraColors.warmBeige,
-                      fontWeight: FontWeight.w800,
-                      height: 1.2,
-                    ),
-                  ),
-                  const SizedBox(height: LunoraSpacing.sm),
-                  Text(
-                    story.summary,
-                    style: theme.textTheme.bodyMedium?.copyWith(
-                      color: LunoraColors.mist.withValues(alpha: 0.78),
-                      height: 1.45,
-                    ),
-                  ),
-                  const SizedBox(height: LunoraSpacing.md),
-                  Wrap(
-                    spacing: LunoraSpacing.md,
-                    runSpacing: LunoraSpacing.xs,
-                    crossAxisAlignment: WrapCrossAlignment.center,
-                    children: [
-                      _MetaChip(
-                        icon: Icons.timer_outlined,
-                        label: '${story.estimatedReadingMinutes} min',
-                      ),
-                      if (story.isSerialized)
-                        _MetaChip(
-                          icon: Icons.menu_book_rounded,
-                          label:
-                              'Chapitre ${story.chapterNumber}/${story.totalChapters}',
-                        ),
-                    ],
-                  ),
-                  const SizedBox(height: LunoraSpacing.lg),
-                  MagicalAppButton(
-                    label: 'Lire l’histoire',
-                    icon: Icons.menu_book_rounded,
-                    onPressed: () => context.push('/story'),
-                  ),
-                  if (AdminConfig.isAdminUser(user)) ...[
-                    const SizedBox(height: LunoraSpacing.md),
-                    MagicalAppButton(
-                      variant: MagicalButtonVariant.secondary,
-                      label: 'Régénérer l’histoire (admin)',
-                      icon: Icons.refresh_rounded,
-                      onPressed: () => _runAdminStoryRegeneration(
-                        context,
-                        ref,
-                        user,
-                        child,
-                      ),
-                    ),
-                  ],
-                ],
-              );
-            },
-            loading: () => const LunoraProgressBar(),
-            error: (err, _) => Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
+          ],
+        ),
+        data: (story) {
+          if (story == null) {
+            return Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
+                const LunoraSectionTitle('Histoire du jour'),
+                const SizedBox(height: LunoraSpacing.sm),
                 Text(
-                  'Impossible de charger l’histoire.',
-                  style: theme.textTheme.bodyMedium?.copyWith(
-                    color: LunoraColors.warmBeige,
-                  ),
-                ),
-                const SizedBox(height: LunoraSpacing.xs),
-                Text(
-                  '$err',
-                  style: theme.textTheme.bodySmall?.copyWith(
-                    color: theme.colorScheme.error,
-                  ),
+                  'Aucune histoire prête pour ce soir.',
+                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                        color: LunoraColors.mist.withValues(alpha: 0.86),
+                      ),
                 ),
                 const SizedBox(height: LunoraSpacing.md),
-                MagicalAppButton(
-                  variant: MagicalButtonVariant.secondary,
-                  label: 'Réessayer',
-                  icon: Icons.refresh_rounded,
-                  onPressed: () => ref.invalidate(todayStoryProvider),
+                LunoraPrimaryButton(
+                  label: 'Créer l\'histoire de ce soir',
+                  icon: Icons.bedtime_rounded,
+                  onPressed: onGenerate,
                 ),
               ],
-            ),
-          ),
-        ],
+            );
+          }
+
+          final childName = childProfile.firstName.trim().isEmpty
+              ? 'ton enfant'
+              : childProfile.firstName.trim();
+
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const LunoraSectionTitle('Histoire du jour'),
+              const SizedBox(height: LunoraSpacing.sm),
+              Text(
+                story.title,
+                style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                      color: LunoraColors.warmBeige,
+                      fontWeight: FontWeight.w800,
+                    ),
+              ),
+              const SizedBox(height: LunoraSpacing.sm),
+              Text(
+                'Créée spécialement pour $childName.',
+                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                      color: LunoraColors.mist.withValues(alpha: 0.86),
+                    ),
+              ),
+              const SizedBox(height: LunoraSpacing.md),
+              Wrap(
+                spacing: LunoraSpacing.xs,
+                runSpacing: LunoraSpacing.xs,
+                children: [
+                  LunoraBadge(
+                    label: readingDurationLabel(story.estimatedReadingMinutes),
+                    icon: Icons.timer_outlined,
+                  ),
+                  LunoraBadge(
+                    label: storyFormatLabel(story),
+                    icon: Icons.menu_book_rounded,
+                  ),
+                  LunoraBadge(
+                    label: storySourceLabel(story.generationSource),
+                    icon: Icons.auto_awesome_rounded,
+                  ),
+                  if (story.isSerialized)
+                    LunoraBadge(
+                      label: 'Chapitre ${story.chapterNumber}',
+                      icon: Icons.bookmark_rounded,
+                    ),
+                ],
+              ),
+              const SizedBox(height: LunoraSpacing.lg),
+              LunoraPrimaryButton(
+                label: 'Lire l\'histoire',
+                icon: Icons.play_arrow_rounded,
+                onPressed: () => onRead(story),
+              ),
+            ],
+          );
+        },
       ),
     );
   }
 }
 
-class _MetaChip extends StatelessWidget {
-  const _MetaChip({required this.icon, required this.label});
+class _HistoryItem extends StatelessWidget {
+  const _HistoryItem({required this.story, required this.onTap});
 
-  final IconData icon;
-  final String label;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(
-        horizontal: LunoraSpacing.sm + 2,
-        vertical: LunoraSpacing.xxs + 2,
-      ),
-      decoration: BoxDecoration(
-        color: LunoraColors.nightBlue.withValues(alpha: 0.35),
-        borderRadius: LunoraSpacing.radiusSm,
-        border: Border.all(color: LunoraColors.mist.withValues(alpha: 0.12)),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(
-            icon,
-            size: 16,
-            color: LunoraColors.starGoldSoft.withValues(alpha: 0.9),
-          ),
-          const SizedBox(width: 6),
-          Text(
-            label,
-            style: Theme.of(context).textTheme.labelMedium?.copyWith(
-              color: LunoraColors.warmBeige.withValues(alpha: 0.9),
-              fontWeight: FontWeight.w700,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _HomeTile extends StatelessWidget {
-  const _HomeTile({
-    required this.icon,
-    required this.title,
-    required this.subtitle,
-    required this.onTap,
-  });
-
-  final IconData icon;
-  final String title;
-  final String subtitle;
+  final Story story;
   final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    return Padding(
-      padding: const EdgeInsets.only(bottom: LunoraSpacing.sm),
-      child: Material(
-        color: LunoraColors.nightBlueLift.withValues(alpha: 0.55),
-        borderRadius: LunoraSpacing.radiusMd,
-        child: InkWell(
-          borderRadius: LunoraSpacing.radiusMd,
-          onTap: onTap,
-          child: Padding(
-            padding: const EdgeInsets.symmetric(
-              horizontal: LunoraSpacing.md,
-              vertical: LunoraSpacing.md,
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        borderRadius: BorderRadius.circular(20),
+        onTap: onTap,
+        child: Ink(
+          decoration: BoxDecoration(
+            color: LunoraColors.nightBlueLift.withValues(alpha: 0.55),
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(
+              color: LunoraColors.mist.withValues(alpha: 0.12),
             ),
+          ),
+          child: Padding(
+            padding: const EdgeInsets.all(LunoraSpacing.md),
             child: Row(
               children: [
-                Container(
-                  padding: const EdgeInsets.all(LunoraSpacing.sm),
-                  decoration: BoxDecoration(
-                    color: LunoraColors.violetSoft.withValues(alpha: 0.2),
-                    borderRadius: LunoraSpacing.radiusSm,
-                  ),
-                  child: Icon(icon, color: LunoraColors.violetGlow, size: 22),
-                ),
-                const SizedBox(width: LunoraSpacing.md),
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        title,
-                        style: theme.textTheme.titleSmall?.copyWith(
-                          color: LunoraColors.warmBeige,
-                          fontWeight: FontWeight.w800,
-                        ),
+                        story.title,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                              color: LunoraColors.warmBeige,
+                              fontWeight: FontWeight.w700,
+                            ),
                       ),
                       const SizedBox(height: LunoraSpacing.xxs),
                       Text(
-                        subtitle,
-                        style: theme.textTheme.bodySmall?.copyWith(
-                          color: LunoraColors.mist.withValues(alpha: 0.72),
-                        ),
+                        '${story.dateKey} · ${readingDurationLabel(story.estimatedReadingMinutes)}',
+                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                              color: LunoraColors.mist.withValues(alpha: 0.78),
+                            ),
                       ),
                     ],
                   ),
                 ),
                 Icon(
                   Icons.chevron_right_rounded,
-                  color: LunoraColors.mist.withValues(alpha: 0.45),
+                  color: LunoraColors.mist.withValues(alpha: 0.72),
                 ),
               ],
             ),
           ),
         ),
       ),
+    );
+  }
+}
+
+class _QuickAction extends StatelessWidget {
+  const _QuickAction({
+    required this.icon,
+    required this.label,
+    required this.onTap,
+  });
+
+  final IconData icon;
+  final String label;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final width = ((constraints.maxWidth - LunoraSpacing.sm) / 2)
+            .clamp(140.0, 240.0);
+        return SizedBox(
+          width: width,
+          child: Material(
+            color: Colors.transparent,
+            child: InkWell(
+              borderRadius: BorderRadius.circular(18),
+              onTap: onTap,
+              child: Ink(
+                decoration: BoxDecoration(
+                  color: LunoraColors.nightBlue.withValues(alpha: 0.5),
+                  borderRadius: BorderRadius.circular(18),
+                  border: Border.all(
+                    color: LunoraColors.mist.withValues(alpha: 0.14),
+                  ),
+                ),
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: LunoraSpacing.md,
+                    vertical: LunoraSpacing.sm + 2,
+                  ),
+                  child: Row(
+                    children: [
+                      Icon(icon, color: LunoraColors.starGoldSoft, size: 18),
+                      const SizedBox(width: LunoraSpacing.xs),
+                      Expanded(
+                        child: Text(
+                          label,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: Theme.of(context).textTheme.labelMedium?.copyWith(
+                                color: LunoraColors.warmBeige,
+                                fontWeight: FontWeight.w700,
+                              ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ),
+        );
+      },
     );
   }
 }

@@ -8,5 +8,13 @@ abstract class AuthRepository {
 
   Future<UserModel> signUp({required String email, required String password});
 
+  Future<UserModel> signInWithGoogle();
+
+  /// iOS / macOS / Android / Web si [SignInWithApple.isAvailable].
+  Future<UserModel> signInWithApple();
+
+  /// Web : popup Firebase. Mobile : nécessite le SDK Meta (non inclus).
+  Future<UserModel> signInWithFacebook();
+
   Future<void> signOut();
 }

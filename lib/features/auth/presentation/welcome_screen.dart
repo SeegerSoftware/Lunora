@@ -2,7 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../core/constants/app_sizes.dart';
-import '../../../shared/widgets/lunora_primary_button.dart';
+import '../../../core/theme/colors.dart';
+import '../../../core/theme/spacing.dart';
+import '../../../core/theme/text_styles.dart';
+import '../../../shared/widgets/custom_button.dart';
+import '../../../shared/widgets/magical/magical_app_button.dart';
+import '../../../shared/widgets/lunora_fade_in.dart';
+import '../../../shared/widgets/lunora_screen_shell.dart';
 
 class WelcomeScreen extends StatelessWidget {
   const WelcomeScreen({super.key});
@@ -12,36 +18,61 @@ class WelcomeScreen extends StatelessWidget {
     final theme = Theme.of(context);
 
     return Scaffold(
-      body: SafeArea(
-        child: Padding(
-          padding: AppSizes.screenPadding,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const Spacer(),
-              Text('lunora.v00', style: theme.textTheme.headlineLarge),
-              const SizedBox(height: AppSizes.sm),
-              Text(
-                'Une histoire douce chaque soir, pensée pour votre rituel du coucher.',
-                style: theme.textTheme.bodyLarge?.copyWith(
-                  color: theme.colorScheme.onSurface.withValues(alpha: 0.78),
+      body: LunoraScreenShell(
+        showStarfield: true,
+        starCount: 32,
+        child: SafeArea(
+          child: Padding(
+            padding: AppSizes.screenPadding,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                const Spacer(flex: 2),
+                LunoraFadeIn(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Lunora',
+                        style: theme.textTheme.displaySmall?.copyWith(
+                          color: LunoraColors.warmBeige,
+                          fontWeight: FontWeight.w900,
+                          letterSpacing: -0.8,
+                        ),
+                      ),
+                      const SizedBox(height: LunoraSpacing.sm),
+                      Text(
+                        'Une histoire douce chaque soir, pour un rituel du coucher serein.',
+                        style: LunoraTextStyles.greetingSub(theme.textTheme)
+                            .copyWith(fontSize: 16),
+                      ),
+                    ],
+                  ),
                 ),
-              ),
-              const SizedBox(height: AppSizes.xl),
-              LunoraPrimaryButton(
-                label: 'Créer un compte',
-                onPressed: () => context.push('/signup'),
-              ),
-              const SizedBox(height: AppSizes.sm),
-              SizedBox(
-                width: double.infinity,
-                child: OutlinedButton(
-                  onPressed: () => context.push('/signin'),
-                  child: const Text('Se connecter'),
+                const Spacer(flex: 3),
+                LunoraFadeIn(
+                  delay: const Duration(milliseconds: 120),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      LunoraCustomButton(
+                        label: 'Créer un compte',
+                        icon: Icons.mail_outline_rounded,
+                        onPressed: () => context.push('/signup'),
+                      ),
+                      const SizedBox(height: LunoraSpacing.md),
+                      LunoraCustomButton(
+                        label: 'J’ai déjà un compte',
+                        variant: MagicalButtonVariant.secondary,
+                        icon: Icons.login_rounded,
+                        onPressed: () => context.push('/signin'),
+                      ),
+                    ],
+                  ),
                 ),
-              ),
-              const Spacer(),
-            ],
+                const SizedBox(height: LunoraSpacing.xl),
+              ],
+            ),
           ),
         ),
       ),

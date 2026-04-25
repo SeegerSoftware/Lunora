@@ -43,8 +43,33 @@ class MockAuthRepository implements AuthRepository {
   }
 
   @override
+  Future<UserModel> signInWithGoogle() async {
+    await Future<void>.delayed(const Duration(milliseconds: 120));
+    final user = _userFrom('google-mock@lunora.app');
+    _store.sessionUser = user;
+    return user;
+  }
+
+  @override
+  Future<UserModel> signInWithApple() async {
+    await Future<void>.delayed(const Duration(milliseconds: 120));
+    final user = _userFrom('apple-mock@lunora.app');
+    _store.sessionUser = user;
+    return user;
+  }
+
+  @override
+  Future<UserModel> signInWithFacebook() async {
+    await Future<void>.delayed(const Duration(milliseconds: 120));
+    final user = _userFrom('facebook-mock@lunora.app');
+    _store.sessionUser = user;
+    return user;
+  }
+
+  @override
   Future<void> signOut() async {
     await Future<void>.delayed(const Duration(milliseconds: 80));
+    _store.sessionUser = null;
   }
 
   UserModel _userFrom(String email) {

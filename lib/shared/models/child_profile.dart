@@ -22,6 +22,16 @@ class ChildProfile extends Equatable {
     required this.storyFormat,
     required this.seriesDurationDays,
     required this.storyLengthMinutes,
+    this.language = 'fr',
+    this.readingDurationMinutes,
+    this.preferredUniverse = '',
+    this.magicLevel = 'legerement magique',
+    this.adventureIntensity = 'equilibree',
+    this.softenedFears = const [],
+    this.valuesToTransmit = const [],
+    this.bedtimeEnergyLevel = 'calme',
+    this.familiarElements = const [],
+    this.tonightGoal = 's’endormir calmement',
     required this.createdAt,
     required this.updatedAt,
   });
@@ -41,6 +51,16 @@ class ChildProfile extends Equatable {
   final StoryFormat storyFormat;
   final int seriesDurationDays;
   final int storyLengthMinutes;
+  final String language;
+  final int? readingDurationMinutes;
+  final String preferredUniverse;
+  final String magicLevel;
+  final String adventureIntensity;
+  final List<String> softenedFears;
+  final List<String> valuesToTransmit;
+  final String bedtimeEnergyLevel;
+  final List<String> familiarElements;
+  final String tonightGoal;
   final DateTime createdAt;
   final DateTime updatedAt;
 
@@ -60,6 +80,16 @@ class ChildProfile extends Equatable {
     StoryFormat? storyFormat,
     int? seriesDurationDays,
     int? storyLengthMinutes,
+    String? language,
+    int? readingDurationMinutes,
+    String? preferredUniverse,
+    String? magicLevel,
+    String? adventureIntensity,
+    List<String>? softenedFears,
+    List<String>? valuesToTransmit,
+    String? bedtimeEnergyLevel,
+    List<String>? familiarElements,
+    String? tonightGoal,
     DateTime? createdAt,
     DateTime? updatedAt,
   }) {
@@ -79,6 +109,16 @@ class ChildProfile extends Equatable {
       storyFormat: storyFormat ?? this.storyFormat,
       seriesDurationDays: seriesDurationDays ?? this.seriesDurationDays,
       storyLengthMinutes: storyLengthMinutes ?? this.storyLengthMinutes,
+      language: language ?? this.language,
+      readingDurationMinutes: readingDurationMinutes ?? this.readingDurationMinutes,
+      preferredUniverse: preferredUniverse ?? this.preferredUniverse,
+      magicLevel: magicLevel ?? this.magicLevel,
+      adventureIntensity: adventureIntensity ?? this.adventureIntensity,
+      softenedFears: softenedFears ?? this.softenedFears,
+      valuesToTransmit: valuesToTransmit ?? this.valuesToTransmit,
+      bedtimeEnergyLevel: bedtimeEnergyLevel ?? this.bedtimeEnergyLevel,
+      familiarElements: familiarElements ?? this.familiarElements,
+      tonightGoal: tonightGoal ?? this.tonightGoal,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
     );
@@ -101,36 +141,82 @@ class ChildProfile extends Equatable {
       'storyFormat': storyFormat.wireValue,
       'seriesDurationDays': seriesDurationDays,
       'storyLengthMinutes': storyLengthMinutes,
+      'readingDurationMinutes': readingDurationMinutes ?? storyLengthMinutes,
+      'language': language,
+      'preferredUniverse': preferredUniverse,
+      'magicLevel': magicLevel,
+      'adventureIntensity': adventureIntensity,
+      'favoriteThemes': preferredThemes,
+      'softenedFears': softenedFears.isEmpty ? fearsToAddress : softenedFears,
+      'valuesToTransmit': valuesToTransmit.isEmpty ? valuesToTeach : valuesToTransmit,
+      'bedtimeEnergyLevel': bedtimeEnergyLevel,
+      'familiarElements': familiarElements,
+      'tonightGoal': tonightGoal,
       'createdAt': createdAt.toIso8601String(),
       'updatedAt': updatedAt.toIso8601String(),
     };
   }
 
   factory ChildProfile.fromMap(Map<String, dynamic> map) {
+    List<String> readList(String key, {List<String>? fallback}) {
+      final raw = map[key];
+      if (raw is List) {
+        return List<String>.from(raw).map((e) => e.trim()).where((e) => e.isNotEmpty).toList();
+      }
+      return fallback ?? const [];
+    }
+
+    String readString(String key, {String fallback = ''}) {
+      final raw = map[key];
+      if (raw == null) return fallback;
+      return raw.toString().trim();
+    }
+
+    final legacyPreferredThemes = readList('preferredThemes');
+    final favoriteThemes = readList('favoriteThemes', fallback: legacyPreferredThemes);
+    final legacyFears = readList('fearsToAddress');
+    final softenedFears = readList('softenedFears', fallback: legacyFears);
+    final legacyValues = readList('valuesToTeach');
+    final valuesToTransmit = readList('valuesToTransmit', fallback: legacyValues);
+    final rawStoryLength = (map['storyLengthMinutes'] as num?)?.toInt();
+    final rawReadingDuration = (map['readingDurationMinutes'] as num?)?.toInt();
+
     return ChildProfile(
-      id: map['id'] as String,
-      userId: map['userId'] as String,
-      firstName: map['firstName'] as String,
-      birthMonth: (map['birthMonth'] as num).toInt(),
-      birthYear: (map['birthYear'] as num).toInt(),
-      preferredThemes: List<String>.from(map['preferredThemes'] as List? ?? []),
-      avoidThemes: List<String>.from(map['avoidThemes'] as List? ?? []),
-      personalityTraits: List<String>.from(
-        map['personalityTraits'] as List? ?? [],
-      ),
-      fearsToAddress: List<String>.from(map['fearsToAddress'] as List? ?? []),
-      valuesToTeach: List<String>.from(map['valuesToTeach'] as List? ?? []),
+      id: map['id'] as String? ?? '',
+      userId: map['userId'] as String? ?? '',
+      firstName: map['firstName'] as String? ?? '',
+      birthMonth: (map['birthMonth'] as num?)?.toInt() ?? 6,
+      birthYear: (map['birthYear'] as num?)?.toInt() ?? DateTime.now().year - 5,
+      preferredThemes: favoriteThemes,
+      avoidThemes: readList('avoidThemes'),
+      personalityTraits: readList('personalityTraits'),
+      fearsToAddress: softenedFears,
+      valuesToTeach: valuesToTransmit,
       universeType: UniverseTypeX.parse(map['universeType'] as String?),
       preferredTone: StoryToneX.parse(map['preferredTone'] as String?),
       storyFormat: StoryFormatFirestore.parse(map['storyFormat'] as String?),
-      seriesDurationDays: (map['seriesDurationDays'] as num).toInt(),
-      storyLengthMinutes: (map['storyLengthMinutes'] as num).toInt(),
+      seriesDurationDays: (map['seriesDurationDays'] as num?)?.toInt() ?? 0,
+      storyLengthMinutes: rawStoryLength ?? rawReadingDuration ?? 10,
+      readingDurationMinutes: rawReadingDuration,
+      language: readString('language', fallback: 'fr'),
+      preferredUniverse: readString(
+        'preferredUniverse',
+        fallback: UniverseTypeX.parse(map['universeType'] as String?).displayLabel,
+      ),
+      magicLevel: readString('magicLevel', fallback: 'legerement magique'),
+      adventureIntensity: readString('adventureIntensity', fallback: 'equilibree'),
+      softenedFears: softenedFears,
+      valuesToTransmit: valuesToTransmit,
+      bedtimeEnergyLevel: readString('bedtimeEnergyLevel', fallback: 'calme'),
+      familiarElements: readList('familiarElements'),
+      tonightGoal: readString('tonightGoal', fallback: 's’endormir calmement'),
       createdAt: _readDate(map['createdAt']),
       updatedAt: _readDate(map['updatedAt']),
     );
   }
 
   static DateTime _readDate(dynamic value) {
+    if (value == null) return DateTime.now();
     if (value is Timestamp) return value.toDate();
     if (value is DateTime) return value;
     if (value is String) return DateTime.parse(value);
@@ -155,6 +241,16 @@ class ChildProfile extends Equatable {
     storyFormat,
     seriesDurationDays,
     storyLengthMinutes,
+    language,
+    readingDurationMinutes,
+    preferredUniverse,
+    magicLevel,
+    adventureIntensity,
+    softenedFears,
+    valuesToTransmit,
+    bedtimeEnergyLevel,
+    familiarElements,
+    tonightGoal,
     createdAt,
     updatedAt,
   ];

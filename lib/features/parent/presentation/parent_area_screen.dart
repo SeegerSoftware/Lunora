@@ -15,6 +15,8 @@ import '../../../shared/models/user_model.dart';
 import '../../auth/presentation/providers/auth_providers.dart';
 import '../../child_profile/presentation/providers/child_profile_providers.dart';
 import '../../stories/presentation/providers/story_providers.dart';
+import '../../../shared/widgets/lunora_fade_in.dart';
+import '../../../shared/widgets/lunora_screen_shell.dart';
 import '../../../shared/widgets/magical/magical.dart';
 
 /// Espace parent : stats simples + accès rapides (logique = navigation existante).
@@ -46,16 +48,17 @@ class ParentAreaScreen extends ConsumerWidget {
           onPressed: () => context.pop(),
         ),
       ),
-      body: Stack(
-        fit: StackFit.expand,
-        children: [
-          const DecoratedBox(
-            decoration: BoxDecoration(gradient: LunoraColors.nightSkyVertical),
-          ),
-          SafeArea(
-            child: ListView(
-              padding: LunoraSpacing.screen,
-              children: [
+      body: LunoraScreenShell(
+        showStarfield: true,
+        starCount: 34,
+        child: SafeArea(
+          child: ListView(
+            padding: LunoraSpacing.screen,
+            children: [
+              LunoraFadeIn(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
                 Text(
                   'Vue d’ensemble',
                   style: LunoraTextStyles.sectionTitle(theme.textTheme),
@@ -137,10 +140,12 @@ class ParentAreaScreen extends ConsumerWidget {
                   variant: MagicalButtonVariant.secondary,
                   onPressed: () => context.push('/subscription'),
                 ),
-              ],
-            ),
+                  ],
+                ),
+              ),
+            ],
           ),
-        ],
+        ),
       ),
     );
   }

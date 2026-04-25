@@ -16,7 +16,7 @@ abstract final class AppSizes {
   /// Lecture confortable (histoire du soir).
   static const EdgeInsets readerPadding = EdgeInsets.fromLTRB(md, xl, md, xxl);
 
-  static const double readerMaxWidth = 640;
+  static const double readerMaxWidth = 560;
 
   static const BorderRadius cardRadius = BorderRadius.all(Radius.circular(18));
 }

@@ -1,7 +1,9 @@
 import 'dart:convert';
 
+import '../../core/utils/age_calculator.dart';
 import '../../shared/models/enums/story_format.dart';
 import '../../shared/models/enums/story_tone.dart';
+import '../../shared/models/series_state.dart';
 import 'models/story_generation_request.dart';
 import 'models/story_generation_result.dart';
 
@@ -16,6 +18,7 @@ class ParsedStoryJson {
     this.toneRaw,
     this.chapterNumber,
     this.totalChapters,
+    this.continuityUpdate,
   });
 
   final String? title;
@@ -26,6 +29,7 @@ class ParsedStoryJson {
   final String? toneRaw;
   final int? chapterNumber;
   final int? totalChapters;
+  final ChapterContinuityUpdate? continuityUpdate;
 }
 
 abstract final class StoryGenerationJsonParser {
@@ -124,12 +128,17 @@ abstract final class StoryGenerationJsonParser {
       toneRaw: _readTrimmedString(m['tone']),
       chapterNumber: readInt(m['chapterNumber']),
       totalChapters: readInt(m['totalChapters']),
+      continuityUpdate: m['continuityUpdate'] is Map
+          ? ChapterContinuityUpdate.fromMap(
+              Map<String, dynamic>.from(m['continuityUpdate'] as Map),
+            )
+          : null,
     );
   }
 }
 
 abstract final class StoryGenerationResultNormalizer {
-  static const int _minContentLength = 350;
+  static const int _minContentLength = 220;
 
   /// Valeurs de chapitre / série : la source de vérité est la requête produit (pas le modèle).
   static StoryGenerationResult normalize({
@@ -153,10 +162,22 @@ abstract final class StoryGenerationResultNormalizer {
         'content trop court (${rawContent.length} car., min $_minContentLength)',
       );
     }
-    final minWords = _minWordsForMinutes(child.storyLengthMinutes);
+    final ageYears = AgeCalculator.ageInYears(
+      birthMonth: child.birthMonth,
+      birthYear: child.birthYear,
+    );
+    final minWords = _minWordsForMinutes(
+      child.storyLengthMinutes,
+      ageYears: ageYears,
+    );
     final words = _wordCount(rawContent);
-    if (words < minWords) {
-      throw FormatException('content trop court ($words mots, min $minWords)');
+    // Politique de validation plus tolérante:
+    // on n'invalide que si le contenu est vraiment trop court.
+    final hardMinWords = (minWords * 0.6).round();
+    if (words < hardMinWords) {
+      throw FormatException(
+        'content trop court ($words mots, min dur $hardMinWords)',
+      );
     }
     final content = rawContent;
 
@@ -190,6 +211,7 @@ abstract final class StoryGenerationResultNormalizer {
       chapterNumber: request.chapterIndex,
       totalChapters: request.totalChapters,
       seriesId: seriesId,
+      continuityUpdate: parsed.continuityUpdate,
       generationSource: 'remote-ai',
     );
   }
@@ -202,15 +224,21 @@ abstract final class StoryGenerationResultNormalizer {
         .length;
   }
 
-  static int _minWordsForMinutes(int minutes) {
+  static int _minWordsForMinutes(int minutes, {required int ageYears}) {
     switch (minutes) {
       case 5:
-        return 340;
+        if (ageYears <= 4) return 220;
+        if (ageYears <= 6) return 260;
+        return 300;
       case 15:
-        return 800;
+        if (ageYears <= 4) return 520;
+        if (ageYears <= 6) return 620;
+        return 720;
       case 10:
       default:
-        return 500;
+        if (ageYears <= 4) return 320;
+        if (ageYears <= 6) return 380;
+        return 460;
     }
   }
 

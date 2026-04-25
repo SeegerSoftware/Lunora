@@ -78,9 +78,18 @@ abstract final class LunoraTextStyles {
     return GoogleFonts.nunito(
       fontSize: 20,
       fontWeight: FontWeight.w500,
-      height: 1.75,
-      letterSpacing: 0.12,
-      color: LunoraColors.warmBeige.withValues(alpha: 0.96),
+      height: 1.78,
+      letterSpacing: 0.08,
+      color: LunoraColors.readerTextPrimary.withValues(alpha: 0.98),
+    );
+  }
+
+  /// Métadonnées sur fond carte lecture.
+  static TextStyle storyReaderMetaOnCard(TextTheme t) {
+    return GoogleFonts.nunito(
+      fontSize: 14,
+      fontWeight: FontWeight.w600,
+      color: LunoraColors.readerTextSecondary.withValues(alpha: 0.95),
     );
   }
 

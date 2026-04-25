@@ -40,6 +40,18 @@ abstract final class AiGenerationConfig {
     return 'gpt-4o-mini';
   }
 
+  /// Modèle utilisé uniquement en secours qualité (coût plus élevé).
+  static String get openaiModelPremium {
+    const fromDefine = String.fromEnvironment(
+      'OPENAI_MODEL_PREMIUM',
+      defaultValue: '',
+    );
+    if (fromDefine.trim().isNotEmpty) return fromDefine.trim();
+    final env = readRuntimeEnv('OPENAI_MODEL_PREMIUM')?.trim();
+    if (env != null && env.isNotEmpty) return env;
+    return 'gpt-4o';
+  }
+
   static String get openaiBaseUrl {
     const fromDefine = String.fromEnvironment(
       'OPENAI_BASE_URL',
@@ -73,4 +85,26 @@ abstract final class AiGenerationConfig {
   static bool get hasOpenAiKey => openaiApiKey.trim().isNotEmpty;
 
   static bool get canUseRemoteAi => useRealAi && hasOpenAiKey;
+
+  /// Affiche system + user dans la console (Flutter : terminal / debug).
+  /// À n’activer qu’en local : le prompt contient des données enfant.
+  static bool get logOpenAiPrompts {
+    const fromDefine = bool.fromEnvironment(
+      'OPENAI_LOG_PROMPTS',
+      defaultValue: false,
+    );
+    if (fromDefine) return true;
+    return readRuntimeEnvFlag('OPENAI_LOG_PROMPTS');
+  }
+
+  /// Log une ligne par appel API (modèle utilisé). Désactivé par défaut hors debug
+  /// (voir `OpenAiChatClient` : en debug Flutter, actif sans config).
+  static bool get logOpenAiCalls {
+    const fromDefine = bool.fromEnvironment(
+      'OPENAI_LOG_CALLS',
+      defaultValue: false,
+    );
+    if (fromDefine) return true;
+    return readRuntimeEnvFlag('OPENAI_LOG_CALLS');
+  }
 }

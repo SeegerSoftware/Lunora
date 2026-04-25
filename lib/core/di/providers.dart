@@ -21,6 +21,7 @@ import '../../services/mock/lunora_mock_store.dart';
 import '../../services/story_generation/ai_story_generation_service.dart';
 import '../../services/story_generation/mock_story_generation_service.dart';
 import '../../services/story_generation/openai_chat_client.dart';
+import '../../services/story_generation/story_generation_orchestrator.dart';
 import '../../services/story_generation/story_generation_service.dart';
 
 final lunoraMockStoreProvider = Provider<LunoraMockStore>((ref) {
@@ -34,7 +35,12 @@ final storyGenerationServiceProvider = Provider<StoryGenerationService>((ref) {
   }
   final client = OpenAiChatClient();
   ref.onDispose(client.close);
-  return AiStoryGenerationService(client: client, fallback: mock);
+  final orchestrator = StoryGenerationOrchestrator(chatClient: client);
+  return AiStoryGenerationService(
+    orchestrator: orchestrator,
+    chatClient: client,
+    fallback: mock,
+  );
 });
 
 final storyMemoryRepositoryProvider = Provider<StoryMemoryRepository>((ref) {
