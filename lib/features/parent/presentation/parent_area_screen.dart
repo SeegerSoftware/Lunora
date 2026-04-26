@@ -60,7 +60,7 @@ class ParentAreaScreen extends ConsumerWidget {
                       ? 'Connecte-toi pour voir l’activité.'
                       : '👋 ${user.email}',
                   style: theme.textTheme.bodyMedium?.copyWith(
-                    color: LunoraColors.mist.withValues(alpha: 0.82),
+                    color: LunoraColors.storybookInk.withValues(alpha: 0.78),
                     height: 1.4,
                   ),
                 ),

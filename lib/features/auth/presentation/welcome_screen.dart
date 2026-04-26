@@ -16,6 +16,7 @@ class WelcomeScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final light = theme.brightness == Brightness.light;
 
     return Scaffold(
       body: LunoraScreenShell(
@@ -43,12 +44,18 @@ class WelcomeScreen extends StatelessWidget {
                       Text(
                         'Elunai',
                         style: theme.textTheme.displaySmall?.copyWith(
-                          color: LunoraColors.warmBeige,
+                          color: light
+                              ? LunoraColors.storybookInk
+                              : LunoraColors.warmBeige,
                           fontWeight: FontWeight.w900,
                           letterSpacing: -0.8,
                           shadows: [
                             Shadow(
-                              color: LunoraColors.violetSoft.withValues(alpha: 0.35),
+                              color:
+                                  (light
+                                          ? LunoraColors.forestGreen
+                                          : LunoraColors.violetSoft)
+                                      .withValues(alpha: 0.28),
                               blurRadius: 18,
                               offset: const Offset(0, 4),
                             ),
@@ -59,7 +66,13 @@ class WelcomeScreen extends StatelessWidget {
                       Text(
                         'Des histoires magiques 0–12 ans qui grandissent avec ton enfant, soir après soir.',
                         style: LunoraTextStyles.greetingSub(theme.textTheme)
-                            .copyWith(fontSize: 16, height: 1.4),
+                            .copyWith(
+                              fontSize: 16,
+                              height: 1.4,
+                              color: light
+                                  ? LunoraColors.storybookInkMuted
+                                  : LunoraColors.mist.withValues(alpha: 0.82),
+                            ),
                       ),
                     ],
                   ),

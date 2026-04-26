@@ -104,11 +104,12 @@ abstract final class LunoraTextStyles {
     );
   }
 
+  /// Titres de section sur fond **clair** (crème / cartes blanches).
   static TextStyle sectionTitle(TextTheme t) {
     return GoogleFonts.nunito(
       fontSize: 17,
       fontWeight: FontWeight.w800,
-      color: LunoraColors.warmBeige.withValues(alpha: 0.95),
+      color: LunoraColors.storybookInk,
     );
   }
 }

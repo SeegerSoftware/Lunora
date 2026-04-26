@@ -272,15 +272,19 @@ abstract final class LunoraTheme {
       ),
       navigationBarTheme: NavigationBarThemeData(
         backgroundColor: LunoraColors.storybookSurface,
-        indicatorColor: LunoraColors.honeyYellow.withValues(alpha: 0.45),
+        surfaceTintColor: Colors.transparent,
+        elevation: 0,
+        height: 72,
+        indicatorColor: LunoraColors.honeyYellow.withValues(alpha: 0.55),
         labelTextStyle: WidgetStateProperty.resolveWith((states) {
           final selected = states.contains(WidgetState.selected);
           return TextStyle(
-            fontWeight: selected ? FontWeight.w800 : FontWeight.w600,
+            fontWeight: selected ? FontWeight.w800 : FontWeight.w700,
             fontSize: 12,
+            letterSpacing: 0.15,
             color: selected
                 ? LunoraColors.forestGreen
-                : LunoraColors.storybookInkMuted,
+                : LunoraColors.storybookInk.withValues(alpha: 0.72),
           );
         }),
         iconTheme: WidgetStateProperty.resolveWith((states) {
@@ -288,7 +292,7 @@ abstract final class LunoraTheme {
           return IconThemeData(
             color: selected
                 ? LunoraColors.forestGreen
-                : LunoraColors.storybookInkMuted,
+                : LunoraColors.storybookInk.withValues(alpha: 0.62),
             size: 24,
           );
         }),

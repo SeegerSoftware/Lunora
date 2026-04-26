@@ -63,26 +63,60 @@ class _MagicalAppButtonState extends State<MagicalAppButton>
 
   @override
   Widget build(BuildContext context) {
+    final light = Theme.of(context).brightness == Brightness.light;
     final isPrimary = widget.variant == MagicalButtonVariant.primary;
-    final gradient = isPrimary ? LunoraColors.ctaGlow : null;
-    final fg = isPrimary ? LunoraColors.warmBeige : LunoraColors.warmBeige;
-    final border = isPrimary
-        ? null
-        : Border.all(color: LunoraColors.warmBeige.withValues(alpha: 0.28));
+
+    final LinearGradient? gradient;
+    final Color? solidColor;
+    final Color fg;
+    final Border? border;
+    final List<BoxShadow>? shadows;
+
+    if (light) {
+      if (isPrimary) {
+        gradient = null;
+        solidColor = LunoraColors.forestGreen;
+        fg = LunoraColors.storybookCream;
+        border = null;
+        shadows = widget.onPressed != null
+            ? [
+                BoxShadow(
+                  color: LunoraColors.forestGreen.withValues(alpha: 0.22),
+                  blurRadius: 18,
+                  offset: const Offset(0, 8),
+                ),
+              ]
+            : null;
+      } else {
+        gradient = null;
+        solidColor = LunoraColors.storybookSurface;
+        fg = LunoraColors.forestGreen;
+        border = Border.all(
+          color: LunoraColors.forestGreen.withValues(alpha: 0.35),
+        );
+        shadows = null;
+      }
+    } else {
+      gradient = isPrimary ? LunoraColors.ctaGlow : null;
+      solidColor = isPrimary ? null : LunoraColors.nightBlueLift.withValues(alpha: 0.82);
+      fg = LunoraColors.warmBeige;
+      border = isPrimary
+          ? null
+          : Border.all(color: LunoraColors.warmBeige.withValues(alpha: 0.28));
+      shadows = isPrimary && widget.onPressed != null
+          ? LunoraColors.primaryGlow(opacity: 0.28)
+          : null;
+    }
 
     final child = ScaleTransition(
       scale: _scale,
       child: DecoratedBox(
         decoration: BoxDecoration(
           borderRadius: LunoraSpacing.radiusLg,
-          color: isPrimary
-              ? null
-              : LunoraColors.nightBlueLift.withValues(alpha: 0.82),
+          color: solidColor,
           gradient: gradient,
           border: border,
-          boxShadow: isPrimary && widget.onPressed != null
-              ? LunoraColors.primaryGlow(opacity: 0.28)
-              : null,
+          boxShadow: shadows,
         ),
         child: Material(
           color: Colors.transparent,

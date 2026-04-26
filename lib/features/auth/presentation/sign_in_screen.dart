@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../../core/constants/app_sizes.dart';
 import '../../../core/validation/auth_validators.dart';
@@ -21,11 +22,25 @@ class SignInScreen extends ConsumerStatefulWidget {
 }
 
 class _SignInScreenState extends ConsumerState<SignInScreen> {
+  static const _lastEmailKey = 'auth.last_email';
   final _formKey = GlobalKey<FormState>();
   final _email = TextEditingController();
   final _password = TextEditingController();
   var _loading = false;
   var _resetBusy = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _restoreLastEmail();
+  }
+
+  Future<void> _restoreLastEmail() async {
+    final prefs = await SharedPreferences.getInstance();
+    final lastEmail = prefs.getString(_lastEmailKey)?.trim() ?? '';
+    if (!mounted || lastEmail.isEmpty) return;
+    setState(() => _email.text = lastEmail);
+  }
 
   @override
   void dispose() {
@@ -41,6 +56,8 @@ class _SignInScreenState extends ConsumerState<SignInScreen> {
       await ref
           .read(authSessionProvider.notifier)
           .signIn(email: _email.text.trim(), password: _password.text);
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString(_lastEmailKey, _email.text.trim().toLowerCase());
       if (!mounted) return;
       navigateAfterAuthenticated(context, ref);
     } catch (e) {
@@ -119,9 +136,9 @@ class _SignInScreenState extends ConsumerState<SignInScreen> {
                 const SizedBox(height: 16),
                 Text(
                   'Tu ne vois rien ?',
-                  style: Theme.of(ctx).textTheme.titleSmall?.copyWith(
-                        fontWeight: FontWeight.w800,
-                      ),
+                  style: Theme.of(
+                    ctx,
+                  ).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w800),
                 ),
                 const SizedBox(height: 8),
                 Text(
@@ -134,7 +151,9 @@ class _SignInScreenState extends ConsumerState<SignInScreen> {
                   '• Option avancée : définis PASSWORD_RESET_CONTINUE_URL dans '
                   'dart_defines.json avec une URL https déjà autorisée dans '
                   'Firebase (souvent meilleure délivrabilité des liens).',
-                  style: Theme.of(ctx).textTheme.bodySmall?.copyWith(height: 1.45),
+                  style: Theme.of(
+                    ctx,
+                  ).textTheme.bodySmall?.copyWith(height: 1.45),
                 ),
               ],
             ),
@@ -149,9 +168,9 @@ class _SignInScreenState extends ConsumerState<SignInScreen> {
       );
     } catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Envoi impossible : $e')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Envoi impossible : $e')));
     } finally {
       if (mounted) setState(() => _resetBusy = false);
       emailCtrl.dispose();
@@ -180,51 +199,55 @@ class _SignInScreenState extends ConsumerState<SignInScreen> {
                 autovalidateMode: AutovalidateMode.onUserInteraction,
                 child: SingleChildScrollView(
                   child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    const SizedBox(height: AppSizes.lg),
-                    LunoraTextField(
-                      controller: _email,
-                      label: 'Email',
-                      keyboardType: TextInputType.emailAddress,
-                      textInputAction: TextInputAction.next,
-                      validator: AuthValidators.emailError,
-                    ),
-                    const SizedBox(height: AppSizes.md),
-                    LunoraTextField(
-                      controller: _password,
-                      label: 'Mot de passe',
-                      obscureText: true,
-                      textInputAction: TextInputAction.done,
-                      validator: AuthValidators.passwordError,
-                    ),
-                    const SizedBox(height: AppSizes.xs),
-                    Align(
-                      alignment: Alignment.centerRight,
-                      child: TextButton(
-                        onPressed: (_loading || _resetBusy) ? null : _forgotPassword,
-                        child: _resetBusy
-                            ? const SizedBox(
-                                width: 18,
-                                height: 18,
-                                child: CircularProgressIndicator(strokeWidth: 2),
-                              )
-                            : const Text('Mot de passe oublié ?'),
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      const SizedBox(height: AppSizes.lg),
+                      LunoraTextField(
+                        controller: _email,
+                        label: 'Email',
+                        keyboardType: TextInputType.emailAddress,
+                        textInputAction: TextInputAction.next,
+                        validator: AuthValidators.emailError,
                       ),
-                    ),
-                    const SizedBox(height: AppSizes.lg),
-                    LunoraPrimaryButton(
-                      label: 'Se connecter',
-                      isLoading: _loading,
-                      onPressed: _submit,
-                    ),
-                    TextButton(
-                      onPressed: () => context.push('/signup'),
-                      child: const Text('Créer un compte'),
-                    ),
-                    const SizedBox(height: AppSizes.xl),
-                    const SocialAuthSection(),
-                  ],
+                      const SizedBox(height: AppSizes.md),
+                      LunoraTextField(
+                        controller: _password,
+                        label: 'Mot de passe',
+                        obscureText: true,
+                        textInputAction: TextInputAction.done,
+                        validator: AuthValidators.passwordError,
+                      ),
+                      const SizedBox(height: AppSizes.xs),
+                      Align(
+                        alignment: Alignment.centerRight,
+                        child: TextButton(
+                          onPressed: (_loading || _resetBusy)
+                              ? null
+                              : _forgotPassword,
+                          child: _resetBusy
+                              ? const SizedBox(
+                                  width: 18,
+                                  height: 18,
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2,
+                                  ),
+                                )
+                              : const Text('Mot de passe oublié ?'),
+                        ),
+                      ),
+                      const SizedBox(height: AppSizes.lg),
+                      LunoraPrimaryButton(
+                        label: 'Se connecter',
+                        isLoading: _loading,
+                        onPressed: _submit,
+                      ),
+                      TextButton(
+                        onPressed: () => context.push('/signup'),
+                        child: const Text('Créer un compte'),
+                      ),
+                      const SizedBox(height: AppSizes.xl),
+                      const SocialAuthSection(),
+                    ],
                   ),
                 ),
               ),

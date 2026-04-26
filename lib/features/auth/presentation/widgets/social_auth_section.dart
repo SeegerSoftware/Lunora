@@ -6,7 +6,7 @@ import '../../../../core/theme/spacing.dart';
 import '../auth_navigation.dart';
 import '../providers/auth_providers.dart';
 
-/// Boutons Google / Apple / Facebook (selon plateforme).
+/// Social auth simplifié : Google uniquement (pour l'instant).
 class SocialAuthSection extends ConsumerStatefulWidget {
   const SocialAuthSection({super.key});
 
@@ -26,9 +26,7 @@ class _SocialAuthSectionState extends ConsumerState<SocialAuthSection> {
       navigateAfterAuthenticated(context, ref);
     } catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('$e')),
-      );
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('$e')));
     } finally {
       if (mounted) setState(() => _busy = null);
     }
@@ -37,23 +35,38 @@ class _SocialAuthSectionState extends ConsumerState<SocialAuthSection> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final light = theme.brightness == Brightness.light;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         Row(
           children: [
-            Expanded(child: Divider(color: LunoraColors.mist.withValues(alpha: 0.25))),
+            Expanded(
+              child: Divider(
+                color: light
+                    ? LunoraColors.storybookInkMuted.withValues(alpha: 0.2)
+                    : LunoraColors.mist.withValues(alpha: 0.25),
+              ),
+            ),
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: LunoraSpacing.md),
               child: Text(
-                'ou avec',
+                'connexion rapide',
                 style: theme.textTheme.labelMedium?.copyWith(
-                  color: LunoraColors.mist.withValues(alpha: 0.65),
+                  color: light
+                      ? LunoraColors.storybookInkMuted
+                      : LunoraColors.mist.withValues(alpha: 0.65),
                   fontWeight: FontWeight.w600,
                 ),
               ),
             ),
-            Expanded(child: Divider(color: LunoraColors.mist.withValues(alpha: 0.25))),
+            Expanded(
+              child: Divider(
+                color: light
+                    ? LunoraColors.storybookInkMuted.withValues(alpha: 0.2)
+                    : LunoraColors.mist.withValues(alpha: 0.25),
+              ),
+            ),
           ],
         ),
         const SizedBox(height: LunoraSpacing.md),
@@ -64,26 +77,6 @@ class _SocialAuthSectionState extends ConsumerState<SocialAuthSection> {
           onTap: () => _run(
             'google',
             () => ref.read(authSessionProvider.notifier).signInWithGoogle(),
-          ),
-        ),
-        const SizedBox(height: LunoraSpacing.sm),
-        _SocialTile(
-          icon: Icons.apple_rounded,
-          label: 'Apple',
-          busy: _busy == 'apple',
-          onTap: () => _run(
-            'apple',
-            () => ref.read(authSessionProvider.notifier).signInWithApple(),
-          ),
-        ),
-        const SizedBox(height: LunoraSpacing.sm),
-        _SocialTile(
-          icon: Icons.facebook,
-          label: 'Facebook',
-          busy: _busy == 'facebook',
-          onTap: () => _run(
-            'facebook',
-            () => ref.read(authSessionProvider.notifier).signInWithFacebook(),
           ),
         ),
       ],
@@ -106,8 +99,11 @@ class _SocialTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final light = Theme.of(context).brightness == Brightness.light;
     return Material(
-      color: LunoraColors.nightBlueLift.withValues(alpha: 0.65),
+      color: light
+          ? LunoraColors.storybookSurface
+          : LunoraColors.nightBlueLift.withValues(alpha: 0.65),
       borderRadius: LunoraSpacing.radiusMd,
       child: InkWell(
         borderRadius: LunoraSpacing.radiusMd,
@@ -119,15 +115,23 @@ class _SocialTile extends StatelessWidget {
           ),
           child: Row(
             children: [
-              Icon(icon, color: LunoraColors.warmBeige, size: 26),
+              Icon(
+                icon,
+                color: light
+                    ? LunoraColors.forestGreen
+                    : LunoraColors.warmBeige,
+                size: 26,
+              ),
               const SizedBox(width: LunoraSpacing.md),
               Expanded(
                 child: Text(
                   label,
                   style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                        color: LunoraColors.warmBeige,
-                        fontWeight: FontWeight.w800,
-                      ),
+                    color: light
+                        ? LunoraColors.storybookInk
+                        : LunoraColors.warmBeige,
+                    fontWeight: FontWeight.w800,
+                  ),
                 ),
               ),
               if (busy)
@@ -139,7 +143,9 @@ class _SocialTile extends StatelessWidget {
               else
                 Icon(
                   Icons.chevron_right_rounded,
-                  color: LunoraColors.mist.withValues(alpha: 0.45),
+                  color: light
+                      ? LunoraColors.storybookInkMuted.withValues(alpha: 0.55)
+                      : LunoraColors.mist.withValues(alpha: 0.45),
                 ),
             ],
           ),

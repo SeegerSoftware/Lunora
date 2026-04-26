@@ -12,10 +12,7 @@ import 'runtime_env.dart';
 /// Ne jamais committer `dart_defines.json` (déjà dans `.gitignore`).
 abstract final class AiGenerationConfig {
   static bool get useRealAi {
-    const fromDefine = bool.fromEnvironment(
-      'USE_REAL_AI',
-      defaultValue: false,
-    );
+    const fromDefine = bool.fromEnvironment('USE_REAL_AI', defaultValue: false);
     if (fromDefine) return true;
     return readRuntimeEnvFlag('USE_REAL_AI');
   }
@@ -30,14 +27,11 @@ abstract final class AiGenerationConfig {
   }
 
   static String get openaiModel {
-    const fromDefine = String.fromEnvironment(
-      'OPENAI_MODEL',
-      defaultValue: '',
-    );
+    const fromDefine = String.fromEnvironment('OPENAI_MODEL', defaultValue: '');
     if (fromDefine.trim().isNotEmpty) return fromDefine.trim();
     final env = readRuntimeEnv('OPENAI_MODEL')?.trim();
     if (env != null && env.isNotEmpty) return env;
-    return 'gpt-4o';
+    return 'gpt-4o-mini';
   }
 
   /// Modèle utilisé uniquement en secours qualité (coût plus élevé).
@@ -49,7 +43,7 @@ abstract final class AiGenerationConfig {
     if (fromDefine.trim().isNotEmpty) return fromDefine.trim();
     final env = readRuntimeEnv('OPENAI_MODEL_PREMIUM')?.trim();
     if (env != null && env.isNotEmpty) return env;
-    return 'gpt-4o';
+    return 'gpt-4o-mini';
   }
 
   static String get openaiBaseUrl {
