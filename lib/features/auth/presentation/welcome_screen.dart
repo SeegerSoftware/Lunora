@@ -20,7 +20,6 @@ class WelcomeScreen extends StatelessWidget {
     return Scaffold(
       body: LunoraScreenShell(
         showStarfield: true,
-        starCount: 32,
         child: SafeArea(
           child: Padding(
             padding: AppSizes.screenPadding,
@@ -33,18 +32,34 @@ class WelcomeScreen extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
+                        '✨ 📖 🌙 ✨',
+                        textAlign: TextAlign.left,
+                        style: theme.textTheme.headlineSmall?.copyWith(
+                          fontSize: 28,
+                          height: 1.1,
+                        ),
+                      ),
+                      const SizedBox(height: LunoraSpacing.md),
+                      Text(
                         'Elunai',
                         style: theme.textTheme.displaySmall?.copyWith(
                           color: LunoraColors.warmBeige,
                           fontWeight: FontWeight.w900,
                           letterSpacing: -0.8,
+                          shadows: [
+                            Shadow(
+                              color: LunoraColors.violetSoft.withValues(alpha: 0.35),
+                              blurRadius: 18,
+                              offset: const Offset(0, 4),
+                            ),
+                          ],
                         ),
                       ),
                       const SizedBox(height: LunoraSpacing.sm),
                       Text(
-                        'La plateforme d’histoires intelligentes 0-12 ans qui s’adapte à chaque enfant.',
+                        'Des histoires magiques 0–12 ans qui grandissent avec ton enfant, soir après soir.',
                         style: LunoraTextStyles.greetingSub(theme.textTheme)
-                            .copyWith(fontSize: 16),
+                            .copyWith(fontSize: 16, height: 1.4),
                       ),
                     ],
                   ),

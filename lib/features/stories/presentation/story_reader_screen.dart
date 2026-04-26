@@ -5,10 +5,14 @@ import 'package:go_router/go_router.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../../../core/constants/app_sizes.dart';
+import '../../../core/di/providers.dart';
 import '../../../core/theme/colors.dart';
 import '../../../core/theme/spacing.dart';
 import '../../../features/child_profile/presentation/providers/child_profile_providers.dart';
 import '../../../services/story_generation/story_adaptation_engine.dart';
+import '../../../services/story_generation/story_generation_exception.dart';
+import '../../../shared/models/story.dart';
+import '../../../shared/widgets/elunai_layout.dart';
 import '../../../shared/widgets/lunora_badge.dart';
 import '../../../shared/widgets/lunora_fade_in.dart';
 import '../../../shared/widgets/lunora_glass_card.dart';
@@ -33,6 +37,107 @@ class _StoryReaderScreenState extends ConsumerState<StoryReaderScreen> {
   static const double _minReaderFontSize = 18;
   static const double _maxReaderFontSize = 24;
   static const StoryAdaptationEngine _adaptationEngine = StoryAdaptationEngine();
+  var _feedbackBusy = false;
+
+  Widget _storySurface({required Widget child}) {
+    return LunoraGlassCard(child: child);
+  }
+
+  Future<void> _submitStoryFeedback(
+    WidgetRef ref,
+    Story story,
+    int feedback,
+  ) async {
+    setState(() => _feedbackBusy = true);
+    try {
+      await ref.read(storyRepositoryProvider).setStoryUserFeedback(
+            storyId: story.id,
+            feedback: feedback,
+          );
+      ref.invalidate(todayStoryProvider);
+      final sid = widget.storyId;
+      if (sid != null) {
+        ref.invalidate(storyByIdProvider(sid));
+      }
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Merci, ton avis est enregistré.')),
+      );
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Enregistrement impossible : $e')),
+      );
+    } finally {
+      if (mounted) setState(() => _feedbackBusy = false);
+    }
+  }
+
+  Widget _storyFeedbackBand(
+    BuildContext context,
+    WidgetRef ref, {
+    required Story story,
+    required Color hi,
+    required Color meta,
+  }) {
+    final theme = Theme.of(context);
+    final sel = story.userFeedback;
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        color: LunoraColors.nightBlueLift.withValues(alpha: 0.48),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: meta.withValues(alpha: 0.22)),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+        child: Row(
+          children: [
+            Expanded(
+              child: Text(
+                'Cette histoire te plaît ?',
+                style: theme.textTheme.bodyMedium?.copyWith(
+                  color: hi.withValues(alpha: 0.96),
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+            ),
+            if (_feedbackBusy)
+              const SizedBox(
+                width: 22,
+                height: 22,
+                child: CircularProgressIndicator(strokeWidth: 2),
+              )
+            else ...[
+              FilledButton.tonalIcon(
+                onPressed: () => _submitStoryFeedback(ref, story, -1),
+                icon: const Icon(Icons.thumb_down_rounded, size: 18),
+                label: const Text('Bof'),
+                style: FilledButton.styleFrom(
+                  visualDensity: VisualDensity.compact,
+                  backgroundColor: sel == -1
+                      ? theme.colorScheme.errorContainer
+                          .withValues(alpha: 0.55)
+                      : null,
+                ),
+              ),
+              const SizedBox(width: 8),
+              FilledButton.tonalIcon(
+                onPressed: () => _submitStoryFeedback(ref, story, 1),
+                icon: const Icon(Icons.thumb_up_rounded, size: 18),
+                label: const Text('J’adore'),
+                style: FilledButton.styleFrom(
+                  visualDensity: VisualDensity.compact,
+                  backgroundColor: sel == 1
+                      ? LunoraColors.joyMint.withValues(alpha: 0.35)
+                      : null,
+                ),
+              ),
+            ],
+          ],
+        ),
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -43,34 +148,41 @@ class _StoryReaderScreenState extends ConsumerState<StoryReaderScreen> {
         : _adaptationEngine.fromChildProfile(childProfile);
     final readerScale = adaptation?.readerFontScale ?? 1.0;
     final effectiveFontSize = (_fontSize * readerScale).clamp(17.0, 28.0);
-    final contentMaxWidth = (adaptation?.preferPagination ?? false) ? 680.0 : 760.0;
+    final contentMaxWidth =
+        ((adaptation?.preferPagination ?? false) ? 680.0 : 760.0);
 
     final id = widget.storyId;
     final asyncStory = id == null
         ? ref.watch(todayStoryProvider)
         : ref.watch(storyByIdProvider(id));
+    final appBarFg = LunoraColors.warmBeige.withValues(alpha: 0.95);
 
     return LunoraNightScaffold(
       scrollable: false,
-      starCount: 20,
-      appBar: AppBar(
-        backgroundColor: Colors.transparent,
-        elevation: 0,
+      joyfulBackdrop: true,
+      showStarryOverlay: true,
+      forceNightBackdrop: true,
+      backgroundGradient: null,
+      appBar: ElunaiAppBar(
+        title: 'Lecture',
+        titleColor: appBarFg,
         leading: IconButton(
           tooltip: 'Retour',
-          icon: Icon(
-            Icons.arrow_back_rounded,
-            color: LunoraColors.warmBeige.withValues(alpha: 0.95),
-          ),
+          icon: const Icon(Icons.arrow_back_rounded),
           onPressed: () => context.pop(),
         ),
-        title: Text(
-          'Lecture',
-          style: theme.textTheme.titleMedium?.copyWith(
-            color: LunoraColors.warmBeige,
-            fontWeight: FontWeight.w800,
+        actions: [
+          IconButton(
+            tooltip: 'Mode liseuse (écran dédié)',
+            icon: const Icon(Icons.nights_stay_rounded),
+            onPressed: () async {
+              final sid = id ??
+                  await ref.read(todayStoryProvider.future).then((s) => s?.id);
+              if (!context.mounted || sid == null) return;
+              context.push('/story/bedtime?id=${Uri.encodeComponent(sid)}');
+            },
           ),
-        ),
+        ],
       ),
       child: asyncStory.when(
             skipLoadingOnReload: true,
@@ -112,6 +224,9 @@ class _StoryReaderScreenState extends ConsumerState<StoryReaderScreen> {
                 );
               }
 
+              const hi = LunoraColors.warmBeige;
+              const meta = LunoraColors.mist;
+
               return ScrollConfiguration(
                 behavior: ScrollConfiguration.of(context).copyWith(
                   physics: const BouncingScrollPhysics(
@@ -119,6 +234,7 @@ class _StoryReaderScreenState extends ConsumerState<StoryReaderScreen> {
                   ),
                 ),
                 child: SingleChildScrollView(
+                  padding: EdgeInsets.zero,
                   child: ConstrainedBox(
                     constraints: BoxConstraints(
                       minHeight: MediaQuery.of(context).size.height - 100,
@@ -133,12 +249,12 @@ class _StoryReaderScreenState extends ConsumerState<StoryReaderScreen> {
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
-                                  const LunoraSectionTitle('Histoire'),
+                                  LunoraSectionTitle('Histoire', foregroundColor: hi),
                                   const SizedBox(height: LunoraSpacing.sm),
                                   Text(
                                     'Générée avec ${storyModelLabel(story.generationSource)}',
                                     style: theme.textTheme.bodySmall?.copyWith(
-                                      color: LunoraColors.mist.withValues(alpha: 0.8),
+                                      color: meta.withValues(alpha: 0.88),
                                       fontWeight: FontWeight.w600,
                                     ),
                                   ),
@@ -146,7 +262,7 @@ class _StoryReaderScreenState extends ConsumerState<StoryReaderScreen> {
                                   Text(
                                     story.title,
                                     style: theme.textTheme.headlineSmall?.copyWith(
-                                      color: LunoraColors.warmBeige,
+                                      color: hi,
                                       fontWeight: FontWeight.w800,
                                       height: 1.2,
                                     ),
@@ -213,8 +329,7 @@ class _StoryReaderScreenState extends ConsumerState<StoryReaderScreen> {
                                               999,
                                             ),
                                             border: Border.all(
-                                              color: LunoraColors.mist
-                                                  .withValues(alpha: 0.2),
+                                              color: meta.withValues(alpha: 0.25),
                                             ),
                                           ),
                                           child: Row(
@@ -223,8 +338,7 @@ class _StoryReaderScreenState extends ConsumerState<StoryReaderScreen> {
                                               Icon(
                                                 Icons.content_copy_rounded,
                                                 size: 14,
-                                                color: LunoraColors.warmBeige
-                                                    .withValues(alpha: 0.94),
+                                                color: hi.withValues(alpha: 0.94),
                                               ),
                                               const SizedBox(
                                                 width: LunoraSpacing.xxs,
@@ -235,8 +349,7 @@ class _StoryReaderScreenState extends ConsumerState<StoryReaderScreen> {
                                                     .textTheme
                                                     .labelSmall
                                                     ?.copyWith(
-                                                      color:
-                                                          LunoraColors.warmBeige,
+                                                      color: hi,
                                                       fontWeight:
                                                           FontWeight.w700,
                                                     ),
@@ -247,13 +360,21 @@ class _StoryReaderScreenState extends ConsumerState<StoryReaderScreen> {
                                       ),
                                     ],
                                   ),
+                                  const SizedBox(height: LunoraSpacing.md),
+                                  _storyFeedbackBand(
+                                    context,
+                                    ref,
+                                    story: story,
+                                    hi: hi,
+                                    meta: meta,
+                                  ),
                                 ],
                               ),
                             ),
                             const SizedBox(height: LunoraSpacing.md),
                             LunoraFadeIn(
                               delay: const Duration(milliseconds: 120),
-                              child: LunoraGlassCard(
+                              child: _storySurface(
                                 child: Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
@@ -287,15 +408,22 @@ class _StoryReaderScreenState extends ConsumerState<StoryReaderScreen> {
                                     Text(
                                       'Bonne lecture',
                                       style: theme.textTheme.labelLarge?.copyWith(
-                                            color: LunoraColors.mist.withValues(alpha: 0.82),
+                                            color: meta.withValues(alpha: 0.82),
                                             fontWeight: FontWeight.w700,
                                           ),
                                     ),
                                     const SizedBox(height: LunoraSpacing.md),
-                                    ..._paragraphWidgets(
-                                      context,
-                                      story.content,
-                                      effectiveFontSize: effectiveFontSize,
+                                    SelectionArea(
+                                      child: Column(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.stretch,
+                                        children: _paragraphWidgets(
+                                          context,
+                                          story.content,
+                                          effectiveFontSize:
+                                              effectiveFontSize,
+                                        ),
+                                      ),
                                     ),
                                   ],
                                 ),
@@ -304,14 +432,14 @@ class _StoryReaderScreenState extends ConsumerState<StoryReaderScreen> {
                             const SizedBox(height: LunoraSpacing.md),
                             LunoraFadeIn(
                               delay: const Duration(milliseconds: 160),
-                              child: LunoraGlassCard(
+                              child: _storySurface(
                                 child: Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
                                     Text(
                                       'Partager un extrait',
                                       style: theme.textTheme.titleSmall?.copyWith(
-                                        color: LunoraColors.warmBeige,
+                                        color: hi,
                                         fontWeight: FontWeight.w700,
                                       ),
                                     ),
@@ -319,7 +447,7 @@ class _StoryReaderScreenState extends ConsumerState<StoryReaderScreen> {
                                     Text(
                                       'On partage uniquement 1/4 de l’histoire.',
                                       style: theme.textTheme.bodySmall?.copyWith(
-                                        color: LunoraColors.mist.withValues(alpha: 0.84),
+                                        color: meta.withValues(alpha: 0.84),
                                       ),
                                     ),
                                     const SizedBox(height: LunoraSpacing.sm),
@@ -363,7 +491,8 @@ class _StoryReaderScreenState extends ConsumerState<StoryReaderScreen> {
                                     Text(
                                       'Connecte-toi à Elunai pour plus d’histoires.',
                                       style: theme.textTheme.bodySmall?.copyWith(
-                                        color: LunoraColors.starGoldSoft.withValues(alpha: 0.94),
+                                        color: LunoraColors.starGoldSoft
+                                            .withValues(alpha: 0.94),
                                         fontWeight: FontWeight.w600,
                                       ),
                                     ),
@@ -404,7 +533,9 @@ class _StoryReaderScreenState extends ConsumerState<StoryReaderScreen> {
                         ),
                         const SizedBox(height: LunoraSpacing.sm),
                         Text(
-                          '$err',
+                          err is StoryGenerationException
+                              ? err.message
+                              : '$err',
                           style: theme.textTheme.bodySmall?.copyWith(
                             color: LunoraColors.mist.withValues(alpha: 0.86),
                           ),
@@ -432,6 +563,7 @@ class _StoryReaderScreenState extends ConsumerState<StoryReaderScreen> {
     required String label,
     required VoidCallback onTap,
   }) {
+    const fg = LunoraColors.warmBeige;
     return InkWell(
       borderRadius: BorderRadius.circular(999),
       onTap: onTap,
@@ -450,7 +582,7 @@ class _StoryReaderScreenState extends ConsumerState<StoryReaderScreen> {
         child: Text(
           label,
           style: Theme.of(context).textTheme.labelMedium?.copyWith(
-                color: LunoraColors.warmBeige,
+                color: fg,
                 fontWeight: FontWeight.w800,
               ),
         ),
@@ -468,9 +600,10 @@ class _StoryReaderScreenState extends ConsumerState<StoryReaderScreen> {
         .map((p) => p.trim())
         .where((p) => p.isNotEmpty)
         .toList();
-    final style = Theme.of(context).textTheme.bodyLarge?.copyWith(
+    final lh = _lineHeightForFontSize(effectiveFontSize);
+    final style = Theme.of(context).textTheme.bodyLarge!.copyWith(
           fontSize: effectiveFontSize,
-          height: _lineHeightForFontSize(effectiveFontSize),
+          height: lh,
           color: LunoraColors.warmBeige.withValues(alpha: 0.97),
         );
     final paragraphGap = _paragraphGapForFontSize(effectiveFontSize);

@@ -22,6 +22,8 @@ class Story extends Equatable {
     this.seriesId,
     this.generationSource = 'unknown',
     required this.createdAt,
+    this.userFeedback,
+    this.userFeedbackAt,
   });
 
   final String id;
@@ -40,6 +42,9 @@ class Story extends Equatable {
   final String? seriesId;
   final String generationSource;
   final DateTime createdAt;
+  /// 1 = j’aime, -1 = je n’aime pas, null = pas encore d’avis.
+  final int? userFeedback;
+  final DateTime? userFeedbackAt;
 
   bool get isSerialized => format == StoryFormat.serializedChapters;
 
@@ -60,6 +65,8 @@ class Story extends Equatable {
     String? seriesId,
     String? generationSource,
     DateTime? createdAt,
+    int? userFeedback,
+    DateTime? userFeedbackAt,
   }) {
     return Story(
       id: id ?? this.id,
@@ -79,6 +86,8 @@ class Story extends Equatable {
       seriesId: seriesId ?? this.seriesId,
       generationSource: generationSource ?? this.generationSource,
       createdAt: createdAt ?? this.createdAt,
+      userFeedback: userFeedback ?? this.userFeedback,
+      userFeedbackAt: userFeedbackAt ?? this.userFeedbackAt,
     );
   }
 
@@ -100,6 +109,8 @@ class Story extends Equatable {
       'seriesId': seriesId,
       'generationSource': generationSource,
       'createdAt': createdAt.toIso8601String(),
+      if (userFeedback != null) 'userFeedback': userFeedback,
+      if (userFeedbackAt != null) 'userFeedbackAt': userFeedbackAt!.toIso8601String(),
     };
   }
 
@@ -121,7 +132,18 @@ class Story extends Equatable {
       seriesId: map['seriesId'] as String?,
       generationSource: (map['generationSource'] as String?) ?? 'unknown',
       createdAt: _readDate(map['createdAt']),
+      userFeedback: (map['userFeedback'] as num?)?.toInt(),
+      userFeedbackAt: _readDateNullable(map['userFeedbackAt']),
     );
+  }
+
+  static DateTime? _readDateNullable(dynamic value) {
+    if (value == null) return null;
+    if (value is Timestamp) return value.toDate();
+    if (value is DateTime) return value;
+    if (value is String) return DateTime.tryParse(value);
+    if (value is int) return DateTime.fromMillisecondsSinceEpoch(value);
+    return null;
   }
 
   static DateTime _readDate(dynamic value) {
@@ -150,5 +172,7 @@ class Story extends Equatable {
     seriesId,
     generationSource,
     createdAt,
+    userFeedback,
+    userFeedbackAt,
   ];
 }

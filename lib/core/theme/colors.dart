@@ -1,7 +1,21 @@
 import 'package:flutter/material.dart';
 
-/// Palette « nuit magique » — calme, lisible, chaleureux.
+/// Palette « nuit magique » + variant **livre pour enfants** (maquettes crème / vert).
 abstract final class LunoraColors {
+  // —— Storybook (jour doux) ——
+  static const Color storybookCream = Color(0xFFFDF9F3);
+  static const Color storybookCreamDeep = Color(0xFFF3EBE0);
+  static const Color storybookInk = Color(0xFF1E2D26);
+  static const Color storybookInkMuted = Color(0xFF4A5C54);
+  static const Color forestGreen = Color(0xFF2D4A3E);
+  static const Color forestGreenSoft = Color(0xFF3D5F4F);
+  static const Color heroCardBlue = Color(0xFF1B2F4A);
+  static const Color heroCardBlueDeep = Color(0xFF142436);
+  static const Color honeyYellow = Color(0xFFF3D56A);
+  static const Color honeyYellowDeep = Color(0xFFE8C547);
+
+  /// Fond crème très léger pour sections contrastées.
+  static const Color storybookSurface = Color(0xFFFFFFFF);
   static const Color nightBlue = Color(0xFF0B1E3B);
   static const Color nightBlueDeep = Color(0xFF050F22);
   static const Color nightBlueLift = Color(0xFF152A45);
@@ -43,6 +57,36 @@ abstract final class LunoraColors {
     end: Alignment.bottomCenter,
     colors: [Color(0xFF12294D), nightBlue, nightBlueDeep],
     stops: [0.0, 0.45, 1.0],
+  );
+
+  /// Fond « ciel magique » plus chaleureux (accueil, navigation).
+  static const LinearGradient joySkyVertical = LinearGradient(
+    begin: Alignment.topLeft,
+    end: Alignment.bottomRight,
+    colors: [
+      Color(0xFF1E3A6E),
+      Color(0xFF2D1B69),
+      Color(0xFF0F2854),
+      nightBlueDeep,
+    ],
+    stops: [0.0, 0.35, 0.72, 1.0],
+  );
+
+  static const Color joyPeach = Color(0xFFFFB4A8);
+  static const Color joyMint = Color(0xFF7EE0C3);
+  static const Color joySun = Color(0xFFFFE08A);
+
+  /// Mode liseuse (papier / encre chaude).
+  static const Color ereaderPaper = Color(0xFFF7F0E4);
+  static const Color ereaderPaperDeep = Color(0xFFE8DCC8);
+  static const Color ereaderInk = Color(0xFF2C2418);
+  static const Color ereaderInkMuted = Color(0xFF5C5246);
+
+  static const LinearGradient ereaderPaperVertical = LinearGradient(
+    begin: Alignment.topCenter,
+    end: Alignment.bottomCenter,
+    colors: [Color(0xFFFFFBF5), ereaderPaper, ereaderPaperDeep],
+    stops: [0.0, 0.42, 1.0],
   );
 
   static const LinearGradient cardAura = LinearGradient(

@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import '../../../core/theme/colors.dart';
 import '../../../core/theme/spacing.dart';
 import '../../../services/story_generation/story_adaptation_engine.dart';
+import '../../../shared/widgets/elunai_layout.dart';
 import '../../../shared/widgets/lunora_fade_in.dart';
 import '../../../shared/widgets/lunora_glass_card.dart';
 import '../../../shared/widgets/lunora_night_scaffold.dart';
@@ -32,17 +33,8 @@ class InstantStoryScreen extends ConsumerWidget {
 
     return LunoraNightScaffold(
       scrollable: true,
-      starCount: 24,
-      appBar: AppBar(
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        title: Text(
-          'Génération instantanée',
-          style: Theme.of(context).textTheme.titleMedium?.copyWith(
-            color: LunoraColors.warmBeige,
-            fontWeight: FontWeight.w800,
-          ),
-        ),
+      appBar: ElunaiAppBar(
+        title: '✨ Génération',
       ),
       child: Center(
         child: ConstrainedBox(

@@ -10,6 +10,7 @@ import '../../../services/firebase/firebase_errors.dart';
 import '../../../services/firebase/firestore_mappers.dart';
 import '../../../services/firebase/firestore_paths.dart';
 import '../../../services/story_generation/models/story_generation_request.dart';
+import '../../../services/story_generation/story_generation_exception.dart';
 import '../../../services/story_generation/story_generation_service.dart';
 import '../../../shared/models/child_profile.dart';
 import '../../../shared/models/enums/story_format.dart';
@@ -52,6 +53,24 @@ class FirebaseStoryRepository implements StoryRepository {
         }
         return null;
       }
+      throw Exception(FirebaseErrors.firestoreMessage(e));
+    }
+  }
+
+  @override
+  Future<void> setStoryUserFeedback({
+    required String storyId,
+    required int feedback,
+  }) async {
+    if (feedback != 1 && feedback != -1) {
+      throw ArgumentError.value(feedback, 'feedback', 'attendu 1 ou -1');
+    }
+    try {
+      await _db.collection(FirestorePaths.stories).doc(storyId).update({
+        'userFeedback': feedback,
+        'userFeedbackAt': FieldValue.serverTimestamp(),
+      });
+    } catch (e) {
       throw Exception(FirebaseErrors.firestoreMessage(e));
     }
   }
@@ -216,6 +235,7 @@ class FirebaseStoryRepository implements StoryRepository {
 
       return story;
     } catch (e) {
+      if (e is StoryGenerationException) rethrow;
       throw Exception(FirebaseErrors.firestoreMessage(e));
     }
   }
@@ -240,6 +260,7 @@ class FirebaseStoryRepository implements StoryRepository {
       await _safeDeleteDoc(snapRef);
       return ensureTodayStory(user: user, child: child);
     } catch (e) {
+      if (e is StoryGenerationException) rethrow;
       throw Exception(FirebaseErrors.firestoreMessage(e));
     }
   }

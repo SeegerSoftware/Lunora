@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import '../../../core/constants/app_sizes.dart';
 import '../../../core/theme/colors.dart';
 import '../../../core/validation/auth_validators.dart';
+import '../../../shared/widgets/elunai_layout.dart';
 import '../../../shared/widgets/lunora_fade_in.dart';
 import '../../../shared/widgets/lunora_primary_button.dart';
 import '../../../shared/widgets/lunora_screen_shell.dart';
@@ -56,27 +57,15 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       extendBodyBehindAppBar: true,
-      appBar: AppBar(
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        title: Text(
-          'Créer un compte',
-          style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                color: LunoraColors.warmBeige,
-                fontWeight: FontWeight.w800,
-              ),
-        ),
+      appBar: ElunaiAppBar(
+        title: 'Créer un compte',
         leading: IconButton(
-          icon: Icon(
-            Icons.arrow_back_rounded,
-            color: LunoraColors.warmBeige.withValues(alpha: 0.9),
-          ),
+          icon: const Icon(Icons.arrow_back_rounded),
           onPressed: () => context.pop(),
         ),
       ),
       body: LunoraScreenShell(
         showStarfield: true,
-        starCount: 26,
         child: SafeArea(
           child: Padding(
             padding: AppSizes.screenPadding,
@@ -89,6 +78,15 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
                     const SizedBox(height: AppSizes.lg),
+                    Text(
+                      'Rejoins la constellation Elunai ✨',
+                      textAlign: TextAlign.center,
+                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                            color: LunoraColors.joySun.withValues(alpha: 0.9),
+                            fontWeight: FontWeight.w800,
+                          ),
+                    ),
+                    const SizedBox(height: AppSizes.sm),
                     LunoraTextField(
                       controller: _email,
                       label: 'Email',

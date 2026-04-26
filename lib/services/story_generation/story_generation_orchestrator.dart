@@ -28,7 +28,7 @@ class StoryGenerationOrchestrator {
   })  : _client = chatClient,
         _promptBuilder = promptBuilder,
         _qualityValidator = qualityValidator,
-        _miniModel = (miniModel ?? AiGenerationConfig.openaiModel).trim(),
+        _miniModel = (miniModel ?? AiGenerationConfig.openaiModelPremium).trim(),
         _premiumModel =
             (premiumModel ?? AiGenerationConfig.openaiModelPremium).trim();
 

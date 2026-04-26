@@ -10,5 +10,4 @@ class AppConfig {
     environment: AppEnvironment.development,
   );
 
-  bool get useMocks => environment != AppEnvironment.production;
 }

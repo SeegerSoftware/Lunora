@@ -5,7 +5,8 @@ import '../../../shared/models/user_model.dart';
 abstract class SubscriptionRepository {
   Future<Subscription?> current(String userId);
 
-  Future<Subscription> selectMockPlan({
+  /// Active un abonnement de test (sans passerelle de paiement) — réservé au dev / QA.
+  Future<Subscription> activateTestPlan({
     required UserModel user,
     required StoryPlan plan,
   });

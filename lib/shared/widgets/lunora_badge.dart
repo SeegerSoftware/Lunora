@@ -15,6 +15,7 @@ class LunoraBadge extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final light = Theme.of(context).brightness == Brightness.light;
     return ConstrainedBox(
       constraints: const BoxConstraints(minHeight: 32),
       child: Container(
@@ -23,23 +24,31 @@ class LunoraBadge extends StatelessWidget {
           vertical: 6,
         ),
         decoration: BoxDecoration(
-          color: LunoraColors.nightBlue.withValues(alpha: 0.42),
+          color: light
+              ? LunoraColors.storybookCreamDeep.withValues(alpha: 0.9)
+              : LunoraColors.nightBlue.withValues(alpha: 0.42),
           borderRadius: BorderRadius.circular(999),
           border: Border.all(
-            color: LunoraColors.starGoldSoft.withValues(alpha: 0.18),
+            color: light
+                ? LunoraColors.forestGreen.withValues(alpha: 0.15)
+                : LunoraColors.starGoldSoft.withValues(alpha: 0.18),
           ),
         ),
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
             if (icon != null) ...[
-              Icon(icon, size: 15, color: LunoraColors.starGoldSoft),
+              Icon(
+                icon,
+                size: 15,
+                color: light ? LunoraColors.forestGreen : LunoraColors.starGoldSoft,
+              ),
               const SizedBox(width: LunoraSpacing.xs),
             ],
             Text(
               label,
               style: Theme.of(context).textTheme.labelMedium?.copyWith(
-                    color: LunoraColors.warmBeige,
+                    color: light ? LunoraColors.storybookInk : LunoraColors.warmBeige,
                     fontWeight: FontWeight.w700,
                     height: 1.1,
                   ),

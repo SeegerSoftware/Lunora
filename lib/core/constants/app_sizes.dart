@@ -18,5 +18,5 @@ abstract final class AppSizes {
 
   static const double readerMaxWidth = 560;
 
-  static const BorderRadius cardRadius = BorderRadius.all(Radius.circular(18));
+  static const BorderRadius cardRadius = BorderRadius.all(Radius.circular(22));
 }

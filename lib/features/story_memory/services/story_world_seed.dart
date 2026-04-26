@@ -2,7 +2,7 @@ import '../../../services/story_generation/series_narrative_seed.dart';
 import '../../../shared/models/child_profile.dart';
 import '../../../shared/models/enums/story_format.dart';
 import '../../../shared/models/enums/story_tone.dart';
-import '../../../shared/models/enums/universe_type.dart';
+import '../../../shared/models/story_universe.dart';
 import '../../../shared/models/user_model.dart';
 import '../domain/story_world.dart';
 
@@ -68,35 +68,50 @@ abstract final class StoryWorldSeed {
   }
 
   static List<String> _recurringPlaces(ChildProfile child, int h) {
-    final u = child.universeType;
-    final pools = <UniverseType, List<String>>{
-      UniverseType.forest: [
+    final u = child.storyUniverse;
+    final pools = <StoryUniverse, List<String>>{
+      StoryUniverse.magicAndFairy: [
+        'le parvis des baguettes endormies',
+        'la salle des coussins royaux',
+        'le pont de brume rose',
+      ],
+      StoryUniverse.animals: [
+        'la tanière aux ronrons',
+        'le sentier des traces douces',
+        'le nid sous la branche coussin',
+      ],
+      StoryUniverse.adventure: [
+        'la cachette derrière la carte',
+        'le banc du pique-nique imaginaire',
+        'le passage secret aux lanternes',
+      ],
+      StoryUniverse.enchantedNature: [
         'le sentier des mousses',
         'la clairière aux lucioles',
         'le ruisseau qui chuchote',
       ],
-      UniverseType.ocean: [
+      StoryUniverse.ocean: [
         'la plage du soir',
         'la vague qui berce',
         'la coquille du silence',
       ],
-      UniverseType.skyAndStars: [
+      StoryUniverse.space: [
         'le balcon des étoiles',
         'le nuage coussin',
         'la comète patiente',
       ],
-      UniverseType.smallVillage: [
+      StoryUniverse.dinosaurs: [
+        'la clairière des pas lourds et doux',
+        'l’œuf rond dans la mousse',
+        'le volcan coiffé de nuage',
+      ],
+      StoryUniverse.everydayMagic: [
         'la place du puits',
         'la rue aux volets clos',
         'le jardin du voisin sage',
       ],
-      UniverseType.imaginaryKingdom: [
-        'le pont des drapeaux doux',
-        'la salle des coussins royaux',
-        'la tour qui veille sans bruit',
-      ],
     };
-    final list = pools[u] ?? pools[UniverseType.skyAndStars]!;
+    final list = pools[u] ?? pools[StoryUniverse.magicAndFairy]!;
     final out = <String>[];
     for (var i = 0; i < list.length; i++) {
       out.add(list[(h + i) % list.length]);

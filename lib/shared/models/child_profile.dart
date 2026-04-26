@@ -3,7 +3,7 @@ import 'package:equatable/equatable.dart';
 
 import 'enums/story_format.dart';
 import 'enums/story_tone.dart';
-import 'enums/universe_type.dart';
+import 'story_universe.dart';
 
 class ChildProfile extends Equatable {
   const ChildProfile({
@@ -17,7 +17,7 @@ class ChildProfile extends Equatable {
     required this.personalityTraits,
     required this.fearsToAddress,
     required this.valuesToTeach,
-    required this.universeType,
+    required this.storyUniverse,
     required this.preferredTone,
     required this.storyFormat,
     required this.seriesDurationDays,
@@ -32,6 +32,7 @@ class ChildProfile extends Equatable {
     this.bedtimeEnergyLevel = 'calme',
     this.familiarElements = const [],
     this.tonightGoal = 's’endormir calmement',
+    this.extraStoryHints = '',
     required this.createdAt,
     required this.updatedAt,
   });
@@ -46,7 +47,8 @@ class ChildProfile extends Equatable {
   final List<String> personalityTraits;
   final List<String> fearsToAddress;
   final List<String> valuesToTeach;
-  final UniverseType universeType;
+  /// Univers narratif principal (clé Firestore historique : `universeType`).
+  final StoryUniverse storyUniverse;
   final StoryTone preferredTone;
   final StoryFormat storyFormat;
   final int seriesDurationDays;
@@ -61,6 +63,8 @@ class ChildProfile extends Equatable {
   final String bedtimeEnergyLevel;
   final List<String> familiarElements;
   final String tonightGoal;
+  /// Texte libre du parent (souhaits, limites, contexte) transmis au LLM.
+  final String extraStoryHints;
   final DateTime createdAt;
   final DateTime updatedAt;
 
@@ -75,7 +79,7 @@ class ChildProfile extends Equatable {
     List<String>? personalityTraits,
     List<String>? fearsToAddress,
     List<String>? valuesToTeach,
-    UniverseType? universeType,
+    StoryUniverse? storyUniverse,
     StoryTone? preferredTone,
     StoryFormat? storyFormat,
     int? seriesDurationDays,
@@ -90,6 +94,7 @@ class ChildProfile extends Equatable {
     String? bedtimeEnergyLevel,
     List<String>? familiarElements,
     String? tonightGoal,
+    String? extraStoryHints,
     DateTime? createdAt,
     DateTime? updatedAt,
   }) {
@@ -104,7 +109,7 @@ class ChildProfile extends Equatable {
       personalityTraits: personalityTraits ?? this.personalityTraits,
       fearsToAddress: fearsToAddress ?? this.fearsToAddress,
       valuesToTeach: valuesToTeach ?? this.valuesToTeach,
-      universeType: universeType ?? this.universeType,
+      storyUniverse: storyUniverse ?? this.storyUniverse,
       preferredTone: preferredTone ?? this.preferredTone,
       storyFormat: storyFormat ?? this.storyFormat,
       seriesDurationDays: seriesDurationDays ?? this.seriesDurationDays,
@@ -119,6 +124,7 @@ class ChildProfile extends Equatable {
       bedtimeEnergyLevel: bedtimeEnergyLevel ?? this.bedtimeEnergyLevel,
       familiarElements: familiarElements ?? this.familiarElements,
       tonightGoal: tonightGoal ?? this.tonightGoal,
+      extraStoryHints: extraStoryHints ?? this.extraStoryHints,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
     );
@@ -136,7 +142,7 @@ class ChildProfile extends Equatable {
       'personalityTraits': personalityTraits,
       'fearsToAddress': fearsToAddress,
       'valuesToTeach': valuesToTeach,
-      'universeType': universeType.wireValue,
+      'universeType': storyUniverse.wireValue,
       'preferredTone': preferredTone.wireValue,
       'storyFormat': storyFormat.wireValue,
       'seriesDurationDays': seriesDurationDays,
@@ -152,6 +158,7 @@ class ChildProfile extends Equatable {
       'bedtimeEnergyLevel': bedtimeEnergyLevel,
       'familiarElements': familiarElements,
       'tonightGoal': tonightGoal,
+      'extraStoryHints': extraStoryHints,
       'createdAt': createdAt.toIso8601String(),
       'updatedAt': updatedAt.toIso8601String(),
     };
@@ -192,7 +199,7 @@ class ChildProfile extends Equatable {
       personalityTraits: readList('personalityTraits'),
       fearsToAddress: softenedFears,
       valuesToTeach: valuesToTransmit,
-      universeType: UniverseTypeX.parse(map['universeType'] as String?),
+      storyUniverse: StoryUniverseX.parse(map['universeType'] as String?),
       preferredTone: StoryToneX.parse(map['preferredTone'] as String?),
       storyFormat: StoryFormatFirestore.parse(map['storyFormat'] as String?),
       seriesDurationDays: (map['seriesDurationDays'] as num?)?.toInt() ?? 0,
@@ -201,7 +208,7 @@ class ChildProfile extends Equatable {
       language: readString('language', fallback: 'fr'),
       preferredUniverse: readString(
         'preferredUniverse',
-        fallback: UniverseTypeX.parse(map['universeType'] as String?).displayLabel,
+        fallback: StoryUniverseX.parse(map['universeType'] as String?).displayName,
       ),
       magicLevel: readString('magicLevel', fallback: 'legerement magique'),
       adventureIntensity: readString('adventureIntensity', fallback: 'equilibree'),
@@ -210,6 +217,7 @@ class ChildProfile extends Equatable {
       bedtimeEnergyLevel: readString('bedtimeEnergyLevel', fallback: 'calme'),
       familiarElements: readList('familiarElements'),
       tonightGoal: readString('tonightGoal', fallback: 's’endormir calmement'),
+      extraStoryHints: readString('extraStoryHints'),
       createdAt: _readDate(map['createdAt']),
       updatedAt: _readDate(map['updatedAt']),
     );
@@ -236,7 +244,7 @@ class ChildProfile extends Equatable {
     personalityTraits,
     fearsToAddress,
     valuesToTeach,
-    universeType,
+    storyUniverse,
     preferredTone,
     storyFormat,
     seriesDurationDays,
@@ -251,6 +259,7 @@ class ChildProfile extends Equatable {
     bedtimeEnergyLevel,
     familiarElements,
     tonightGoal,
+    extraStoryHints,
     createdAt,
     updatedAt,
   ];

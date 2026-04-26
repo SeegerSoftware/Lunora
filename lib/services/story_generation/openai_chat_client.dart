@@ -58,8 +58,8 @@ class OpenAiChatClient {
     final msg =
         'OpenAI chat/completions → ce prompt part sur le modèle '
         '"$resolvedModel" ($kind) | system $systemChars car., user $userChars car.';
-    developer.log(msg, name: 'lunora.openai');
-    debugPrint('[lunora.openai] $msg');
+    developer.log(msg, name: 'elunai.openai');
+    debugPrint('[elunai.openai] $msg');
   }
 
   /// Corps brut du message assistant (JSON attendu).

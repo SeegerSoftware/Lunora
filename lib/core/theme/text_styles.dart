@@ -84,6 +84,17 @@ abstract final class LunoraTextStyles {
     );
   }
 
+  /// Corps histoire en mode liseuse (serif confort).
+  static TextStyle ereaderBody(double fontSize, double height) {
+    return GoogleFonts.literata(
+      fontSize: fontSize,
+      fontWeight: FontWeight.w400,
+      height: height,
+      letterSpacing: 0.02,
+      color: LunoraColors.ereaderInk,
+    );
+  }
+
   /// Métadonnées sur fond carte lecture.
   static TextStyle storyReaderMetaOnCard(TextTheme t) {
     return GoogleFonts.nunito(

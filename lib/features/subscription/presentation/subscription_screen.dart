@@ -6,6 +6,7 @@ import '../../../core/theme/colors.dart';
 import '../../../core/theme/spacing.dart';
 import '../../../core/theme/text_styles.dart';
 import '../../../shared/models/enums/story_plan.dart';
+import '../../../shared/widgets/elunai_layout.dart';
 import '../../../shared/widgets/lunora_fade_in.dart';
 import '../../../shared/widgets/lunora_screen_shell.dart';
 import '../../auth/presentation/providers/auth_providers.dart';
@@ -13,6 +14,8 @@ import 'providers/subscription_providers.dart';
 
 class SubscriptionScreen extends ConsumerWidget {
   const SubscriptionScreen({super.key});
+
+  static final StoryPlan _plan = StoryPlan.elunai;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -26,27 +29,15 @@ class SubscriptionScreen extends ConsumerWidget {
 
     return Scaffold(
       extendBodyBehindAppBar: true,
-      appBar: AppBar(
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        title: Text(
-          'Abonnement',
-          style: theme.textTheme.titleLarge?.copyWith(
-            color: LunoraColors.warmBeige,
-            fontWeight: FontWeight.w800,
-          ),
-        ),
+      appBar: ElunaiAppBar(
+        title: 'Abonnement',
         leading: IconButton(
-          icon: Icon(
-            Icons.arrow_back_rounded,
-            color: LunoraColors.warmBeige.withValues(alpha: 0.9),
-          ),
+          icon: const Icon(Icons.arrow_back_rounded),
           onPressed: () => context.pop(),
         ),
       ),
       body: LunoraScreenShell(
         showStarfield: true,
-        starCount: 24,
         child: SafeArea(
           child: ListView(
             padding: LunoraSpacing.screen,
@@ -56,10 +47,9 @@ class SubscriptionScreen extends ConsumerWidget {
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
                     Text(
-                      'Choisis une durée moyenne d’histoire, puis passe par l’écran '
-                      'de paiement Stripe (ou le mode test sans carte).',
+                      'Un seul abonnement : histoires du soir personnalisées, paiement sécurisé avec Stripe.',
                       style: theme.textTheme.bodyMedium?.copyWith(
-                        color: LunoraColors.mist.withValues(alpha: 0.8),
+                        color: LunoraColors.mist.withValues(alpha: 0.84),
                         height: 1.5,
                       ),
                     ),
@@ -84,8 +74,8 @@ class SubscriptionScreen extends ConsumerWidget {
                           children: [
                             Text(
                               subscription == null
-                                  ? 'Aucun abonnement mocké'
-                                  : 'Plan ${subscription.planId}',
+                                  ? 'Aucun abonnement actif'
+                                  : 'Abonnement ${subscription.planId}',
                               style: theme.textTheme.titleSmall?.copyWith(
                                 color: LunoraColors.warmBeige,
                                 fontWeight: FontWeight.w800,
@@ -104,62 +94,92 @@ class SubscriptionScreen extends ConsumerWidget {
                     ),
                     const SizedBox(height: LunoraSpacing.xl),
                     Text(
-                      'Plans',
+                      'Offre',
                       style: LunoraTextStyles.sectionTitle(theme.textTheme),
                     ),
                     const SizedBox(height: LunoraSpacing.sm),
-                    ...StoryPlan.values.map(
-                      (plan) => Padding(
-                        padding: const EdgeInsets.only(bottom: LunoraSpacing.sm),
-                        child: Material(
-                          color: LunoraColors.nightBlueLift.withValues(alpha: 0.55),
-                          borderRadius: LunoraSpacing.radiusMd,
-                          child: InkWell(
-                            borderRadius: LunoraSpacing.radiusMd,
-                            onTap: () {
-                              context.push(
-                                '/stripe-checkout?planId=${Uri.encodeComponent(plan.planId)}',
-                              );
-                            },
-                            child: Padding(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: LunoraSpacing.lg,
-                                vertical: LunoraSpacing.md,
-                              ),
-                              child: Row(
-                                children: [
-                                  Expanded(
-                                    child: Column(
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.start,
-                                      children: [
-                                        Text(
-                                          plan.displayLabel,
-                                          style: theme.textTheme.titleSmall
-                                              ?.copyWith(
-                                            color: LunoraColors.warmBeige,
-                                            fontWeight: FontWeight.w800,
-                                          ),
+                    Material(
+                      color: LunoraColors.nightBlueLift.withValues(alpha: 0.55),
+                      borderRadius: LunoraSpacing.radiusMd,
+                      child: InkWell(
+                        borderRadius: LunoraSpacing.radiusMd,
+                        onTap: () {
+                          context.push(
+                            '/stripe-checkout?planId=${Uri.encodeComponent(_plan.planId)}',
+                          );
+                        },
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: LunoraSpacing.lg,
+                            vertical: LunoraSpacing.md,
+                          ),
+                          child: Row(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Container(
+                                      padding: const EdgeInsets.symmetric(
+                                        horizontal: LunoraSpacing.xs,
+                                        vertical: 2,
+                                      ),
+                                      decoration: BoxDecoration(
+                                        color: LunoraColors.violetGlow.withValues(alpha: 0.28),
+                                        borderRadius: BorderRadius.circular(999),
+                                      ),
+                                      child: Text(
+                                        _plan.marketingTag,
+                                        style: theme.textTheme.labelSmall?.copyWith(
+                                          color: LunoraColors.warmBeige,
+                                          fontWeight: FontWeight.w700,
                                         ),
-                                        const SizedBox(height: LunoraSpacing.xxs),
-                                        Text(
-                                          'Histoires autour de ${plan.targetStoryMinutes} minutes',
-                                          style: theme.textTheme.bodySmall
-                                              ?.copyWith(
-                                            color: LunoraColors.mist
-                                                .withValues(alpha: 0.72),
-                                          ),
-                                        ),
-                                      ],
+                                      ),
                                     ),
-                                  ),
-                                  Icon(
-                                    Icons.chevron_right_rounded,
-                                    color: LunoraColors.mist.withValues(alpha: 0.45),
-                                  ),
-                                ],
+                                    const SizedBox(height: LunoraSpacing.xs),
+                                    Text(
+                                      _plan.displayLabel,
+                                      style: theme.textTheme.titleSmall?.copyWith(
+                                        color: LunoraColors.warmBeige,
+                                        fontWeight: FontWeight.w800,
+                                      ),
+                                    ),
+                                    const SizedBox(height: LunoraSpacing.xxs),
+                                    Text(
+                                      'Histoires d’environ ${_plan.targetStoryMinutes} minutes, adaptées au profil.',
+                                      style: theme.textTheme.bodySmall?.copyWith(
+                                        color: LunoraColors.mist.withValues(alpha: 0.72),
+                                      ),
+                                    ),
+                                    const SizedBox(height: LunoraSpacing.xs),
+                                    Text(
+                                      _plan.monthlyPriceLabel,
+                                      style: theme.textTheme.bodyMedium?.copyWith(
+                                        color: LunoraColors.starGoldSoft,
+                                        fontWeight: FontWeight.w800,
+                                      ),
+                                    ),
+                                    const SizedBox(height: LunoraSpacing.xs),
+                                    ..._plan.keyBenefits.map(
+                                      (benefit) => Padding(
+                                        padding: const EdgeInsets.only(bottom: 2),
+                                        child: Text(
+                                          '• $benefit',
+                                          style: theme.textTheme.bodySmall?.copyWith(
+                                            color: LunoraColors.mist.withValues(alpha: 0.72),
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
                               ),
-                            ),
+                              Icon(
+                                Icons.chevron_right_rounded,
+                                color: LunoraColors.mist.withValues(alpha: 0.45),
+                              ),
+                            ],
                           ),
                         ),
                       ),

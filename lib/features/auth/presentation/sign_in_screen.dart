@@ -3,8 +3,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../core/constants/app_sizes.dart';
-import '../../../core/theme/colors.dart';
 import '../../../core/validation/auth_validators.dart';
+import '../../../shared/widgets/elunai_layout.dart';
 import '../../../shared/widgets/lunora_fade_in.dart';
 import '../../../shared/widgets/lunora_primary_button.dart';
 import '../../../shared/widgets/lunora_screen_shell.dart';
@@ -25,6 +25,7 @@ class _SignInScreenState extends ConsumerState<SignInScreen> {
   final _email = TextEditingController();
   final _password = TextEditingController();
   var _loading = false;
+  var _resetBusy = false;
 
   @override
   void dispose() {
@@ -52,31 +53,124 @@ class _SignInScreenState extends ConsumerState<SignInScreen> {
     }
   }
 
+  Future<void> _forgotPassword() async {
+    final emailCtrl = TextEditingController(text: _email.text.trim());
+    final dialogForm = GlobalKey<FormState>();
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Mot de passe oublié'),
+        content: Form(
+          key: dialogForm,
+          child: TextFormField(
+            controller: emailCtrl,
+            keyboardType: TextInputType.emailAddress,
+            textInputAction: TextInputAction.done,
+            decoration: const InputDecoration(
+              labelText: 'Email',
+              hintText: 'toi@email.com',
+            ),
+            validator: AuthValidators.emailError,
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('Annuler'),
+          ),
+          FilledButton(
+            onPressed: () {
+              if (!(dialogForm.currentState?.validate() ?? false)) return;
+              Navigator.pop(ctx, true);
+            },
+            child: const Text('Envoyer'),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true || !mounted) return;
+
+    final targetEmail = emailCtrl.text.trim().toLowerCase();
+    setState(() => _resetBusy = true);
+    try {
+      await ref
+          .read(authSessionProvider.notifier)
+          .sendPasswordResetEmail(email: targetEmail);
+      if (!mounted) return;
+      await showDialog<void>(
+        context: context,
+        builder: (ctx) => AlertDialog(
+          icon: Icon(
+            Icons.mark_email_read_rounded,
+            color: Theme.of(ctx).colorScheme.primary,
+            size: 36,
+          ),
+          title: const Text('Lien demandé auprès de Firebase'),
+          content: SingleChildScrollView(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  'Si un compte existe pour :\n$targetEmail\n\n'
+                  'un e-mail de réinitialisation part dans les prochaines minutes.',
+                  style: Theme.of(ctx).textTheme.bodyMedium,
+                ),
+                const SizedBox(height: 16),
+                Text(
+                  'Tu ne vois rien ?',
+                  style: Theme.of(ctx).textTheme.titleSmall?.copyWith(
+                        fontWeight: FontWeight.w800,
+                      ),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  '• Regarde dans Indésirables / Promotions (surtout Gmail).\n'
+                  '• Vérifie qu’il n’y a pas de faute dans l’adresse.\n'
+                  '• Dans la console Firebase : Authentication → Sign-in method : '
+                  '« E-mail / Mot de passe » doit être activé.\n'
+                  '• Domaine d’expédition : vérifie les modèles d’e-mail Auth '
+                  '(pas désactivés) et les quotas du projet.\n'
+                  '• Option avancée : définis PASSWORD_RESET_CONTINUE_URL dans '
+                  'dart_defines.json avec une URL https déjà autorisée dans '
+                  'Firebase (souvent meilleure délivrabilité des liens).',
+                  style: Theme.of(ctx).textTheme.bodySmall?.copyWith(height: 1.45),
+                ),
+              ],
+            ),
+          ),
+          actions: [
+            FilledButton(
+              onPressed: () => Navigator.of(ctx).pop(),
+              child: const Text('Compris'),
+            ),
+          ],
+        ),
+      );
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Envoi impossible : $e')),
+      );
+    } finally {
+      if (mounted) setState(() => _resetBusy = false);
+      emailCtrl.dispose();
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       extendBodyBehindAppBar: true,
-      appBar: AppBar(
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        title: Text(
-          'Connexion',
-          style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                color: LunoraColors.warmBeige,
-                fontWeight: FontWeight.w800,
-              ),
-        ),
+      appBar: ElunaiAppBar(
+        title: 'Connexion',
         leading: IconButton(
-          icon: Icon(
-            Icons.arrow_back_rounded,
-            color: LunoraColors.warmBeige.withValues(alpha: 0.9),
-          ),
+          icon: const Icon(Icons.arrow_back_rounded),
           onPressed: () => context.pop(),
         ),
       ),
       body: LunoraScreenShell(
         showStarfield: true,
-        starCount: 26,
         child: SafeArea(
           child: Padding(
             padding: AppSizes.screenPadding,
@@ -103,6 +197,20 @@ class _SignInScreenState extends ConsumerState<SignInScreen> {
                       obscureText: true,
                       textInputAction: TextInputAction.done,
                       validator: AuthValidators.passwordError,
+                    ),
+                    const SizedBox(height: AppSizes.xs),
+                    Align(
+                      alignment: Alignment.centerRight,
+                      child: TextButton(
+                        onPressed: (_loading || _resetBusy) ? null : _forgotPassword,
+                        child: _resetBusy
+                            ? const SizedBox(
+                                width: 18,
+                                height: 18,
+                                child: CircularProgressIndicator(strokeWidth: 2),
+                              )
+                            : const Text('Mot de passe oublié ?'),
+                      ),
                     ),
                     const SizedBox(height: AppSizes.lg),
                     LunoraPrimaryButton(

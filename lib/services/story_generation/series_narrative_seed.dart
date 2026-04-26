@@ -1,5 +1,5 @@
 import '../../shared/models/child_profile.dart';
-import '../../shared/models/enums/universe_type.dart';
+import '../../shared/models/story_universe.dart';
 import '../../shared/models/story.dart';
 
 /// Éléments stables du « fil rouge » d’une série (compagnon, objet, quête douce).
@@ -92,7 +92,7 @@ abstract final class SeriesNarrativeSeed {
     return '''
 Résumé des chapitres précédents :
 - Personnage principal : $hero
-- Univers : ${child.universeType.displayLabel}
+- Univers : ${child.storyUniverse.meta.displayName}
 - Situation actuelle : $situation
 - Objectif : $seriesGlobalObjective
 - Dernier événement : « ${last.title.trim()} » — $excerpt

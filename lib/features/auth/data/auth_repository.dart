@@ -16,5 +16,7 @@ abstract class AuthRepository {
   /// Web : popup Firebase. Mobile : nécessite le SDK Meta (non inclus).
   Future<UserModel> signInWithFacebook();
 
+  Future<void> sendPasswordResetEmail({required String email});
+
   Future<void> signOut();
 }

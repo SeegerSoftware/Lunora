@@ -1,4 +1,4 @@
-import '../../services/mock/mock_data.dart';
+import '../constants/profile_limits.dart';
 
 abstract final class AuthValidators {
   static String? emailError(String? raw) {
@@ -12,8 +12,8 @@ abstract final class AuthValidators {
   static String? passwordError(String? raw) {
     final v = raw ?? '';
     if (v.isEmpty) return 'Mot de passe requis';
-    if (v.length < MockData.minPasswordLength) {
-      return 'Mot de passe : ${MockData.minPasswordLength} caractères minimum';
+    if (v.length < ProfileLimits.minPasswordLength) {
+      return 'Mot de passe : ${ProfileLimits.minPasswordLength} caractères minimum';
     }
     return null;
   }

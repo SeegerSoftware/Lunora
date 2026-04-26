@@ -7,6 +7,7 @@ import '../../../core/theme/spacing.dart';
 import '../../../core/theme/text_styles.dart';
 import '../../../shared/models/enums/story_format.dart';
 import '../../../shared/models/story.dart';
+import '../../../shared/widgets/elunai_layout.dart';
 import '../../../shared/widgets/lunora_fade_in.dart';
 import '../../../shared/widgets/lunora_screen_shell.dart';
 import '../../../shared/widgets/magical/lunora_progress_bar.dart';
@@ -31,27 +32,15 @@ class StoryHistoryScreen extends ConsumerWidget {
 
     return Scaffold(
       extendBodyBehindAppBar: true,
-      appBar: AppBar(
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        title: Text(
-          'Historique',
-          style: theme.textTheme.titleLarge?.copyWith(
-            color: LunoraColors.warmBeige,
-            fontWeight: FontWeight.w800,
-          ),
-        ),
+      appBar: ElunaiAppBar(
+        title: 'Historique',
         leading: IconButton(
-          icon: Icon(
-            Icons.arrow_back_rounded,
-            color: LunoraColors.warmBeige.withValues(alpha: 0.9),
-          ),
+          icon: const Icon(Icons.arrow_back_rounded),
           onPressed: () => context.pop(),
         ),
       ),
       body: LunoraScreenShell(
         showStarfield: true,
-        starCount: 28,
         child: SafeArea(
           child: historyAsync.when(
             skipLoadingOnReload: true,
@@ -62,11 +51,12 @@ class StoryHistoryScreen extends ConsumerWidget {
                     padding: LunoraSpacing.screen,
                     child: LunoraFadeIn(
                       child: Text(
-                        'Les histoires générées apparaîtront ici, dans le carnet de lecture.',
+                        '📚 Ton carnet de lecture est prêt ! Les histoires du soir '
+                        's’afficheront ici au fil des jours.',
                         textAlign: TextAlign.center,
                         style: theme.textTheme.bodyLarge?.copyWith(
-                          color: LunoraColors.mist.withValues(alpha: 0.82),
-                          height: 1.5,
+                          color: LunoraColors.mist.withValues(alpha: 0.84),
+                          height: 1.55,
                         ),
                       ),
                     ),

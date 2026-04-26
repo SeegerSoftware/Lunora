@@ -12,6 +12,7 @@ import '../features/home/presentation/home_screen.dart';
 import '../features/parent/presentation/parent_area_screen.dart';
 import '../features/stories/presentation/story_history_screen.dart';
 import '../features/stories/presentation/instant_story_screen.dart';
+import '../features/stories/presentation/story_bedtime_reader_screen.dart';
 import '../features/stories/presentation/story_reader_screen.dart';
 import '../features/subscription/presentation/stripe_checkout_screen.dart';
 import '../features/subscription/presentation/subscription_screen.dart';
@@ -78,6 +79,16 @@ final goRouterProvider = Provider<GoRouter>((ref) {
         },
       ),
       GoRoute(
+        path: '/story/bedtime',
+        pageBuilder: (context, state) {
+          final id = state.uri.queryParameters['id'];
+          return lunoraFadePage(
+            key: state.pageKey,
+            child: StoryBedtimeReaderScreen(storyId: id),
+          );
+        },
+      ),
+      GoRoute(
         path: '/history',
         pageBuilder: (context, state) => lunoraFadePage(
           key: state.pageKey,
@@ -101,7 +112,7 @@ final goRouterProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/stripe-checkout',
         pageBuilder: (context, state) {
-          final planId = state.uri.queryParameters['planId'] ?? 'plan_10';
+          final planId = state.uri.queryParameters['planId'] ?? 'plan_elunai';
           return lunoraFadePage(
             key: state.pageKey,
             child: StripeCheckoutScreen(initialPlanId: planId),

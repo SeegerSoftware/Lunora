@@ -1,6 +1,6 @@
 import 'runtime_env.dart';
 
-/// Bascule data layer : `false` = mocks, `true` = Firebase (Auth + Firestore).
+/// Bascule data layer : Firebase requis pour l’app (défaut `true`).
 ///
 /// Ordre de priorité :
 /// 1. `--dart-define=USE_FIREBASE=true` (compilation)
@@ -11,7 +11,7 @@ abstract final class BackendConfig {
   static bool get useFirebase {
     const fromDefine = bool.fromEnvironment(
       'USE_FIREBASE',
-      defaultValue: false,
+      defaultValue: true,
     );
     if (fromDefine) return true;
     return readRuntimeEnvFlag('USE_FIREBASE');

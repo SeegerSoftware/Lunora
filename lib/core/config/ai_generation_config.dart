@@ -37,7 +37,7 @@ abstract final class AiGenerationConfig {
     if (fromDefine.trim().isNotEmpty) return fromDefine.trim();
     final env = readRuntimeEnv('OPENAI_MODEL')?.trim();
     if (env != null && env.isNotEmpty) return env;
-    return 'gpt-4o-mini';
+    return 'gpt-4o';
   }
 
   /// Modèle utilisé uniquement en secours qualité (coût plus élevé).

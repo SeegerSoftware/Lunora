@@ -1,6 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/di/providers.dart';
+import '../../../../core/validation/child_profile_rules.dart';
 import '../../../../shared/models/child_profile.dart';
 
 final childProfileProvider =
@@ -21,8 +22,13 @@ class ChildProfileNotifier extends Notifier<ChildProfile?> {
   }
 
   Future<void> upsert(ChildProfile profile) async {
-    await ref.read(childProfileRepositoryProvider).upsert(profile);
-    state = profile;
+    final normalized = ChildProfileRules.normalize(profile);
+    final err = ChildProfileRules.validate(normalized);
+    if (err != null) {
+      throw Exception(err);
+    }
+    await ref.read(childProfileRepositoryProvider).upsert(normalized);
+    state = normalized;
   }
 
   void clear() {

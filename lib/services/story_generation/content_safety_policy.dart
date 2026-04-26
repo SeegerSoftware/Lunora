@@ -1,3 +1,4 @@
+import '../../core/validation/story_profile_moderation.dart';
 import '../../shared/models/child_profile.dart';
 
 /// Règles éditoriales destinées à être renforcées côté serveur / modèle.
@@ -23,24 +24,9 @@ class StoryGenerationDraft {
   final String summary;
 }
 
-/// Garde-fous : mots interdits, longueur, thèmes à éviter (parent), indices de fin apaisante.
+/// Garde-fous : liste de modération, thèmes à éviter (parent), longueur, fin apaisante.
 class LocalContentSafetyPolicy implements ContentSafetyPolicy {
   const LocalContentSafetyPolicy();
-
-  static const _blockedTokens = <String>{
-    'sang',
-    'sanglant',
-    'mort',
-    'mourir',
-    'tuer',
-    'arme',
-    'pistolet',
-    'horreur',
-    'sexe',
-    'sexy',
-    'porn',
-    'suicide',
-  };
 
   /// Indices légers que la fin n’est pas anxiogène (derniers caractères).
   static const _soothingHints = <String>{
@@ -57,6 +43,9 @@ class LocalContentSafetyPolicy implements ContentSafetyPolicy {
     'demain',
     'repos',
     'sérénité',
+    'dormir',
+    'bien',
+    'douceur',
   };
 
   @override
@@ -64,21 +53,32 @@ class LocalContentSafetyPolicy implements ContentSafetyPolicy {
     required ChildProfile profile,
     required StoryGenerationDraft draft,
   }) {
-    final haystack = '${draft.title} ${draft.summary} ${draft.content}'.toLowerCase();
-    for (final token in _blockedTokens) {
-      if (haystack.contains(token)) return false;
+    final haystackRaw = '${draft.title} ${draft.summary} ${draft.content}';
+    final haystack = StoryProfileModeration.foldAscii(haystackRaw);
+
+    if (StoryProfileModeration.containsDisallowedContent(haystackRaw)) {
+      return false;
     }
+
+    if (StoryProfileModeration.validateChildProfile(profile) != null) {
+      return false;
+    }
+
     final body = draft.content.trim();
     if (body.length < 400) return false;
 
     for (final avoid in profile.avoidThemes) {
-      final a = avoid.trim().toLowerCase();
+      final a = StoryProfileModeration.foldAscii(avoid.trim());
       if (a.length < 3) continue;
       final re = RegExp(r'\b' + RegExp.escape(a) + r'\b');
       if (re.hasMatch(haystack)) return false;
     }
 
-    final tail = body.length > 320 ? body.substring(body.length - 320).toLowerCase() : haystack;
+    final tail = body.length > 320
+        ? StoryProfileModeration.foldAscii(
+            body.substring(body.length - 320),
+          )
+        : haystack;
     var soothing = 0;
     for (final h in _soothingHints) {
       if (tail.contains(h)) soothing++;

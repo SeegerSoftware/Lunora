@@ -7,6 +7,7 @@ import 'package:flutter/foundation.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:sign_in_with_apple/sign_in_with_apple.dart';
 
+import '../../../core/config/auth_action_config.dart';
 import '../../../core/config/social_auth_config.dart';
 import '../../../services/firebase/firebase_errors.dart';
 import '../../../services/firebase/firestore_mappers.dart';
@@ -229,6 +230,33 @@ class FirebaseAuthRepository implements AuthRepository {
     } catch (_) {}
     try {
       await _auth.signOut();
+    } on FirebaseAuthException catch (e) {
+      throw Exception(FirebaseErrors.authMessage(e));
+    }
+  }
+
+  @override
+  Future<void> sendPasswordResetEmail({required String email}) async {
+    final normalized = email.trim().toLowerCase();
+    if (normalized.isEmpty) {
+      throw Exception('Email requis');
+    }
+    try {
+      final action = AuthActionConfig.passwordResetActionCodeSettings();
+      if (action != null) {
+        await _auth.sendPasswordResetEmail(
+          email: normalized,
+          actionCodeSettings: action,
+        );
+      } else {
+        await _auth.sendPasswordResetEmail(email: normalized);
+      }
+      if (kDebugMode) {
+        debugPrint(
+          'elunai.auth: password reset requested for $normalized '
+          '(actionUrl=${AuthActionConfig.passwordResetContinueUrl.isEmpty ? "default" : "custom"})',
+        );
+      }
     } on FirebaseAuthException catch (e) {
       throw Exception(FirebaseErrors.authMessage(e));
     }

@@ -36,7 +36,7 @@ class FirebaseSubscriptionRepository implements SubscriptionRepository {
   }
 
   @override
-  Future<Subscription> selectMockPlan({
+  Future<Subscription> activateTestPlan({
     required UserModel user,
     required StoryPlan plan,
   }) async {

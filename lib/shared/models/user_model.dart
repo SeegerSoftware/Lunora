@@ -18,7 +18,7 @@ class UserModel extends Equatable {
   final String email;
   final DateTime createdAt;
 
-  /// Identifiant de plan (ex. `plan_10`) — aligné sur `StoryPlan.planId`.
+  /// Identifiant de plan — aligné sur `StoryPlan.planId` (ex. `plan_elunai`).
   final String? selectedPlan;
   final SubscriptionStatus subscriptionStatus;
 

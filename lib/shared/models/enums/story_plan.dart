@@ -1,29 +1,38 @@
-/// Plans d’abonnement indexés sur la durée moyenne d’histoire (MVP).
-enum StoryPlan { minutes5, minutes10, minutes15 }
+/// Abonnement unique (MVP) — durée cible de lecture ~10 min.
+enum StoryPlan { elunai }
 
 extension StoryPlanX on StoryPlan {
-  int get targetStoryMinutes => switch (this) {
-    StoryPlan.minutes5 => 5,
-    StoryPlan.minutes10 => 10,
-    StoryPlan.minutes15 => 15,
-  };
+  int get targetStoryMinutes => 10;
 
-  String get planId => switch (this) {
-    StoryPlan.minutes5 => 'plan_5',
-    StoryPlan.minutes10 => 'plan_10',
-    StoryPlan.minutes15 => 'plan_15',
-  };
+  String get planId => 'plan_elunai';
 
-  String get displayLabel => switch (this) {
-    StoryPlan.minutes5 => 'Essentiel · 5 min',
-    StoryPlan.minutes10 => 'Sérénité · 10 min',
-    StoryPlan.minutes15 => 'Rituel · 15 min',
-  };
+  String get displayLabel => 'Elunai — histoires du soir';
+
+  /// Prix public : 5,99 CHF / mois.
+  int get monthlyPriceCents => 599;
+
+  String get monthlyPriceLabel {
+    final chf = monthlyPriceCents / 100;
+    return 'CHF ${chf.toStringAsFixed(2)} / mois';
+  }
+
+  String get marketingTag => 'Offre unique';
+
+  List<String> get keyBenefits => const [
+        'Histoires personnalisées pour le coucher',
+        'Adaptation par âge et profil enfant',
+        'Lecture apaisante et mode liseuse dédié',
+      ];
 
   static StoryPlan fromPlanId(String? raw) {
-    return StoryPlan.values.firstWhere(
-      (e) => e.planId == raw,
-      orElse: () => StoryPlan.minutes10,
-    );
+    if (raw == null || raw.isEmpty) return StoryPlan.elunai;
+    for (final p in StoryPlan.values) {
+      if (p.planId == raw) return p;
+    }
+    // Anciens identifiants → offre unique actuelle
+    if (raw == 'plan_5' || raw == 'plan_10' || raw == 'plan_15') {
+      return StoryPlan.elunai;
+    }
+    return StoryPlan.elunai;
   }
 }

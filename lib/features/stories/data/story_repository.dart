@@ -18,5 +18,11 @@ abstract class StoryRepository {
 
   Future<Story?> findById(String storyId);
 
+  /// [feedback] : 1 = j’aime, -1 = je n’aime pas.
+  Future<void> setStoryUserFeedback({
+    required String storyId,
+    required int feedback,
+  });
+
   Future<void> reset();
 }

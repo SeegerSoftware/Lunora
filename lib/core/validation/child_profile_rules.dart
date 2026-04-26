@@ -1,10 +1,11 @@
-import '../../services/mock/mock_data.dart';
+import '../constants/profile_limits.dart';
 import '../../shared/models/child_profile.dart';
+import 'story_profile_moderation.dart';
 import '../../shared/models/enums/story_format.dart';
 import '../../shared/models/enums/story_tone.dart';
-import '../../shared/models/enums/universe_type.dart';
+import '../../shared/models/story_universe.dart';
 
-/// Règles métier + normalisation profil enfant (MVP mock).
+/// Règles métier + normalisation profil enfant.
 abstract final class ChildProfileRules {
   static ChildProfile normalize(ChildProfile input) {
     if (input.storyFormat == StoryFormat.dailyStandalone) {
@@ -16,7 +17,7 @@ abstract final class ChildProfileRules {
   }
 
   static int _coerceSeriesDurationDays(int raw) {
-    if (MockData.seriesDurationDaysAllowed.contains(raw)) return raw;
+    if (ProfileLimits.seriesDurationDaysAllowed.contains(raw)) return raw;
     return 7;
   }
 
@@ -29,26 +30,29 @@ abstract final class ChildProfileRules {
       return 'Mois de naissance invalide';
     }
     final y = profile.birthYear;
-    final minY = MockData.minBirthYear();
-    final maxY = MockData.maxBirthYear();
+    final minY = ProfileLimits.minBirthYear();
+    final maxY = ProfileLimits.maxBirthYear();
     if (y > maxY) return 'L’année de naissance ne peut pas être dans le futur';
     if (y < minY) return 'Année de naissance peu réaliste pour l’app';
 
-    if (!MockData.storyLengthMinutesAllowed.contains(
+    if (!ProfileLimits.storyLengthMinutesAllowed.contains(
       profile.storyLengthMinutes,
     )) {
       return 'Durée d’histoire invalide';
     }
 
     if (profile.storyFormat == StoryFormat.serializedChapters) {
-      if (!MockData.seriesDurationDaysAllowed.contains(
+      if (!ProfileLimits.seriesDurationDaysAllowed.contains(
         profile.seriesDurationDays,
       )) {
-        return 'Durée de série obligatoire (3, 5, 7 ou 14 jours)';
+        return 'Durée de série obligatoire (7 jours)';
       }
     } else if (profile.seriesDurationDays != 0) {
       return 'Incohérence : durée de série sans format sérialisé';
     }
+
+    final moderation = StoryProfileModeration.validateChildProfile(profile);
+    if (moderation != null) return moderation;
 
     return null;
   }
@@ -59,18 +63,18 @@ abstract final class ChildProfileRules {
   }
 
   static String? validateBirthYear(int year) {
-    if (year > MockData.maxBirthYear()) {
+    if (year > ProfileLimits.maxBirthYear()) {
       return 'L’année ne peut pas être dans le futur';
     }
-    if (year < MockData.minBirthYear()) {
+    if (year < ProfileLimits.minBirthYear()) {
       return 'Année peu réaliste';
     }
     return null;
   }
 
   static String? validateStoryMinutes(int minutes) {
-    if (!MockData.storyLengthMinutesAllowed.contains(minutes)) {
-      return 'Choisissez une durée d’histoire (5, 10 ou 15 min)';
+    if (!ProfileLimits.storyLengthMinutesAllowed.contains(minutes)) {
+      return 'Durée d’histoire invalide (10 min attendu)';
     }
     return null;
   }
@@ -80,14 +84,14 @@ abstract final class ChildProfileRules {
     int seriesDays,
   ) {
     if (format == StoryFormat.serializedChapters) {
-      if (!MockData.seriesDurationDaysAllowed.contains(seriesDays)) {
+      if (!ProfileLimits.seriesDurationDaysAllowed.contains(seriesDays)) {
         return 'Choisissez une durée de série';
       }
     }
     return null;
   }
 
-  static UniverseType defaultUniverseType() => UniverseType.skyAndStars;
+  static StoryUniverse defaultStoryUniverse() => StoryUniverse.magicAndFairy;
 
   static StoryTone defaultTone() => StoryTone.reassuring;
 }

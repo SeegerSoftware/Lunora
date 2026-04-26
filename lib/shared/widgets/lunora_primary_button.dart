@@ -22,14 +22,20 @@ class LunoraPrimaryButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
+    final light = Theme.of(context).brightness == Brightness.light;
     final button = FilledButton(
         onPressed: isLoading ? null : onPressed,
         style: FilledButton.styleFrom(
-          elevation: 0.2,
-          backgroundColor: LunoraColors.warmBeige,
-          foregroundColor: LunoraColors.nightBlueDeep,
-          disabledBackgroundColor: LunoraColors.warmBeigeDim.withValues(alpha: 0.75),
-          disabledForegroundColor: LunoraColors.nightBlueDeep.withValues(alpha: 0.55),
+          elevation: light ? 0 : 0.2,
+          backgroundColor: light ? cs.primary : LunoraColors.warmBeige,
+          foregroundColor: light ? cs.onPrimary : LunoraColors.nightBlueDeep,
+          disabledBackgroundColor: light
+              ? cs.primary.withValues(alpha: 0.35)
+              : LunoraColors.warmBeigeDim.withValues(alpha: 0.75),
+          disabledForegroundColor: light
+              ? cs.onPrimary.withValues(alpha: 0.55)
+              : LunoraColors.nightBlueDeep.withValues(alpha: 0.55),
           padding: const EdgeInsets.symmetric(
             horizontal: LunoraSpacing.lg,
             vertical: LunoraSpacing.md + 2,
@@ -37,18 +43,20 @@ class LunoraPrimaryButton extends StatelessWidget {
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(22),
             side: BorderSide(
-              color: LunoraColors.starGold.withValues(alpha: 0.26),
+              color: light
+                  ? LunoraColors.forestGreen.withValues(alpha: 0.12)
+                  : LunoraColors.starGold.withValues(alpha: 0.26),
             ),
           ),
           minimumSize: const Size.fromHeight(54),
         ),
         child: isLoading
-            ? const SizedBox(
+            ? SizedBox(
                 height: 22,
                 width: 22,
                 child: CircularProgressIndicator(
                   strokeWidth: 2.2,
-                  color: LunoraColors.nightBlueDeep,
+                  color: light ? cs.onPrimary : LunoraColors.nightBlueDeep,
                 ),
               )
             : Row(
@@ -62,7 +70,7 @@ class LunoraPrimaryButton extends StatelessWidget {
                   Text(
                     label,
                     style: Theme.of(context).textTheme.labelLarge?.copyWith(
-                          color: LunoraColors.nightBlueDeep,
+                          color: light ? cs.onPrimary : LunoraColors.nightBlueDeep,
                           fontWeight: FontWeight.w900,
                           letterSpacing: 0.2,
                         ),

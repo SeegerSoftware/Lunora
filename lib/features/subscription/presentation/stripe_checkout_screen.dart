@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import '../../../core/config/stripe_config.dart';
 import '../../../core/theme/colors.dart';
@@ -8,6 +9,7 @@ import '../../../core/theme/spacing.dart';
 import '../../../core/theme/text_styles.dart';
 import '../../../shared/models/enums/story_plan.dart';
 import '../../../shared/models/enums/subscription_status.dart';
+import '../../../shared/widgets/elunai_layout.dart';
 import '../../../shared/widgets/lunora_fade_in.dart';
 import '../../../shared/widgets/lunora_primary_button.dart';
 import '../../../shared/widgets/lunora_screen_shell.dart';
@@ -31,6 +33,7 @@ class StripeCheckoutScreen extends ConsumerStatefulWidget {
 class _StripeCheckoutScreenState extends ConsumerState<StripeCheckoutScreen> {
   late StoryPlan _plan;
   var _testBusy = false;
+  var _payBusy = false;
 
   @override
   void initState() {
@@ -45,7 +48,7 @@ class _StripeCheckoutScreenState extends ConsumerState<StripeCheckoutScreen> {
     try {
       await ref
           .read(subscriptionProvider.notifier)
-          .selectMockPlanFor(user: user, plan: _plan);
+          .activateTestPlanFor(user: user, plan: _plan);
       ref.read(authSessionProvider.notifier).applyPlanSelection(
             planId: _plan.planId,
             status: SubscriptionStatus.active,
@@ -60,16 +63,42 @@ class _StripeCheckoutScreenState extends ConsumerState<StripeCheckoutScreen> {
     }
   }
 
-  void _onPayWithStripe() {
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text(
-          'Branchement Stripe : endpoint sécurisé (ex. Cloud Function) qui '
-          'retourne clientSecret + activation PaymentSheet / Checkout.',
+  Future<void> _onPayWithStripe() async {
+    final user = ref.read(authSessionProvider);
+    if (user == null) return;
+    final baseUrl = StripeConfig.checkoutUrlForPlan(_plan);
+    if (baseUrl == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            'Checkout Stripe non configuré. '
+            'Ajoute STRIPE_CHECKOUT_URL (URL de session Stripe) dans les dart-defines.',
+          ),
+          duration: Duration(seconds: 5),
         ),
-        duration: Duration(seconds: 5),
-      ),
+      );
+      return;
+    }
+
+    final uri = Uri.parse(baseUrl).replace(
+      queryParameters: {
+        ...Uri.parse(baseUrl).queryParameters,
+        'planId': _plan.planId,
+        'email': user.email,
+      },
     );
+
+    setState(() => _payBusy = true);
+    try {
+      final opened = await launchUrl(uri, mode: LaunchMode.externalApplication);
+      if (!opened && mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Impossible d’ouvrir Stripe Checkout.')),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _payBusy = false);
+    }
   }
 
   @override
@@ -84,27 +113,15 @@ class _StripeCheckoutScreenState extends ConsumerState<StripeCheckoutScreen> {
 
     return Scaffold(
       extendBodyBehindAppBar: true,
-      appBar: AppBar(
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        title: Text(
-          'Paiement',
-          style: theme.textTheme.titleLarge?.copyWith(
-            color: LunoraColors.warmBeige,
-            fontWeight: FontWeight.w800,
-          ),
-        ),
+      appBar: ElunaiAppBar(
+        title: 'Paiement',
         leading: IconButton(
-          icon: Icon(
-            Icons.arrow_back_rounded,
-            color: LunoraColors.warmBeige.withValues(alpha: 0.9),
-          ),
+          icon: const Icon(Icons.arrow_back_rounded),
           onPressed: () => context.pop(),
         ),
       ),
       body: LunoraScreenShell(
         showStarfield: true,
-        starCount: 20,
         child: SafeArea(
           child: ListView(
             padding: LunoraSpacing.screen,
@@ -145,6 +162,14 @@ class _StripeCheckoutScreenState extends ConsumerState<StripeCheckoutScreen> {
                                 color: LunoraColors.mist.withValues(alpha: 0.75),
                               ),
                             ),
+                            const SizedBox(height: LunoraSpacing.xs),
+                            Text(
+                              _plan.monthlyPriceLabel,
+                              style: theme.textTheme.bodyMedium?.copyWith(
+                                color: LunoraColors.starGoldSoft,
+                                fontWeight: FontWeight.w800,
+                              ),
+                            ),
                             const SizedBox(height: LunoraSpacing.sm),
                             Text(
                               'Compte : ${user.email}',
@@ -177,8 +202,8 @@ class _StripeCheckoutScreenState extends ConsumerState<StripeCheckoutScreen> {
                           children: [
                             Text(
                               stripeReady
-                                  ? 'Clé publique détectée (pk_…). Prochaine étape : '
-                                      'flutter_stripe + PaymentSheet après clientSecret.'
+                                  ? 'Clé publique détectée (pk_…). '
+                                      'Paiement via Stripe Checkout sécurisé.'
                                   : 'Définis STRIPE_PUBLISHABLE_KEY (pk_test_…) en '
                                       'dart-define pour activer le SDK côté app.',
                               style: theme.textTheme.bodySmall?.copyWith(
@@ -221,7 +246,8 @@ class _StripeCheckoutScreenState extends ConsumerState<StripeCheckoutScreen> {
                       label: stripeReady
                           ? 'Payer avec Stripe'
                           : 'Payer avec Stripe (configurer la clé)',
-                      onPressed: _testBusy ? null : _onPayWithStripe,
+                      isLoading: _payBusy,
+                      onPressed: (_testBusy || _payBusy) ? null : _onPayWithStripe,
                     ),
                     const SizedBox(height: LunoraSpacing.sm),
                     TextButton(

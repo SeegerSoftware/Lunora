@@ -18,13 +18,13 @@ class SubscriptionNotifier extends Notifier<Subscription?> {
     state = await ref.read(subscriptionRepositoryProvider).current(userId);
   }
 
-  Future<Subscription> selectMockPlanFor({
+  Future<Subscription> activateTestPlanFor({
     required UserModel user,
     required StoryPlan plan,
   }) async {
     final subscription = await ref
         .read(subscriptionRepositoryProvider)
-        .selectMockPlan(user: user, plan: plan);
+        .activateTestPlan(user: user, plan: plan);
     state = subscription;
     return subscription;
   }
