@@ -1,7 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../config/ai_generation_config.dart';
 import '../config/backend_config.dart';
+import '../config/mobile_api_config.dart';
 import '../../features/auth/data/auth_repository.dart';
 import '../../features/auth/data/firebase_auth_repository.dart';
 import '../../features/child_profile/data/child_profile_repository.dart';
@@ -13,49 +13,55 @@ import '../../features/story_memory/data/story_memory_repository.dart';
 import '../../features/subscription/data/firebase_subscription_repository.dart';
 import '../../features/subscription/data/subscription_repository.dart';
 import '../../shared/models/series_state.dart';
-import '../../services/story_generation/ai_story_generation_service.dart';
+import '../../services/backend/elunai_api_client.dart';
+import '../../services/story_generation/backend_story_generation_service.dart';
 import '../../services/story_generation/models/story_generation_request.dart';
 import '../../services/story_generation/models/story_generation_result.dart';
-import '../../services/story_generation/openai_chat_client.dart';
 import '../../services/story_generation/story_generation_exception.dart';
-import '../../services/story_generation/story_generation_orchestrator.dart';
 import '../../services/story_generation/story_generation_service.dart';
 
 void _requireFirebase() {
   if (!BackendConfig.useFirebase) {
     throw StateError(
-      'Lunora est conçu pour fonctionner en ligne avec Firebase. '
+      'Elunai est conçu pour fonctionner en ligne avec Firebase. '
       'Lance l’app avec USE_FIREBASE=true (voir dart_defines.example.json).',
     );
   }
 }
 
-final storyGenerationServiceProvider = Provider<StoryGenerationService>((ref) {
-  if (!AiGenerationConfig.canUseRemoteAi) {
-    return _UnconfiguredStoryGenerationService();
-  }
-  final client = OpenAiChatClient();
+final elunaiApiClientProvider = Provider<ElunaiApiClient>((ref) {
+  final client = MobileApiConfig.isConfigured
+      ? ElunaiApiClient()
+      : ElunaiApiClient(baseUrl: '');
   ref.onDispose(client.close);
-  final orchestrator = StoryGenerationOrchestrator(chatClient: client);
-  return AiStoryGenerationService(
-    orchestrator: orchestrator,
-    chatClient: client,
-  );
+  return client;
 });
 
-final class _UnconfiguredStoryGenerationService implements StoryGenerationService {
+final storyGenerationServiceProvider = Provider<StoryGenerationService>((ref) {
+  if (MobileApiConfig.isConfigured) {
+    return BackendStoryGenerationService(
+      apiClient: ref.watch(elunaiApiClientProvider),
+    );
+  }
+  return _UnconfiguredStoryGenerationService();
+});
+
+final class _UnconfiguredStoryGenerationService
+    implements StoryGenerationService {
   @override
   Future<StoryGenerationResult> generate(StoryGenerationRequest request) async {
     throw StoryGenerationException(
-      'Génération en ligne désactivée : ajoute USE_REAL_AI=true et une clé OPENAI_API_KEY '
-      'dans dart_defines.json (voir dart_defines.example.json).',
+      'Génération en ligne désactivée : configure USE_SERVER_API=true et '
+      'ELUNAI_API_BASE_URL pour utiliser le backend Elunai.',
     );
   }
 
   @override
-  Future<SeriesBible> generateSeriesBible(StoryGenerationRequest request) async {
+  Future<SeriesBible> generateSeriesBible(
+    StoryGenerationRequest request,
+  ) async {
     throw StoryGenerationException(
-      'Génération en ligne désactivée : configure OPENAI_API_KEY et USE_REAL_AI.',
+      'Génération en ligne désactivée : configure le backend Elunai.',
     );
   }
 }

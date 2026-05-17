@@ -1,5 +1,4 @@
 import '../models/story.dart';
-import '../../core/config/ai_generation_config.dart';
 
 String storyFormatLabel(Story story) {
   if (story.isSerialized) return 'Chapitre';
@@ -17,6 +16,7 @@ String readingDurationLabel(int minutes) => '$minutes min';
 String storyModelLabel(String source) {
   final lower = source.toLowerCase();
   if (lower.contains('fallback')) return 'mode secours local';
-  if (lower.contains('gpt-4o')) return AiGenerationConfig.openaiModelPremium;
-  return AiGenerationConfig.openaiModel;
+  if (lower.contains('backend')) return 'backend Elunai';
+  if (lower.contains('remote-ai')) return 'IA serveur';
+  return 'génération personnalisée';
 }

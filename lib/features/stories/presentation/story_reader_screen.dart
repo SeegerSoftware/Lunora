@@ -9,6 +9,7 @@ import '../../../core/di/providers.dart';
 import '../../../core/theme/colors.dart';
 import '../../../core/theme/spacing.dart';
 import '../../../features/child_profile/presentation/providers/child_profile_providers.dart';
+import '../../../routing/safe_navigation.dart';
 import '../../../services/story_generation/story_adaptation_engine.dart';
 import '../../../services/story_generation/story_generation_exception.dart';
 import '../../../shared/models/story.dart';
@@ -169,7 +170,7 @@ class _StoryReaderScreenState extends ConsumerState<StoryReaderScreen> {
         leading: IconButton(
           tooltip: 'Retour',
           icon: const Icon(Icons.arrow_back_rounded),
-          onPressed: () => context.pop(),
+          onPressed: () => context.safePopOrGo('/home'),
         ),
         actions: [
           IconButton(

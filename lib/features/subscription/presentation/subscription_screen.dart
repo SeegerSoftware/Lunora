@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import '../../../core/theme/colors.dart';
 import '../../../core/theme/spacing.dart';
 import '../../../core/theme/text_styles.dart';
+import '../../../routing/safe_navigation.dart';
 import '../../../shared/models/enums/story_plan.dart';
 import '../../../shared/widgets/elunai_layout.dart';
 import '../../../shared/widgets/lunora_fade_in.dart';
@@ -33,7 +34,7 @@ class SubscriptionScreen extends ConsumerWidget {
         title: 'Abonnement',
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_rounded),
-          onPressed: () => context.pop(),
+          onPressed: () => context.safePopOrGo('/home'),
         ),
       ),
       body: LunoraScreenShell(
@@ -186,7 +187,7 @@ class SubscriptionScreen extends ConsumerWidget {
                     ),
                     const SizedBox(height: LunoraSpacing.lg),
                     OutlinedButton(
-                      onPressed: () => context.pop(),
+                      onPressed: () => context.safePopOrGo('/home'),
                       child: const Text('Retour'),
                     ),
                   ],

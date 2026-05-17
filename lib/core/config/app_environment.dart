@@ -1,6 +1,6 @@
 enum AppEnvironment { development, staging, production }
 
-/// Voir `lib/core/config/ai_generation_config.dart` (USE_REAL_AI, OPENAI_API_KEY, …).
+/// Voir `lib/core/config/mobile_api_config.dart` (USE_SERVER_API, ELUNAI_API_BASE_URL).
 class AppConfig {
   const AppConfig({required this.environment});
 

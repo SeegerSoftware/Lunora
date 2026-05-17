@@ -1,18 +1,40 @@
-# lunora.v00
+# Lunora
 
-Package Dart : `lunora_v00` (le point n’est pas autorisé dans `pubspec name`).
+Application Flutter pour générer des histoires du soir personnalisées pour les enfants.
 
-A new Flutter project.
+## État du projet
 
-## Getting Started
+- App Flutter structurée par fonctionnalités : auth, profil enfant, histoires, mémoire narrative, abonnement.
+- Firebase Auth et Cloud Firestore sont utilisés côté mobile.
+- Génération IA côté backend via FastAPI.
+- Backend FastAPI présent dans `backend/` pour les appels sensibles : OpenAI, Stripe Checkout.
 
-This project is a starting point for a Flutter application.
+## Lancer l'app
 
-A few resources to get you started if this is your first Flutter project:
+1. Copier `dart_defines.example.json` vers `dart_defines.json`.
+2. Renseigner uniquement les valeurs locales nécessaires.
+3. Pour la génération IA et Stripe côté serveur, définir :
+   - `USE_SERVER_API=true`
+   - `ELUNAI_API_BASE_URL=http://localhost:8000`
+4. Lancer :
 
-- [Lab: Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Cookbook: Useful Flutter samples](https://docs.flutter.dev/cookbook)
+```powershell
+.\run.ps1
+```
 
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+## Sécurité
+
+Ne jamais versionner `dart_defines.json`, `.env`, les fichiers Firebase natifs ou une clé OpenAI réelle.
+
+La génération OpenAI doit passer par le backend. Ne place pas de clé OpenAI dans les `dart-defines` de l'app mobile.
+
+## Backend
+
+```powershell
+cd backend
+docker compose up --build
+```
+
+- API : http://localhost:8000
+- Santé : http://localhost:8000/health
+- Config mobile : http://localhost:8000/mobile/config

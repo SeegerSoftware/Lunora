@@ -8,6 +8,7 @@ import '../../../core/validation/child_profile_rules.dart';
 import '../../../core/theme/spacing.dart';
 import '../../../core/theme/text_styles.dart';
 import '../../../core/di/providers.dart';
+import '../../../routing/safe_navigation.dart';
 import '../../../shared/models/child_profile.dart';
 import '../../../shared/models/enums/story_format.dart';
 import '../../../shared/models/enums/story_tone.dart';
@@ -37,7 +38,7 @@ class ParentAreaScreen extends ConsumerWidget {
         title: 'Espace parent',
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_rounded),
-          onPressed: () => context.pop(),
+          onPressed: () => context.safePopOrGo('/home'),
         ),
       ),
       body: LunoraScreenShell(

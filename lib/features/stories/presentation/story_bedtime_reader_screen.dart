@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
 
 import '../../../core/theme/spacing.dart';
 import '../../../core/theme/text_styles.dart';
+import '../../../routing/safe_navigation.dart';
 import '../../../shared/widgets/magical/lunora_progress_bar.dart';
 import 'providers/story_providers.dart';
 
@@ -56,7 +56,7 @@ class _StoryBedtimeReaderScreenState extends ConsumerState<StoryBedtimeReaderScr
                   child: IconButton(
                     tooltip: 'Retour',
                     icon: const Icon(Icons.arrow_back_rounded, color: _inkMuted),
-                    onPressed: () => context.pop(),
+                    onPressed: () => context.safePopOrGo('/story'),
                   ),
                 ),
                 Expanded(

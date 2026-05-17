@@ -45,7 +45,5 @@
 	<true/>
 	<key>UIApplicationSupportsIndirectInputEvents</key>
 	<true/>
-	<key>NSFaceIDUsageDescription</key>
-	<string>Déverrouillage sécurisé de l'application Elunai.</string>
 </dict>
 </plist>

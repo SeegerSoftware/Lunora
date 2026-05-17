@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
 
 import '../../../core/constants/app_sizes.dart';
 import '../../../core/theme/colors.dart';
 import '../../../core/validation/auth_validators.dart';
+import '../../../routing/safe_navigation.dart';
 import '../../../shared/widgets/elunai_layout.dart';
 import '../../../shared/widgets/lunora_fade_in.dart';
 import '../../../shared/widgets/lunora_primary_button.dart';
@@ -61,7 +61,7 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
         title: 'Créer un compte',
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_rounded),
-          onPressed: () => context.pop(),
+          onPressed: () => context.safePopOrGo('/welcome'),
         ),
       ),
       body: LunoraScreenShell(
@@ -109,7 +109,7 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
                       onPressed: _submit,
                     ),
                     TextButton(
-                      onPressed: () => context.pop(),
+                      onPressed: () => context.safePopOrGo('/signin'),
                       child: const Text('Déjà un compte ? Se connecter'),
                     ),
                     const SizedBox(height: AppSizes.xl),

@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import '../../../core/theme/colors.dart';
 import '../../../core/theme/spacing.dart';
 import '../../../core/theme/text_styles.dart';
+import '../../../routing/safe_navigation.dart';
 import '../../../shared/models/enums/story_format.dart';
 import '../../../shared/models/story.dart';
 import '../../../shared/widgets/elunai_layout.dart';
@@ -36,7 +37,7 @@ class StoryHistoryScreen extends ConsumerWidget {
         title: 'Historique',
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_rounded),
-          onPressed: () => context.pop(),
+          onPressed: () => context.safePopOrGo('/home'),
         ),
       ),
       body: LunoraScreenShell(

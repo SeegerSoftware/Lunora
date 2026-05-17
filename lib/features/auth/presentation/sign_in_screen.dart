@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../../core/constants/app_sizes.dart';
+import '../../../routing/safe_navigation.dart';
 import '../../../core/validation/auth_validators.dart';
 import '../../../shared/widgets/elunai_layout.dart';
 import '../../../shared/widgets/lunora_fade_in.dart';
@@ -185,7 +186,7 @@ class _SignInScreenState extends ConsumerState<SignInScreen> {
         title: 'Connexion',
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_rounded),
-          onPressed: () => context.pop(),
+          onPressed: () => context.safePopOrGo('/welcome'),
         ),
       ),
       body: LunoraScreenShell(

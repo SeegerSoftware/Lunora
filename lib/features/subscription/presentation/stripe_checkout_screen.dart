@@ -1,20 +1,21 @@
+import 'package:firebase_auth/firebase_auth.dart' as firebase_auth;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
 import 'package:url_launcher/url_launcher.dart';
 
+import '../../../core/config/mobile_api_config.dart';
 import '../../../core/config/stripe_config.dart';
+import '../../../core/di/providers.dart';
 import '../../../core/theme/colors.dart';
 import '../../../core/theme/spacing.dart';
 import '../../../core/theme/text_styles.dart';
+import '../../../routing/safe_navigation.dart';
 import '../../../shared/models/enums/story_plan.dart';
-import '../../../shared/models/enums/subscription_status.dart';
 import '../../../shared/widgets/elunai_layout.dart';
 import '../../../shared/widgets/lunora_fade_in.dart';
 import '../../../shared/widgets/lunora_primary_button.dart';
 import '../../../shared/widgets/lunora_screen_shell.dart';
 import '../../auth/presentation/providers/auth_providers.dart';
-import 'providers/subscription_providers.dart';
 
 /// Écran de paiement préparé pour Stripe : récap plan + zone « carte ».
 ///
@@ -32,7 +33,6 @@ class StripeCheckoutScreen extends ConsumerStatefulWidget {
 
 class _StripeCheckoutScreenState extends ConsumerState<StripeCheckoutScreen> {
   late StoryPlan _plan;
-  var _testBusy = false;
   var _payBusy = false;
 
   @override
@@ -41,59 +41,23 @@ class _StripeCheckoutScreenState extends ConsumerState<StripeCheckoutScreen> {
     _plan = StoryPlanX.fromPlanId(widget.initialPlanId);
   }
 
-  Future<void> _activateTestPlan() async {
-    final user = ref.read(authSessionProvider);
-    if (user == null) return;
-    setState(() => _testBusy = true);
-    try {
-      await ref
-          .read(subscriptionProvider.notifier)
-          .activateTestPlanFor(user: user, plan: _plan);
-      ref.read(authSessionProvider.notifier).applyPlanSelection(
-            planId: _plan.planId,
-            status: SubscriptionStatus.active,
-          );
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Plan test : ${_plan.displayLabel}')),
-      );
-      context.pop();
-    } finally {
-      if (mounted) setState(() => _testBusy = false);
-    }
-  }
-
   Future<void> _onPayWithStripe() async {
     final user = ref.read(authSessionProvider);
     if (user == null) return;
-    final baseUrl = StripeConfig.checkoutUrlForPlan(_plan);
-    if (baseUrl == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text(
-            'Checkout Stripe non configuré. '
-            'Ajoute STRIPE_CHECKOUT_URL (URL de session Stripe) dans les dart-defines.',
-          ),
-          duration: Duration(seconds: 5),
-        ),
-      );
-      return;
-    }
-
-    final uri = Uri.parse(baseUrl).replace(
-      queryParameters: {
-        ...Uri.parse(baseUrl).queryParameters,
-        'planId': _plan.planId,
-        'email': user.email,
-      },
-    );
 
     setState(() => _payBusy = true);
     try {
+      final uri = await _checkoutUriFor(user.email);
       final opened = await launchUrl(uri, mode: LaunchMode.externalApplication);
       if (!opened && mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Impossible d’ouvrir Stripe Checkout.')),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('$e')),
         );
       }
     } finally {
@@ -101,11 +65,47 @@ class _StripeCheckoutScreenState extends ConsumerState<StripeCheckoutScreen> {
     }
   }
 
+  Future<Uri> _checkoutUriFor(String email) async {
+    if (MobileApiConfig.isConfigured) {
+      final token = await firebase_auth.FirebaseAuth.instance.currentUser
+          ?.getIdToken();
+      if (token == null || token.isEmpty) {
+        throw StateError('Session Firebase requise pour ouvrir Stripe.');
+      }
+      final response = await ref.read(elunaiApiClientProvider).postJson(
+        '/stripe/checkout',
+        bearerToken: token,
+        body: {'planId': _plan.planId, 'email': email},
+      );
+      final url = response['url']?.toString().trim() ?? '';
+      if (url.isEmpty) {
+        throw StateError('Le backend Stripe n’a pas renvoyé d’URL Checkout.');
+      }
+      return Uri.parse(url);
+    }
+
+    final baseUrl = StripeConfig.checkoutUrlForPlan(_plan);
+    if (baseUrl == null) {
+      throw StateError(
+        'Checkout Stripe non configuré. Configure le backend de paiement, puis '
+        'ELUNAI_API_BASE_URL côté app.',
+      );
+    }
+    return Uri.parse(baseUrl).replace(
+      queryParameters: {
+        ...Uri.parse(baseUrl).queryParameters,
+        'planId': _plan.planId,
+        'email': email,
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final user = ref.watch(authSessionProvider);
-    final stripeReady = StripeConfig.isPublishableKeyConfigured;
+    final stripeReady =
+        MobileApiConfig.isConfigured || StripeConfig.isPublishableKeyConfigured;
 
     if (user == null) {
       return const Scaffold(body: Center(child: Text('Session requise')));
@@ -117,7 +117,7 @@ class _StripeCheckoutScreenState extends ConsumerState<StripeCheckoutScreen> {
         title: 'Paiement',
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_rounded),
-          onPressed: () => context.pop(),
+          onPressed: () => context.safePopOrGo('/subscription'),
         ),
       ),
       body: LunoraScreenShell(
@@ -202,10 +202,10 @@ class _StripeCheckoutScreenState extends ConsumerState<StripeCheckoutScreen> {
                           children: [
                             Text(
                               stripeReady
-                                  ? 'Clé publique détectée (pk_…). '
+                                  ? 'Checkout backend détecté. '
                                       'Paiement via Stripe Checkout sécurisé.'
-                                  : 'Définis STRIPE_PUBLISHABLE_KEY (pk_test_…) en '
-                                      'dart-define pour activer le SDK côté app.',
+                                  : 'Configure le backend de paiement et '
+                                      'ELUNAI_API_BASE_URL côté app.',
                               style: theme.textTheme.bodySmall?.copyWith(
                                 color: LunoraColors.mist.withValues(alpha: 0.82),
                                 height: 1.45,
@@ -247,20 +247,7 @@ class _StripeCheckoutScreenState extends ConsumerState<StripeCheckoutScreen> {
                           ? 'Payer avec Stripe'
                           : 'Payer avec Stripe (configurer la clé)',
                       isLoading: _payBusy,
-                      onPressed: (_testBusy || _payBusy) ? null : _onPayWithStripe,
-                    ),
-                    const SizedBox(height: LunoraSpacing.sm),
-                    TextButton(
-                      onPressed: _testBusy ? null : _activateTestPlan,
-                      child: _testBusy
-                          ? const SizedBox(
-                              height: 22,
-                              width: 22,
-                              child: CircularProgressIndicator(strokeWidth: 2),
-                            )
-                          : const Text(
-                              'Mode test : activer le plan sans paiement',
-                            ),
+                      onPressed: _payBusy ? null : _onPayWithStripe,
                     ),
                   ],
                 ),

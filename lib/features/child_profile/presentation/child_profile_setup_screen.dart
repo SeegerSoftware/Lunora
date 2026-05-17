@@ -5,10 +5,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:uuid/uuid.dart';
 
-import '../../../core/config/security_preferences.dart';
 import '../../../core/constants/app_sizes.dart';
 import '../../../core/theme/colors.dart';
 import '../../../core/validation/child_profile_rules.dart';
+import '../../../routing/safe_navigation.dart';
 import '../../../shared/models/child_profile.dart';
 import '../../../shared/models/enums/story_format.dart';
 import '../../../shared/models/enums/story_tone.dart';
@@ -111,12 +111,13 @@ class _ChildProfileSetupScreenState
   ];
 
   var _loading = false;
-  var _biometricLockEnabled = true;
+  var _currentStep = 0;
+
+  static const int _lastStep = 2;
 
   @override
   void initState() {
     super.initState();
-    _loadSecurityPreferences();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final existing = ref.read(childProfileProvider);
       if (existing == null) return;
@@ -144,17 +145,6 @@ class _ChildProfileSetupScreenState
             : _composeLegacyHints(existing);
       });
     });
-  }
-
-  Future<void> _loadSecurityPreferences() async {
-    final enabled = await SecurityPreferences.isBiometricLockEnabled();
-    if (!mounted) return;
-    setState(() => _biometricLockEnabled = enabled);
-  }
-
-  Future<void> _setBiometricLockEnabled(bool enabled) async {
-    setState(() => _biometricLockEnabled = enabled);
-    await SecurityPreferences.setBiometricLockEnabled(enabled);
   }
 
   String _composeLegacyHints(ChildProfile c) {
@@ -246,6 +236,23 @@ class _ChildProfileSetupScreenState
     ScaffoldMessenger.of(
       context,
     ).showSnackBar(SnackBar(content: Text(message)));
+  }
+
+  void _nextStep() {
+    if (_currentStep == 0 && !(_formKey.currentState?.validate() ?? false)) {
+      return;
+    }
+    if (_currentStep < _lastStep) {
+      setState(() => _currentStep += 1);
+    }
+  }
+
+  void _previousStep() {
+    if (_currentStep > 0) {
+      setState(() => _currentStep -= 1);
+    } else {
+      context.safePopOrGo('/home');
+    }
   }
 
   Future<void> _submit() async {
@@ -448,7 +455,10 @@ class _ChildProfileSetupScreenState
                     ),
                   ),
                   const SizedBox(height: AppSizes.lg),
-                  _SectionCard(
+                  _ProfileFlowHeader(currentStep: _currentStep),
+                  const SizedBox(height: AppSizes.md),
+                  if (_currentStep == 0)
+                    _SectionCard(
                     title: 'Profil enfant',
                     subtitle: 'Obligatoire : prénom + âge.',
                     child: Column(
@@ -527,9 +537,9 @@ class _ChildProfileSetupScreenState
                         ),
                       ],
                     ),
-                  ),
-                  const SizedBox(height: AppSizes.md),
-                  _SectionCard(
+                    ),
+                  if (_currentStep == 1) ...[
+                    _SectionCard(
                     title: 'Guide pour les histoires',
                     subtitle:
                         'Touche une idée pour l’ajouter, ou écris librement (virgules ou lignes).',
@@ -611,9 +621,10 @@ class _ChildProfileSetupScreenState
                         ),
                       ],
                     ),
-                  ),
-                  const SizedBox(height: AppSizes.md),
-                  _SectionCard(
+                    ),
+                  ],
+                  if (_currentStep == 2) ...[
+                    _SectionCard(
                     title: 'Encore plus de détails ?',
                     subtitle:
                         'Tout ce que tu veux ajouter : à éviter, peurs, valeurs, prénoms du doudou…',
@@ -625,22 +636,8 @@ class _ChildProfileSetupScreenState
                       maxLines: 6,
                       minLines: 3,
                     ),
-                  ),
-                  const SizedBox(height: AppSizes.md),
-                  _SectionCard(
-                    title: 'Sécurité',
-                    subtitle:
-                        'Verrouille Elunai au retour dans l’app avec empreinte / Face ID.',
-                    child: SwitchListTile.adaptive(
-                      contentPadding: EdgeInsets.zero,
-                      value: _biometricLockEnabled,
-                      title: const Text('Verrouillage biométrique'),
-                      subtitle: const Text(
-                        'Recommandé sur les appareils partagés.',
-                      ),
-                      onChanged: _setBiometricLockEnabled,
                     ),
-                  ),
+                  ],
                   const SizedBox(height: AppSizes.lg),
                   if (_loading)
                     const Center(
@@ -650,10 +647,32 @@ class _ChildProfileSetupScreenState
                       ),
                     )
                   else
-                    MagicalAppButton(
-                      label: 'Enregistrer',
-                      icon: Icons.save_rounded,
-                      onPressed: _submit,
+                    Row(
+                      children: [
+                        Expanded(
+                          child: OutlinedButton.icon(
+                            onPressed: _previousStep,
+                            icon: const Icon(Icons.arrow_back_rounded),
+                            label: Text(
+                              _currentStep == 0 ? 'Retour' : 'Précédent',
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: AppSizes.sm),
+                        Expanded(
+                          child: MagicalAppButton(
+                            label: _currentStep == _lastStep
+                                ? 'Enregistrer'
+                                : 'Continuer',
+                            icon: _currentStep == _lastStep
+                                ? Icons.save_rounded
+                                : Icons.arrow_forward_rounded,
+                            onPressed: _currentStep == _lastStep
+                                ? _submit
+                                : _nextStep,
+                          ),
+                        ),
+                      ],
                     ),
                   const SizedBox(height: AppSizes.md),
                 ],
@@ -662,6 +681,68 @@ class _ChildProfileSetupScreenState
           ),
         ),
       ),
+    );
+  }
+}
+
+class _ProfileFlowHeader extends StatelessWidget {
+  const _ProfileFlowHeader({required this.currentStep});
+
+  final int currentStep;
+
+  static const _labels = ['Profil', 'Histoire', 'Notes'];
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Row(
+          children: [
+            for (var i = 0; i < _labels.length; i++) ...[
+              Expanded(
+                child: Column(
+                  children: [
+                    AnimatedContainer(
+                      duration: const Duration(milliseconds: 180),
+                      height: 6,
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(999),
+                        color: i <= currentStep
+                            ? LunoraColors.forestGreen
+                            : LunoraColors.storybookInkMuted.withValues(
+                                alpha: 0.18,
+                              ),
+                      ),
+                    ),
+                    const SizedBox(height: AppSizes.xs),
+                    Text(
+                      _labels[i],
+                      style: theme.textTheme.labelSmall?.copyWith(
+                        color: i == currentStep
+                            ? LunoraColors.forestGreen
+                            : LunoraColors.storybookInkMuted,
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              if (i != _labels.length - 1) const SizedBox(width: AppSizes.xs),
+            ],
+          ],
+        ),
+        const SizedBox(height: AppSizes.sm),
+        Text(
+          'Étape ${currentStep + 1}/${_labels.length}',
+          textAlign: TextAlign.center,
+          style: theme.textTheme.bodySmall?.copyWith(
+            color: LunoraColors.storybookInkMuted,
+            fontWeight: FontWeight.w700,
+          ),
+        ),
+      ],
     );
   }
 }

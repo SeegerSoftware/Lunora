@@ -1,13 +1,8 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 import '../../../services/firebase/firebase_errors.dart';
-import '../../../services/firebase/firestore_mappers.dart';
 import '../../../services/firebase/firestore_paths.dart';
-import '../../../shared/models/enums/renewal_type.dart';
-import '../../../shared/models/enums/story_plan.dart';
-import '../../../shared/models/enums/subscription_status.dart';
 import '../../../shared/models/subscription.dart';
-import '../../../shared/models/user_model.dart';
 import 'subscription_repository.dart';
 
 class FirebaseSubscriptionRepository implements SubscriptionRepository {
@@ -35,35 +30,4 @@ class FirebaseSubscriptionRepository implements SubscriptionRepository {
     }
   }
 
-  @override
-  Future<Subscription> activateTestPlan({
-    required UserModel user,
-    required StoryPlan plan,
-  }) async {
-    try {
-      final now = DateTime.now();
-      final sub = Subscription(
-        userId: user.id,
-        planId: plan.planId,
-        status: SubscriptionStatus.active,
-        startedAt: now,
-        endsAt: now.add(const Duration(days: 30)),
-        renewalType: RenewalType.monthly,
-      );
-
-      final batch = _db.batch();
-      batch.set(
-        _db.collection(FirestorePaths.subscriptions).doc(user.id),
-        FirestoreMappers.subscriptionWrite(sub),
-      );
-      batch.set(_db.collection(FirestorePaths.users).doc(user.id), {
-        'selectedPlan': plan.planId,
-        'subscriptionStatus': SubscriptionStatus.active.wireValue,
-      }, SetOptions(merge: true));
-      await batch.commit();
-      return sub;
-    } catch (e) {
-      throw Exception(FirebaseErrors.firestoreMessage(e));
-    }
-  }
 }
