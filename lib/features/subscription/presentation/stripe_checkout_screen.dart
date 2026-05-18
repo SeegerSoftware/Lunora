@@ -16,6 +16,7 @@ import '../../../shared/widgets/lunora_fade_in.dart';
 import '../../../shared/widgets/lunora_primary_button.dart';
 import '../../../shared/widgets/lunora_screen_shell.dart';
 import '../../auth/presentation/providers/auth_providers.dart';
+import '../../../services/firebase/app_check_token_provider.dart';
 
 /// Écran de paiement préparé pour Stripe : récap plan + zone « carte ».
 ///
@@ -75,6 +76,7 @@ class _StripeCheckoutScreenState extends ConsumerState<StripeCheckoutScreen> {
       final response = await ref.read(elunaiApiClientProvider).postJson(
         '/stripe/checkout',
         bearerToken: token,
+        appCheckToken: await AppCheckTokenProvider.getToken(),
         body: {'planId': _plan.planId, 'email': email},
       );
       final url = response['url']?.toString().trim() ?? '';

@@ -31,6 +31,8 @@ Docs interactives FastAPI : <http://localhost:8000/docs>
 - `STRIPE_PRICE_ID_ELUNAI` : Price ID Stripe utilisé pour l'abonnement.
 - `STRIPE_WEBHOOK_SECRET` : secret de signature du webhook Stripe.
 - `STRIPE_SUCCESS_URL` / `STRIPE_CANCEL_URL` : URLs de retour Checkout.
+- `APP_CHECK_ENFORCED=true` : exige un token Firebase App Check valide sur les endpoints protégés.
+- `GENERATION_RATE_LIMIT_PER_HOUR` : limite de génération par utilisateur, par défaut `12`.
 
 Voir `.env.example`. Copie vers `.env` si besoin.
 
@@ -43,6 +45,7 @@ Voir `.env.example`. Copie vers `.env` si besoin.
 - `POST /stripe/webhook` : webhook Stripe, vérifie la signature puis met à jour :
   - `subscriptions/{firebaseUid}`
   - `users/{firebaseUid}.subscriptionStatus`
+- `DELETE /account` : protégé par Firebase ID token et App Check, supprime les données utilisateur et le compte Firebase Auth.
 
 Le webhook attend `firebaseUid` et `planId` dans les métadonnées de la souscription Stripe. L'endpoint Checkout les place automatiquement dans la session.
 
@@ -59,6 +62,7 @@ Le webhook attend `firebaseUid` et `planId` dans les métadonnées de la souscri
    - `customer.subscription.created`
    - `customer.subscription.updated`
    - `customer.subscription.deleted`
+8. Active App Check côté Firebase puis passe `APP_CHECK_ENFORCED=true` côté backend après validation sur staging.
 
 ## Tests backend
 

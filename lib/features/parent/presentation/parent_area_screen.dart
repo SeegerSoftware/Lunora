@@ -133,6 +133,23 @@ class ParentAreaScreen extends ConsumerWidget {
                   variant: MagicalButtonVariant.secondary,
                   onPressed: () => context.push('/subscription'),
                 ),
+                const SizedBox(height: LunoraSpacing.xl),
+                Text(
+                  'Compte',
+                  style: LunoraTextStyles.sectionTitle(theme.textTheme),
+                ),
+                const SizedBox(height: LunoraSpacing.sm),
+                OutlinedButton.icon(
+                  onPressed: user == null
+                      ? null
+                      : () => _confirmDeleteAccount(context, ref),
+                  icon: const Icon(Icons.delete_forever_rounded),
+                  label: const Text('Supprimer mon compte et mes données'),
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: theme.colorScheme.error,
+                    side: BorderSide(color: theme.colorScheme.error),
+                  ),
+                ),
                   ],
                 ),
               ),
@@ -140,6 +157,52 @@ class ParentAreaScreen extends ConsumerWidget {
           ),
         ),
       ),
+    );
+  }
+}
+
+Future<void> _confirmDeleteAccount(BuildContext context, WidgetRef ref) async {
+  final confirmed = await showDialog<bool>(
+    context: context,
+    builder: (ctx) => AlertDialog(
+      title: const Text('Supprimer le compte ?'),
+      content: const Text(
+        'Cette action supprime le compte, les profils enfant, les histoires, '
+        'la mémoire narrative et les données d’abonnement associées.',
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.of(ctx).pop(false),
+          child: const Text('Annuler'),
+        ),
+        FilledButton(
+          onPressed: () => Navigator.of(ctx).pop(true),
+          style: FilledButton.styleFrom(
+            backgroundColor: Theme.of(ctx).colorScheme.error,
+            foregroundColor: Theme.of(ctx).colorScheme.onError,
+          ),
+          child: const Text('Supprimer'),
+        ),
+      ],
+    ),
+  );
+  if (confirmed != true || !context.mounted) return;
+
+  showDialog<void>(
+    context: context,
+    barrierDismissible: false,
+    builder: (_) => const Center(child: CircularProgressIndicator()),
+  );
+  try {
+    await ref.read(authSessionProvider.notifier).deleteAccount();
+    if (!context.mounted) return;
+    Navigator.of(context, rootNavigator: true).pop();
+    context.go('/welcome');
+  } catch (e) {
+    if (!context.mounted) return;
+    Navigator.of(context, rootNavigator: true).pop();
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text('$e')),
     );
   }
 }

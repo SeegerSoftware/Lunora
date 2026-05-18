@@ -107,6 +107,11 @@ class AuthSessionNotifier extends Notifier<UserModel?> {
     await ref.read(authRepositoryProvider).sendPasswordResetEmail(email: email);
   }
 
+  Future<void> deleteAccount() async {
+    await ref.read(authRepositoryProvider).deleteAccount();
+    syncSignedOutFromFirebase();
+  }
+
   void applyPlanSelection({
     required String planId,
     required SubscriptionStatus status,

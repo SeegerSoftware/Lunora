@@ -3,7 +3,10 @@ import os
 from fastapi import Depends, FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
 
-from .auth import verify_firebase_user
+from .account import delete_account_data
+from .auth import verify_app_check, verify_firebase_user
+from .models import StoryGenerationPayload, StripeCheckoutPayload
+from .rate_limit import check_generation_rate_limit
 from .story_generation import generate_series_bible, generate_story
 from .stripe_checkout import create_checkout_session
 from .subscriptions import handle_stripe_webhook
@@ -25,8 +28,8 @@ app.add_middleware(
     CORSMiddleware,
     allow_origins=_cors_origins(),
     allow_credentials=True,
-    allow_methods=["GET", "POST", "OPTIONS"],
-    allow_headers=["Authorization", "Content-Type"],
+    allow_methods=["GET", "POST", "DELETE", "OPTIONS"],
+    allow_headers=["Authorization", "Content-Type", "X-Firebase-AppCheck"],
 )
 
 
@@ -49,31 +52,44 @@ def mobile_config():
 
 @app.post("/stories/generate")
 def stories_generate(
-    payload: dict,
+    payload: StoryGenerationPayload,
     firebase_user: dict = Depends(verify_firebase_user),
+    _: None = Depends(verify_app_check),
 ):
-    child_user_id = payload.get("child", {}).get("userId")
+    data = payload.model_dump(mode="json", exclude_none=True)
+    child_user_id = data.get("child", {}).get("userId")
     if child_user_id and child_user_id != firebase_user.get("uid"):
         raise HTTPException(status_code=403, detail="Child profile does not belong to token user")
 
-    if payload.get("user", {}).get("id") != firebase_user.get("uid"):
+    if data.get("user", {}).get("id") != firebase_user.get("uid"):
         # The mobile client sends its current user model; the Firebase token is authoritative.
-        payload = {**payload, "user": {**payload.get("user", {}), "id": firebase_user.get("uid")}}
+        data = {**data, "user": {**data.get("user", {}), "id": firebase_user.get("uid")}}
 
-    kind = str(payload.get("kind") or "story")
+    check_generation_rate_limit(str(firebase_user.get("uid")))
+
+    kind = str(data.get("kind") or "story")
     if kind == "series_bible":
-        return {"result": generate_series_bible(payload)}
+        return {"result": generate_series_bible(data)}
     if kind == "story":
-        return {"result": generate_story(payload)}
+        return {"result": generate_story(data)}
     raise HTTPException(status_code=400, detail="Unsupported generation kind")
 
 
 @app.post("/stripe/checkout")
 def stripe_checkout(
-    payload: dict,
+    payload: StripeCheckoutPayload,
     firebase_user: dict = Depends(verify_firebase_user),
+    _: None = Depends(verify_app_check),
 ):
-    return create_checkout_session(payload, firebase_user)
+    return create_checkout_session(payload.model_dump(exclude_none=True), firebase_user)
+
+
+@app.delete("/account")
+def delete_account(
+    firebase_user: dict = Depends(verify_firebase_user),
+    _: None = Depends(verify_app_check),
+):
+    return {"ok": True, "deleted": delete_account_data(str(firebase_user.get("uid")))}
 
 
 @app.post("/stripe/webhook")

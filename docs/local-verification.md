@@ -12,6 +12,8 @@ pip install -r requirements.txt
 $env:ALLOW_TEST_BEARER_TOKEN="true"
 $env:OPENAI_MOCK="true"
 $env:STRIPE_MOCK="true"
+$env:ALLOW_TEST_APP_CHECK="true"
+$env:APP_CHECK_ENFORCED="false"
 $env:FIREBASE_PROJECT_ID="lunora-adb24"
 $env:FIREBASE_AUTH_EMULATOR_HOST="localhost:9099"
 $env:FIRESTORE_EMULATOR_HOST="localhost:8080"

@@ -10,6 +10,7 @@ os.environ["ALLOW_TEST_BEARER_TOKEN"] = "true"
 os.environ["OPENAI_MOCK"] = "true"
 os.environ["STRIPE_MOCK"] = "true"
 os.environ["FIRESTORE_EMULATOR_HOST"] = "localhost:8080"
+os.environ["ALLOW_TEST_APP_CHECK"] = "true"
 
 from app.main import app  # noqa: E402
 
@@ -26,7 +27,10 @@ def test_stories_generate_requires_firebase_token():
 def test_stories_generate_with_test_token_returns_story():
     response = client.post(
         "/stories/generate",
-        headers={"Authorization": "Bearer test:user-1"},
+        headers={
+            "Authorization": "Bearer test:user-1",
+            "X-Firebase-AppCheck": "test",
+        },
         json={
             "kind": "story",
             "user": {"id": "user-1", "email": "parent@example.com"},
@@ -51,12 +55,45 @@ def test_stories_generate_with_test_token_returns_story():
 def test_stripe_checkout_with_test_token_returns_url():
     response = client.post(
         "/stripe/checkout",
-        headers={"Authorization": "Bearer test:user-1"},
+        headers={
+            "Authorization": "Bearer test:user-1",
+            "X-Firebase-AppCheck": "test",
+        },
         json={"planId": "plan_elunai", "email": "parent@example.com"},
     )
 
     assert response.status_code == 200
     assert response.json()["url"].startswith("https://checkout.stripe.com/")
+
+
+def test_stories_generate_validates_payload():
+    response = client.post(
+        "/stories/generate",
+        headers={
+            "Authorization": "Bearer test:user-1",
+            "X-Firebase-AppCheck": "test",
+        },
+        json={"kind": "story"},
+    )
+
+    assert response.status_code == 422
+
+
+def test_stories_generate_rejects_foreign_child_profile():
+    response = client.post(
+        "/stories/generate",
+        headers={
+            "Authorization": "Bearer test:user-1",
+            "X-Firebase-AppCheck": "test",
+        },
+        json={
+            "kind": "story",
+            "user": {"id": "user-1"},
+            "child": {"id": "child-1", "userId": "user-2"},
+        },
+    )
+
+    assert response.status_code == 403
 
 
 def test_stripe_webhook_mock_accepts_subscription_update(monkeypatch):
@@ -108,3 +145,60 @@ def test_stripe_webhook_mock_accepts_subscription_update(monkeypatch):
     assert writes[0][1]["status"] == "active"
     assert writes[1][0] == "users/user-1"
     assert writes[1][1]["subscriptionStatus"] == "active"
+
+
+def test_delete_account_deletes_user_scoped_data(monkeypatch):
+    deletes = []
+
+    class FakeRef:
+        def __init__(self, path):
+            self.path = path
+
+        def delete(self):
+            deletes.append(self.path)
+
+        def set(self, data, merge=False):
+            pass
+
+    class FakeSnap:
+        def __init__(self, path):
+            self.reference = FakeRef(path)
+
+    class FakeQuery:
+        def __init__(self, collection_name):
+            self.collection_name = collection_name
+
+        def stream(self):
+            return [FakeSnap(f"{self.collection_name}/doc-1")]
+
+    class FakeCollection:
+        def __init__(self, name):
+            self.name = name
+
+        def where(self, *_args):
+            return FakeQuery(self.name)
+
+        def document(self, doc_id):
+            return FakeRef(f"{self.name}/{doc_id}")
+
+    class FakeDb:
+        def collection(self, name):
+            return FakeCollection(name)
+
+    class FakeAuth:
+        def delete_user(self, uid):
+            deletes.append(f"auth/{uid}")
+
+    monkeypatch.setattr("app.account.firestore_client", lambda: FakeDb())
+    monkeypatch.setattr("app.account._firebase_auth", lambda: FakeAuth())
+
+    response = client.delete(
+        "/account",
+        headers={
+            "Authorization": "Bearer test:user-1",
+            "X-Firebase-AppCheck": "test",
+        },
+    )
+
+    assert response.status_code == 200
+    assert "auth/user-1" in deletes

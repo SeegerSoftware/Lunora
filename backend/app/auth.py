@@ -47,6 +47,27 @@ def verify_firebase_user(authorization: str | None = Header(default=None)) -> di
 FirebaseUser = Depends(verify_firebase_user)
 
 
+def verify_app_check(x_firebase_appcheck: str | None = Header(default=None)) -> None:
+    enforced = os.getenv("APP_CHECK_ENFORCED", "").lower() == "true"
+    if os.getenv("ALLOW_TEST_APP_CHECK") == "true" and x_firebase_appcheck == "test":
+        return
+    if not x_firebase_appcheck:
+        if enforced:
+            raise HTTPException(status_code=401, detail="Firebase App Check token required")
+        return
+    try:
+        from firebase_admin import app_check
+
+        _firebase_auth()
+        app_check.verify_token(x_firebase_appcheck)
+    except Exception as exc:
+        if enforced:
+            raise HTTPException(status_code=401, detail="Invalid Firebase App Check token") from exc
+
+
+AppCheck = Depends(verify_app_check)
+
+
 def firestore_client():
     try:
         from firebase_admin import firestore

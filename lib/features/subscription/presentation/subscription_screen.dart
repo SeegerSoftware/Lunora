@@ -6,9 +6,11 @@ import '../../../core/theme/colors.dart';
 import '../../../core/theme/spacing.dart';
 import '../../../core/theme/text_styles.dart';
 import '../../../routing/safe_navigation.dart';
+import '../../../shared/models/enums/subscription_status.dart';
 import '../../../shared/models/enums/story_plan.dart';
 import '../../../shared/widgets/elunai_layout.dart';
 import '../../../shared/widgets/lunora_fade_in.dart';
+import '../../../shared/widgets/lunora_primary_button.dart';
 import '../../../shared/widgets/lunora_screen_shell.dart';
 import '../../auth/presentation/providers/auth_providers.dart';
 import 'providers/subscription_providers.dart';
@@ -23,6 +25,9 @@ class SubscriptionScreen extends ConsumerWidget {
     final theme = Theme.of(context);
     final user = ref.watch(authSessionProvider);
     final subscription = ref.watch(subscriptionProvider);
+    final effectiveStatus = subscription?.status ?? user?.subscriptionStatus;
+    final isActive = effectiveStatus == SubscriptionStatus.active ||
+        effectiveStatus == SubscriptionStatus.grace;
 
     if (user == null) {
       return const Scaffold(body: Center(child: Text('Session requise')));
@@ -48,12 +53,21 @@ class SubscriptionScreen extends ConsumerWidget {
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
                     Text(
-                      'Un seul abonnement : histoires du soir personnalisées, paiement sécurisé avec Stripe.',
+                      'Un abonnement clair, géré par Stripe. Le statut est mis à jour automatiquement après confirmation du paiement.',
                       style: theme.textTheme.bodyMedium?.copyWith(
                         color: LunoraColors.mist.withValues(alpha: 0.84),
                         height: 1.5,
                       ),
                     ),
+                    if (subscription?.endsAt != null) ...[
+                      const SizedBox(height: LunoraSpacing.sm),
+                      Text(
+                        'Fin de période : ${subscription!.endsAt!.day.toString().padLeft(2, '0')}.${subscription.endsAt!.month.toString().padLeft(2, '0')}.${subscription.endsAt!.year}',
+                        style: theme.textTheme.bodySmall?.copyWith(
+                          color: LunoraColors.mist.withValues(alpha: 0.75),
+                        ),
+                      ),
+                    ],
                     const SizedBox(height: LunoraSpacing.xl),
                     Text(
                       'État actuel',
@@ -74,9 +88,9 @@ class SubscriptionScreen extends ConsumerWidget {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              subscription == null
-                                  ? 'Aucun abonnement actif'
-                                  : 'Abonnement ${subscription.planId}',
+                              isActive
+                                  ? 'Abonnement actif'
+                                  : 'Aucun abonnement actif',
                               style: theme.textTheme.titleSmall?.copyWith(
                                 color: LunoraColors.warmBeige,
                                 fontWeight: FontWeight.w800,
@@ -84,7 +98,9 @@ class SubscriptionScreen extends ConsumerWidget {
                             ),
                             const SizedBox(height: LunoraSpacing.xs),
                             Text(
-                              'Compte : ${user.subscriptionStatus.name} · ${user.selectedPlan ?? 'aucun plan'}',
+                              subscription == null
+                                  ? 'Compte : ${effectiveStatus?.name ?? 'none'} · ${user.subscriptionStatus.name}'
+                                  : 'Plan : ${subscription.planId} · statut ${subscription.status.name}',
                               style: theme.textTheme.bodySmall?.copyWith(
                                 color: LunoraColors.mist.withValues(alpha: 0.75),
                               ),
@@ -184,6 +200,20 @@ class SubscriptionScreen extends ConsumerWidget {
                           ),
                         ),
                       ),
+                    ),
+                    const SizedBox(height: LunoraSpacing.lg),
+                    LunoraPrimaryButton(
+                      label: isActive
+                          ? 'Gérer mon abonnement'
+                          : 'S’abonner avec Stripe',
+                      icon: isActive
+                          ? Icons.manage_accounts_rounded
+                          : Icons.lock_rounded,
+                      onPressed: () {
+                        context.push(
+                          '/stripe-checkout?planId=${Uri.encodeComponent(_plan.planId)}',
+                        );
+                      },
                     ),
                     const SizedBox(height: LunoraSpacing.lg),
                     OutlinedButton(

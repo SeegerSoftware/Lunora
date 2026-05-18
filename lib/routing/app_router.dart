@@ -15,6 +15,7 @@ import '../features/stories/presentation/instant_story_screen.dart';
 import '../features/stories/presentation/story_bedtime_reader_screen.dart';
 import '../features/stories/presentation/story_reader_screen.dart';
 import '../features/subscription/presentation/stripe_checkout_screen.dart';
+import '../features/subscription/presentation/payment_result_screen.dart';
 import '../features/subscription/presentation/subscription_screen.dart';
 import 'lunora_page_transitions.dart';
 import 'router_refresh.dart';
@@ -118,6 +119,20 @@ final goRouterProvider = Provider<GoRouter>((ref) {
             child: StripeCheckoutScreen(initialPlanId: planId),
           );
         },
+      ),
+      GoRoute(
+        path: '/subscription/success',
+        pageBuilder: (context, state) => lunoraFadePage(
+          key: state.pageKey,
+          child: const PaymentResultScreen(success: true),
+        ),
+      ),
+      GoRoute(
+        path: '/subscription/cancel',
+        pageBuilder: (context, state) => lunoraFadePage(
+          key: state.pageKey,
+          child: const PaymentResultScreen(success: false),
+        ),
       ),
     ],
     redirect: (BuildContext context, GoRouterState state) {

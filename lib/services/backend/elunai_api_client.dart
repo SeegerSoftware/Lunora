@@ -40,10 +40,13 @@ class ElunaiApiClient {
     return Uri.parse('$_baseUrl$cleanPath').replace(queryParameters: query);
   }
 
-  Map<String, String> _headers({String? bearerToken}) {
+  Map<String, String> _headers({String? bearerToken, String? appCheckToken}) {
     final headers = <String, String>{'Content-Type': 'application/json'};
     if (bearerToken != null && bearerToken.trim().isNotEmpty) {
       headers['Authorization'] = 'Bearer ${bearerToken.trim()}';
+    }
+    if (appCheckToken != null && appCheckToken.trim().isNotEmpty) {
+      headers['X-Firebase-AppCheck'] = appCheckToken.trim();
     }
     return headers;
   }
@@ -52,9 +55,16 @@ class ElunaiApiClient {
     String path, {
     Map<String, String>? query,
     String? bearerToken,
+    String? appCheckToken,
   }) async {
     final response = await _http
-        .get(_uri(path, query), headers: _headers(bearerToken: bearerToken))
+        .get(
+          _uri(path, query),
+          headers: _headers(
+            bearerToken: bearerToken,
+            appCheckToken: appCheckToken,
+          ),
+        )
         .timeout(_timeout);
     return _decodeJson(response, path);
   }
@@ -63,12 +73,34 @@ class ElunaiApiClient {
     String path, {
     Map<String, dynamic>? body,
     String? bearerToken,
+    String? appCheckToken,
   }) async {
     final response = await _http
         .post(
           _uri(path),
-          headers: _headers(bearerToken: bearerToken),
+          headers: _headers(
+            bearerToken: bearerToken,
+            appCheckToken: appCheckToken,
+          ),
           body: jsonEncode(body ?? const <String, dynamic>{}),
+        )
+        .timeout(_timeout);
+    return _decodeJson(response, path);
+  }
+
+  Future<Map<String, dynamic>> deleteJson(
+    String path, {
+    Map<String, String>? query,
+    String? bearerToken,
+    String? appCheckToken,
+  }) async {
+    final response = await _http
+        .delete(
+          _uri(path, query),
+          headers: _headers(
+            bearerToken: bearerToken,
+            appCheckToken: appCheckToken,
+          ),
         )
         .timeout(_timeout);
     return _decodeJson(response, path);

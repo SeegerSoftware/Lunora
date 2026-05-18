@@ -73,7 +73,7 @@ final storyMemoryRepositoryProvider = Provider<StoryMemoryRepository>((ref) {
 
 final authRepositoryProvider = Provider<AuthRepository>((ref) {
   _requireFirebase();
-  return FirebaseAuthRepository();
+  return FirebaseAuthRepository(apiClient: ref.watch(elunaiApiClientProvider));
 });
 
 final childProfileRepositoryProvider = Provider<ChildProfileRepository>((ref) {

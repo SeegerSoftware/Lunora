@@ -29,5 +29,4 @@ class FirebaseSubscriptionRepository implements SubscriptionRepository {
       throw Exception(FirebaseErrors.firestoreMessage(e));
     }
   }
-
 }

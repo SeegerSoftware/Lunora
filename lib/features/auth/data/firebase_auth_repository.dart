@@ -8,7 +8,10 @@ import 'package:google_sign_in/google_sign_in.dart';
 import 'package:sign_in_with_apple/sign_in_with_apple.dart';
 
 import '../../../core/config/auth_action_config.dart';
+import '../../../core/config/mobile_api_config.dart';
 import '../../../core/config/social_auth_config.dart';
+import '../../../services/backend/elunai_api_client.dart';
+import '../../../services/firebase/app_check_token_provider.dart';
 import '../../../services/firebase/firebase_errors.dart';
 import '../../../services/firebase/firestore_mappers.dart';
 import '../../../services/firebase/firestore_paths.dart';
@@ -17,12 +20,18 @@ import '../../../shared/models/user_model.dart';
 import 'auth_repository.dart';
 
 class FirebaseAuthRepository implements AuthRepository {
-  FirebaseAuthRepository({FirebaseAuth? auth, FirebaseFirestore? firestore})
+  FirebaseAuthRepository({
+    FirebaseAuth? auth,
+    FirebaseFirestore? firestore,
+    ElunaiApiClient? apiClient,
+  })
     : _auth = auth ?? FirebaseAuth.instance,
-      _db = firestore ?? FirebaseFirestore.instance;
+      _db = firestore ?? FirebaseFirestore.instance,
+      _api = apiClient;
 
   final FirebaseAuth _auth;
   final FirebaseFirestore _db;
+  final ElunaiApiClient? _api;
 
   @override
   Future<UserModel?> restoreSession() async {
@@ -259,6 +268,29 @@ class FirebaseAuthRepository implements AuthRepository {
       }
     } on FirebaseAuthException catch (e) {
       throw Exception(FirebaseErrors.authMessage(e));
+    }
+  }
+
+  @override
+  Future<void> deleteAccount() async {
+    final user = _auth.currentUser;
+    if (user == null) return;
+    if (!MobileApiConfig.isConfigured) {
+      throw Exception('Suppression compte indisponible : backend non configuré.');
+    }
+    final token = await user.getIdToken();
+    final api = _api ?? ElunaiApiClient();
+    try {
+      await api.deleteJson(
+        '/account',
+        bearerToken: token,
+        appCheckToken: await AppCheckTokenProvider.getToken(),
+      );
+      await _auth.signOut();
+    } catch (e) {
+      throw Exception('Suppression du compte impossible : $e');
+    } finally {
+      if (_api == null) api.close();
     }
   }
 }

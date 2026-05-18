@@ -7,6 +7,7 @@ import '../../shared/models/enums/story_tone.dart';
 import '../../shared/models/series_state.dart';
 import '../../shared/models/story_universe.dart';
 import '../backend/elunai_api_client.dart';
+import '../firebase/app_check_token_provider.dart';
 import 'models/story_generation_request.dart';
 import 'models/story_generation_result.dart';
 import 'story_generation_exception.dart';
@@ -67,6 +68,7 @@ class BackendStoryGenerationService implements StoryGenerationService {
       return await _api.postJson(
         '/stories/generate',
         bearerToken: token,
+        appCheckToken: await AppCheckTokenProvider.getToken(),
         body: _requestBody(kind: kind, request: request),
       );
     } catch (e) {

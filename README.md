@@ -28,6 +28,10 @@ Ne jamais versionner `dart_defines.json`, `.env`, les fichiers Firebase natifs o
 
 La génération OpenAI doit passer par le backend. Ne place pas de clé OpenAI dans les `dart-defines` de l'app mobile.
 
+## Mise en production
+
+Voir le plan d'actions exportable : [`docs/release-action-plan.md`](docs/release-action-plan.md).
+
 ## Backend
 
 ```powershell

@@ -7,8 +7,8 @@ from fastapi import HTTPException
 def create_checkout_session(payload: dict[str, Any], firebase_user: dict[str, Any]) -> dict[str, str]:
     secret_key = os.getenv("STRIPE_SECRET_KEY", "").strip()
     price_id = os.getenv("STRIPE_PRICE_ID_ELUNAI", "").strip()
-    success_url = os.getenv("STRIPE_SUCCESS_URL", "https://lunora.app/subscription/success")
-    cancel_url = os.getenv("STRIPE_CANCEL_URL", "https://lunora.app/subscription/cancel")
+    success_url = os.getenv("STRIPE_SUCCESS_URL", "https://lunora.app/#/subscription/success")
+    cancel_url = os.getenv("STRIPE_CANCEL_URL", "https://lunora.app/#/subscription/cancel")
 
     if os.getenv("STRIPE_MOCK", "").lower() == "true":
         return {"url": "https://checkout.stripe.com/mock-session"}
