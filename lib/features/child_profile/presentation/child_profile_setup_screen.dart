@@ -15,6 +15,7 @@ import '../../../shared/models/enums/story_tone.dart';
 import '../../../shared/models/story_universe.dart';
 import '../../../shared/widgets/elunai_layout.dart';
 import '../../../shared/widgets/lunora_fade_in.dart';
+import '../../../shared/widgets/lunora_page_header.dart';
 import '../../../shared/widgets/lunora_screen_shell.dart';
 import '../../../shared/widgets/lunora_text_field.dart';
 import '../../../shared/widgets/magical/magical.dart';
@@ -402,7 +403,6 @@ class _ChildProfileSetupScreenState
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
     final existingProfile = ref.watch(childProfileProvider);
     final years = List<int>.generate(18, (i) => DateTime.now().year - i);
 
@@ -426,216 +426,229 @@ class _ChildProfileSetupScreenState
                     ),
                     const SizedBox(height: AppSizes.lg),
                   ],
-                  Text(
-                    'Renseigne le minimum — Elunai fera le reste avec tendresse et un brin de magie.',
-                    style: theme.textTheme.bodyMedium?.copyWith(
-                      color: LunoraColors.storybookInkMuted,
-                      height: 1.45,
-                    ),
+                  const LunoraPageHeader(
+                    compact: true,
+                    icon: Icons.child_care_rounded,
+                    title: 'Créer le profil narratif',
+                    subtitle:
+                        'Quelques choix suffisent pour guider le ton, les thèmes et la durée des histoires.',
+                    badge: '3 étapes · modifiable à tout moment',
                   ),
-                  const SizedBox(height: AppSizes.md),
-                  Container(
-                    width: double.infinity,
-                    padding: const EdgeInsets.all(AppSizes.md),
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(12),
-                      color: LunoraColors.storybookSurface,
-                      border: Border.all(
-                        color: LunoraColors.storybookInkMuted.withValues(
-                          alpha: 0.14,
-                        ),
-                      ),
-                    ),
-                    child: Text(
-                      'Histoires : série en 7 chapitres (un par soir) · lecture environ $kFixedStoryMinutes min.',
-                      style: theme.textTheme.bodySmall?.copyWith(
-                        color: LunoraColors.storybookInkMuted,
-                        height: 1.35,
-                      ),
-                    ),
-                  ),
+                  const SizedBox(height: AppSizes.lg),
+                  const _StoryDefaultsCard(),
                   const SizedBox(height: AppSizes.lg),
                   _ProfileFlowHeader(currentStep: _currentStep),
                   const SizedBox(height: AppSizes.md),
                   if (_currentStep == 0)
                     _SectionCard(
-                    title: 'Profil enfant',
-                    subtitle: 'Obligatoire : prénom + âge.',
-                    child: Column(
-                      children: [
-                        LunoraTextField(
-                          controller: _firstName,
-                          label: 'Prénom',
-                          textInputAction: TextInputAction.next,
-                          validator: (value) {
-                            final v = value?.trim() ?? '';
-                            if (v.isEmpty) return 'Prénom obligatoire';
-                            return null;
-                          },
-                        ),
-                        const SizedBox(height: AppSizes.md),
-                        Row(
-                          children: [
-                            Expanded(
-                              child: DropdownButtonFormField<int>(
-                                value: _birthMonth,
-                                decoration: const InputDecoration(
-                                  labelText: 'Mois',
-                                ),
-                                items: List.generate(
-                                  12,
-                                  (i) => DropdownMenuItem(
-                                    value: i + 1,
-                                    child: Text('${i + 1}'),
+                      title: 'Profil enfant',
+                      subtitle: 'Obligatoire : prénom + âge.',
+                      child: Column(
+                        children: [
+                          LunoraTextField(
+                            controller: _firstName,
+                            label: 'Prénom',
+                            textInputAction: TextInputAction.next,
+                            validator: (value) {
+                              final v = value?.trim() ?? '';
+                              if (v.isEmpty) return 'Prénom obligatoire';
+                              return null;
+                            },
+                          ),
+                          const SizedBox(height: AppSizes.md),
+                          Row(
+                            children: [
+                              Expanded(
+                                child: DropdownButtonFormField<int>(
+                                  value: _birthMonth,
+                                  decoration: const InputDecoration(
+                                    labelText: 'Mois',
+                                  ),
+                                  items: List.generate(
+                                    12,
+                                    (i) => DropdownMenuItem(
+                                      value: i + 1,
+                                      child: Text('${i + 1}'),
+                                    ),
+                                  ),
+                                  onChanged: (v) => setState(
+                                    () => _birthMonth = v ?? _birthMonth,
                                   ),
                                 ),
-                                onChanged: (v) => setState(
-                                  () => _birthMonth = v ?? _birthMonth,
+                              ),
+                              const SizedBox(width: AppSizes.md),
+                              Expanded(
+                                child: DropdownButtonFormField<int>(
+                                  value: _birthYear,
+                                  decoration: const InputDecoration(
+                                    labelText: 'Année',
+                                  ),
+                                  items: years
+                                      .map(
+                                        (y) => DropdownMenuItem(
+                                          value: y,
+                                          child: Text('$y'),
+                                        ),
+                                      )
+                                      .toList(),
+                                  onChanged: (v) => setState(
+                                    () => _birthYear = v ?? _birthYear,
+                                  ),
                                 ),
                               ),
-                            ),
-                            const SizedBox(width: AppSizes.md),
-                            Expanded(
-                              child: DropdownButtonFormField<int>(
-                                value: _birthYear,
-                                decoration: const InputDecoration(
-                                  labelText: 'Année',
-                                ),
-                                items: years
-                                    .map(
-                                      (y) => DropdownMenuItem(
-                                        value: y,
-                                        child: Text('$y'),
-                                      ),
-                                    )
-                                    .toList(),
-                                onChanged: (v) => setState(
-                                  () => _birthYear = v ?? _birthYear,
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: AppSizes.md),
-                        DropdownButtonFormField<String>(
-                          value: _language,
-                          decoration: const InputDecoration(
-                            labelText: 'Langue de l’histoire',
+                            ],
                           ),
-                          items: const [
-                            DropdownMenuItem(
-                              value: 'fr',
-                              child: Text('Français'),
+                          const SizedBox(height: AppSizes.md),
+                          DropdownButtonFormField<String>(
+                            value: _language,
+                            decoration: const InputDecoration(
+                              labelText: 'Langue de l’histoire',
                             ),
-                            DropdownMenuItem(
-                              value: 'en',
-                              child: Text('Anglais'),
-                            ),
-                          ],
-                          onChanged: (v) =>
-                              setState(() => _language = v ?? _language),
-                        ),
-                      ],
-                    ),
+                            items: const [
+                              DropdownMenuItem(
+                                value: 'fr',
+                                child: Text('Français'),
+                              ),
+                              DropdownMenuItem(
+                                value: 'en',
+                                child: Text('Anglais'),
+                              ),
+                            ],
+                            onChanged: (v) =>
+                                setState(() => _language = v ?? _language),
+                          ),
+                        ],
+                      ),
                     ),
                   if (_currentStep == 1) ...[
                     _SectionCard(
-                    title: 'Guide pour les histoires',
-                    subtitle:
-                        'Touche une idée pour l’ajouter, ou écris librement (virgules ou lignes).',
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
-                      children: [
-                        LunoraTextField(
-                          controller: _preferredThemes,
-                          label: 'Thème principal',
-                          hint: 'ex. animaux de la forêt, océan calme…',
-                        ),
-                        const SizedBox(height: AppSizes.sm),
-                        _ChipSuggestions(
-                          options: kThemeSuggestionChips,
-                          onSelected: (value) =>
-                              _appendChipValue(_preferredThemes, value),
-                        ),
-                        const SizedBox(height: AppSizes.md),
-                        LunoraTextField(
-                          controller: _personalityTraits,
-                          label: 'Personnage principal',
-                          hint: 'ex. un chat curieux, ta fille courageuse…',
-                        ),
-                        const SizedBox(height: AppSizes.sm),
-                        _ChipSuggestions(
-                          options: kCharacterSuggestionChips,
-                          onSelected: (value) =>
-                              _appendChipValue(_personalityTraits, value),
-                        ),
-                        const SizedBox(height: AppSizes.md),
-                        DropdownButtonFormField<String>(
-                          value: _storyStyle,
-                          decoration: const InputDecoration(
-                            labelText: 'Style d’histoire',
+                      title: 'Guide pour les histoires',
+                      subtitle:
+                          'Touche une idée pour l’ajouter, ou écris librement (virgules ou lignes).',
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          LunoraTextField(
+                            controller: _preferredThemes,
+                            label: 'Thème principal',
+                            hint: 'ex. animaux de la forêt, océan calme…',
                           ),
-                          items: kStoryStyleOptions
-                              .map(
-                                (s) =>
-                                    DropdownMenuItem(value: s, child: Text(s)),
-                              )
-                              .toList(),
-                          onChanged: (v) =>
-                              setState(() => _storyStyle = v ?? _storyStyle),
-                        ),
-                        const SizedBox(height: AppSizes.md),
-                        Text(
-                          'Univers du soir',
-                          style: Theme.of(context).textTheme.titleSmall
-                              ?.copyWith(
-                                color: LunoraColors.storybookInk,
-                                fontWeight: FontWeight.w800,
-                              ),
-                        ),
-                        const SizedBox(height: AppSizes.xs),
-                        Text(
-                          'Une ambiance par soir — Elunai s’en inspire pour les détails (modifiable plus tard).',
-                          style: Theme.of(context).textTheme.bodySmall
-                              ?.copyWith(
-                                color: LunoraColors.storybookInkMuted,
-                                height: 1.35,
-                              ),
-                        ),
-                        const SizedBox(height: AppSizes.sm),
-                        ...kUniverseChoices.map(_universeTile),
-                        const SizedBox(height: AppSizes.md),
-                        DropdownButtonFormField<StoryTone>(
-                          value: _tone,
-                          decoration: const InputDecoration(labelText: 'Ton'),
-                          isExpanded: true,
-                          items: kToneChoices
-                              .map(
-                                (t) => DropdownMenuItem(
-                                  value: t,
-                                  child: Text(t.displayLabel),
+                          const SizedBox(height: AppSizes.sm),
+                          _ChipSuggestions(
+                            options: kThemeSuggestionChips,
+                            onSelected: (value) =>
+                                _appendChipValue(_preferredThemes, value),
+                          ),
+                          const SizedBox(height: AppSizes.md),
+                          LunoraTextField(
+                            controller: _personalityTraits,
+                            label: 'Personnage principal',
+                            hint: 'ex. un chat curieux, ta fille courageuse…',
+                          ),
+                          const SizedBox(height: AppSizes.sm),
+                          _ChipSuggestions(
+                            options: kCharacterSuggestionChips,
+                            onSelected: (value) =>
+                                _appendChipValue(_personalityTraits, value),
+                          ),
+                          const SizedBox(height: AppSizes.md),
+                          DropdownButtonFormField<String>(
+                            value: _storyStyle,
+                            decoration: const InputDecoration(
+                              labelText: 'Style d’histoire',
+                            ),
+                            items: kStoryStyleOptions
+                                .map(
+                                  (s) => DropdownMenuItem(
+                                    value: s,
+                                    child: Text(s),
+                                  ),
+                                )
+                                .toList(),
+                            onChanged: (v) =>
+                                setState(() => _storyStyle = v ?? _storyStyle),
+                          ),
+                          const SizedBox(height: AppSizes.md),
+                          Text(
+                            'Univers du soir',
+                            style: Theme.of(context).textTheme.titleSmall
+                                ?.copyWith(
+                                  color: LunoraColors.storybookInk,
+                                  fontWeight: FontWeight.w800,
                                 ),
-                              )
-                              .toList(),
-                          onChanged: (v) => setState(() => _tone = v ?? _tone),
-                        ),
-                      ],
-                    ),
+                          ),
+                          const SizedBox(height: AppSizes.xs),
+                          Text(
+                            'Une ambiance par soir — Elunai s’en inspire pour les détails (modifiable plus tard).',
+                            style: Theme.of(context).textTheme.bodySmall
+                                ?.copyWith(
+                                  color: LunoraColors.storybookInkMuted,
+                                  height: 1.35,
+                                ),
+                          ),
+                          const SizedBox(height: AppSizes.sm),
+                          ...kUniverseChoices.map(_universeTile),
+                          const SizedBox(height: AppSizes.md),
+                          DropdownButtonFormField<StoryTone>(
+                            value: _tone,
+                            decoration: const InputDecoration(labelText: 'Ton'),
+                            isExpanded: true,
+                            items: kToneChoices
+                                .map(
+                                  (t) => DropdownMenuItem(
+                                    value: t,
+                                    child: Text(t.displayLabel),
+                                  ),
+                                )
+                                .toList(),
+                            onChanged: (v) =>
+                                setState(() => _tone = v ?? _tone),
+                          ),
+                        ],
+                      ),
                     ),
                   ],
                   if (_currentStep == 2) ...[
                     _SectionCard(
-                    title: 'Encore plus de détails ?',
-                    subtitle:
-                        'Tout ce que tu veux ajouter : à éviter, peurs, valeurs, prénoms du doudou…',
-                    child: LunoraTextField(
-                      controller: _extraStoryHints,
-                      label: 'Notes libres pour Elunai',
-                      hint:
-                          'Ex. éviter les loups, valoriser le partage, inclure le chat Mistigri…',
-                      maxLines: 6,
-                      minLines: 3,
-                    ),
+                      title: 'Résumé avant sauvegarde',
+                      subtitle:
+                          'Vérifie les repères principaux. Les détails restent modifiables plus tard.',
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          _ProfileSummaryRow(
+                            icon: Icons.person_rounded,
+                            label: 'Enfant',
+                            value: _firstName.text.trim().isEmpty
+                                ? 'Prénom à compléter'
+                                : _firstName.text.trim(),
+                          ),
+                          _ProfileSummaryRow(
+                            icon: Icons.palette_rounded,
+                            label: 'Style',
+                            value: _storyStyle,
+                          ),
+                          _ProfileSummaryRow(
+                            icon: Icons.explore_rounded,
+                            label: 'Univers',
+                            value: _universe.displayName,
+                          ),
+                          _ProfileSummaryRow(
+                            icon: Icons.record_voice_over_rounded,
+                            label: 'Ton',
+                            value: _tone.displayLabel,
+                          ),
+                          const SizedBox(height: AppSizes.md),
+                          LunoraTextField(
+                            controller: _extraStoryHints,
+                            label: 'Notes libres pour Elunai',
+                            hint:
+                                'Ex. éviter les loups, valoriser le partage, inclure le doudou préféré…',
+                            maxLines: 5,
+                            minLines: 3,
+                          ),
+                        ],
+                      ),
                     ),
                   ],
                   const SizedBox(height: AppSizes.lg),
@@ -747,6 +760,46 @@ class _ProfileFlowHeader extends StatelessWidget {
   }
 }
 
+class _StoryDefaultsCard extends StatelessWidget {
+  const _StoryDefaultsCard();
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(AppSizes.md),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(20),
+        color: LunoraColors.honeyYellow.withValues(alpha: 0.18),
+        border: Border.all(
+          color: LunoraColors.honeyYellowDeep.withValues(alpha: 0.28),
+        ),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Icon(
+            Icons.auto_stories_rounded,
+            color: LunoraColors.forestGreen,
+          ),
+          const SizedBox(width: AppSizes.sm),
+          Expanded(
+            child: Text(
+              'Format par défaut : série en 7 chapitres, un chapitre par soir, lecture environ 10 minutes.',
+              style: theme.textTheme.bodySmall?.copyWith(
+                color: LunoraColors.storybookInk,
+                height: 1.35,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
 class _SectionCard extends StatelessWidget {
   const _SectionCard({
     required this.title,
@@ -765,7 +818,7 @@ class _SectionCard extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(AppSizes.md),
       decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(24),
         color: light
             ? LunoraColors.storybookSurface
             : LunoraColors.nightBlueLift.withValues(alpha: 0.55),
@@ -792,10 +845,59 @@ class _SectionCard extends StatelessWidget {
               color: light
                   ? LunoraColors.storybookInkMuted
                   : LunoraColors.mist.withValues(alpha: 0.78),
+              height: 1.35,
             ),
           ),
           const SizedBox(height: AppSizes.md),
           child,
+        ],
+      ),
+    );
+  }
+}
+
+class _ProfileSummaryRow extends StatelessWidget {
+  const _ProfileSummaryRow({
+    required this.icon,
+    required this.label,
+    required this.value,
+  });
+
+  final IconData icon;
+  final String label;
+  final String value;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Padding(
+      padding: const EdgeInsets.only(bottom: AppSizes.sm),
+      child: Row(
+        children: [
+          Icon(icon, size: 18, color: LunoraColors.forestGreen),
+          const SizedBox(width: AppSizes.sm),
+          Expanded(
+            child: Text(
+              label,
+              style: theme.textTheme.labelMedium?.copyWith(
+                color: LunoraColors.storybookInkMuted,
+                fontWeight: FontWeight.w800,
+              ),
+            ),
+          ),
+          Flexible(
+            flex: 2,
+            child: Text(
+              value,
+              textAlign: TextAlign.right,
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+              style: theme.textTheme.bodySmall?.copyWith(
+                color: LunoraColors.storybookInk,
+                fontWeight: FontWeight.w900,
+              ),
+            ),
+          ),
         ],
       ),
     );

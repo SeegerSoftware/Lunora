@@ -16,6 +16,7 @@ import '../../../shared/models/story_universe.dart';
 import '../../../shared/models/user_model.dart';
 import '../../auth/presentation/providers/auth_providers.dart';
 import '../../child_profile/presentation/providers/child_profile_providers.dart';
+import '../../legal/presentation/terms_screen.dart';
 import '../../stories/presentation/providers/story_providers.dart';
 import '../../../shared/widgets/elunai_layout.dart';
 import '../../../shared/widgets/lunora_fade_in.dart';
@@ -51,105 +52,118 @@ class ParentAreaScreen extends ConsumerWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                Text(
-                  'Espace parent',
-                  style: LunoraTextStyles.sectionTitle(theme.textTheme),
-                ),
-                const SizedBox(height: LunoraSpacing.sm),
-                Text(
-                  user == null
-                      ? 'Connecte-toi pour voir l’activité.'
-                      : '👋 ${user.email}',
-                  style: theme.textTheme.bodyMedium?.copyWith(
-                    color: LunoraColors.storybookInk.withValues(alpha: 0.78),
-                    height: 1.4,
-                  ),
-                ),
-                const SizedBox(height: LunoraSpacing.xl),
-                historyAsync.when(
-                  skipLoadingOnReload: true,
-                  data: (stories) {
-                    final total = stories.length;
-                    final last = stories.isNotEmpty ? stories.first.title : '—';
-                    return Row(
-                      children: [
-                        Expanded(
-                          child: _StatCard(
-                            label: 'Histoires lues',
-                            value: '$total',
-                            hint: 'dans ton espace',
-                          ),
-                        ),
-                        const SizedBox(width: LunoraSpacing.md),
-                        Expanded(
-                          child: _StatCard(
-                            label: 'Dernière',
-                            value: total > 0 ? '✓' : '—',
-                            hint: total > 0 ? last : 'aucune pour l’instant',
-                          ),
-                        ),
-                      ],
-                    );
-                  },
-                  loading: () => const SizedBox(
-                    height: 100,
-                    child: Center(child: LunoraProgressBar()),
-                  ),
-                  error: (e, _) => Text(
-                    'Stats indisponibles.',
-                    style: theme.textTheme.bodyMedium?.copyWith(
-                      color: theme.colorScheme.error,
+                    Text(
+                      'Espace parent',
+                      style: LunoraTextStyles.sectionTitle(theme.textTheme),
                     ),
-                  ),
-                ),
-                const SizedBox(height: LunoraSpacing.xl),
-                Text(
-                  'Raccourcis',
-                  style: LunoraTextStyles.sectionTitle(theme.textTheme),
-                ),
-                const SizedBox(height: LunoraSpacing.sm),
-                MagicalAppButton(
-                  label: 'Historique des histoires',
-                  icon: Icons.history_rounded,
-                  variant: MagicalButtonVariant.secondary,
-                  onPressed: () => context.push('/history'),
-                ),
-                const SizedBox(height: LunoraSpacing.sm),
-                MagicalAppButton(
-                  label: 'Générer une histoire (test)',
-                  icon: Icons.auto_stories_rounded,
-                  onPressed: user == null
-                      ? null
-                      : () => _openQuickStoryGenerator(
-                          context: context,
-                          ref: ref,
-                          user: user,
+                    const SizedBox(height: LunoraSpacing.sm),
+                    Text(
+                      user == null
+                          ? 'Connecte-toi pour voir l’activité.'
+                          : '👋 ${user.email}',
+                      style: theme.textTheme.bodyMedium?.copyWith(
+                        color: LunoraColors.storybookInk.withValues(
+                          alpha: 0.78,
                         ),
-                ),
-                const SizedBox(height: LunoraSpacing.sm),
-                MagicalAppButton(
-                  label: 'Abonnement',
-                  icon: Icons.workspace_premium_rounded,
-                  variant: MagicalButtonVariant.secondary,
-                  onPressed: () => context.push('/subscription'),
-                ),
-                const SizedBox(height: LunoraSpacing.xl),
-                Text(
-                  'Compte',
-                  style: LunoraTextStyles.sectionTitle(theme.textTheme),
-                ),
-                const SizedBox(height: LunoraSpacing.sm),
-                OutlinedButton.icon(
-                  onPressed: user == null
-                      ? null
-                      : () => _confirmDeleteAccount(context, ref),
-                  icon: const Icon(Icons.delete_forever_rounded),
-                  label: const Text('Supprimer mon compte et mes données'),
-                  style: OutlinedButton.styleFrom(
-                    foregroundColor: theme.colorScheme.error,
-                    side: BorderSide(color: theme.colorScheme.error),
-                  ),
-                ),
+                        height: 1.4,
+                      ),
+                    ),
+                    const SizedBox(height: LunoraSpacing.xl),
+                    historyAsync.when(
+                      skipLoadingOnReload: true,
+                      data: (stories) {
+                        final total = stories.length;
+                        final last = stories.isNotEmpty
+                            ? stories.first.title
+                            : '—';
+                        return Row(
+                          children: [
+                            Expanded(
+                              child: _StatCard(
+                                label: 'Histoires lues',
+                                value: '$total',
+                                hint: 'dans ton espace',
+                              ),
+                            ),
+                            const SizedBox(width: LunoraSpacing.md),
+                            Expanded(
+                              child: _StatCard(
+                                label: 'Dernière',
+                                value: total > 0 ? '✓' : '—',
+                                hint: total > 0
+                                    ? last
+                                    : 'aucune pour l’instant',
+                              ),
+                            ),
+                          ],
+                        );
+                      },
+                      loading: () => const SizedBox(
+                        height: 100,
+                        child: Center(child: LunoraProgressBar()),
+                      ),
+                      error: (e, _) => Text(
+                        'Stats indisponibles.',
+                        style: theme.textTheme.bodyMedium?.copyWith(
+                          color: theme.colorScheme.error,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: LunoraSpacing.xl),
+                    Text(
+                      'Raccourcis',
+                      style: LunoraTextStyles.sectionTitle(theme.textTheme),
+                    ),
+                    const SizedBox(height: LunoraSpacing.sm),
+                    MagicalAppButton(
+                      label: 'Historique des histoires',
+                      icon: Icons.history_rounded,
+                      variant: MagicalButtonVariant.secondary,
+                      onPressed: () => context.push('/history'),
+                    ),
+                    const SizedBox(height: LunoraSpacing.sm),
+                    MagicalAppButton(
+                      label: 'Générer une histoire (test)',
+                      icon: Icons.auto_stories_rounded,
+                      onPressed: user == null
+                          ? null
+                          : () => _openQuickStoryGenerator(
+                              context: context,
+                              ref: ref,
+                              user: user,
+                            ),
+                    ),
+                    const SizedBox(height: LunoraSpacing.sm),
+                    MagicalAppButton(
+                      label: 'Abonnement',
+                      icon: Icons.workspace_premium_rounded,
+                      variant: MagicalButtonVariant.secondary,
+                      onPressed: () => context.push('/subscription'),
+                    ),
+                    const SizedBox(height: LunoraSpacing.sm),
+                    MagicalAppButton(
+                      label: 'Conditions d’utilisation',
+                      icon: Icons.article_rounded,
+                      variant: MagicalButtonVariant.secondary,
+                      onPressed: () => context.push(TermsScreen.routePath),
+                    ),
+                    const SizedBox(height: LunoraSpacing.xl),
+                    Text(
+                      'Compte',
+                      style: LunoraTextStyles.sectionTitle(theme.textTheme),
+                    ),
+                    const SizedBox(height: LunoraSpacing.sm),
+                    OutlinedButton.icon(
+                      onPressed: user == null
+                          ? null
+                          : () => _confirmDeleteAccount(context, ref),
+                      icon: const Icon(Icons.delete_forever_rounded),
+                      label: const Text('Supprimer mon compte et mes données'),
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: theme.colorScheme.error,
+                        side: BorderSide(color: theme.colorScheme.error),
+                      ),
+                    ),
                   ],
                 ),
               ),
@@ -201,9 +215,7 @@ Future<void> _confirmDeleteAccount(BuildContext context, WidgetRef ref) async {
   } catch (e) {
     if (!context.mounted) return;
     Navigator.of(context, rootNavigator: true).pop();
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('$e')),
-    );
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('$e')));
   }
 }
 
@@ -255,15 +267,16 @@ Future<void> _openQuickStoryGenerator({
                     DropdownButtonFormField<int>(
                       initialValue: birthYear,
                       decoration: const InputDecoration(labelText: 'Année'),
-                      items: List<int>.generate(
-                        16,
-                        (i) => DateTime.now().year - i,
-                      ).map((year) {
-                        return DropdownMenuItem<int>(
-                          value: year,
-                          child: Text('$year'),
-                        );
-                      }).toList(),
+                      items:
+                          List<int>.generate(
+                            16,
+                            (i) => DateTime.now().year - i,
+                          ).map((year) {
+                            return DropdownMenuItem<int>(
+                              value: year,
+                              child: Text('$year'),
+                            );
+                          }).toList(),
                       onChanged: (value) {
                         if (value == null) return;
                         setDialogState(() => birthYear = value);
@@ -338,10 +351,10 @@ Future<void> _openQuickStoryGenerator({
     }
   } catch (e) {
     if (!context.mounted) return;
-    final msg = e is Exception ? e.toString().replaceFirst('Exception: ', '') : '$e';
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(msg)),
-    );
+    final msg = e is Exception
+        ? e.toString().replaceFirst('Exception: ', '')
+        : '$e';
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(msg)));
   }
 }
 

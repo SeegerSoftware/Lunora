@@ -4,12 +4,13 @@ import 'package:go_router/go_router.dart';
 
 import '../../../core/theme/colors.dart';
 import '../../../core/theme/spacing.dart';
-import '../../../core/theme/text_styles.dart';
 import '../../../routing/safe_navigation.dart';
 import '../../../shared/models/enums/subscription_status.dart';
 import '../../../shared/models/enums/story_plan.dart';
 import '../../../shared/widgets/elunai_layout.dart';
 import '../../../shared/widgets/lunora_fade_in.dart';
+import '../../../shared/widgets/lunora_glass_card.dart';
+import '../../../shared/widgets/lunora_page_header.dart';
 import '../../../shared/widgets/lunora_primary_button.dart';
 import '../../../shared/widgets/lunora_screen_shell.dart';
 import '../../auth/presentation/providers/auth_providers.dart';
@@ -26,7 +27,8 @@ class SubscriptionScreen extends ConsumerWidget {
     final user = ref.watch(authSessionProvider);
     final subscription = ref.watch(subscriptionProvider);
     final effectiveStatus = subscription?.status ?? user?.subscriptionStatus;
-    final isActive = effectiveStatus == SubscriptionStatus.active ||
+    final isActive =
+        effectiveStatus == SubscriptionStatus.active ||
         effectiveStatus == SubscriptionStatus.grace;
 
     if (user == null) {
@@ -52,153 +54,27 @@ class SubscriptionScreen extends ConsumerWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    Text(
-                      'Un abonnement clair, géré par Stripe. Le statut est mis à jour automatiquement après confirmation du paiement.',
-                      style: theme.textTheme.bodyMedium?.copyWith(
-                        color: LunoraColors.mist.withValues(alpha: 0.84),
-                        height: 1.5,
-                      ),
-                    ),
-                    if (subscription?.endsAt != null) ...[
-                      const SizedBox(height: LunoraSpacing.sm),
-                      Text(
-                        'Fin de période : ${subscription!.endsAt!.day.toString().padLeft(2, '0')}.${subscription.endsAt!.month.toString().padLeft(2, '0')}.${subscription.endsAt!.year}',
-                        style: theme.textTheme.bodySmall?.copyWith(
-                          color: LunoraColors.mist.withValues(alpha: 0.75),
-                        ),
-                      ),
-                    ],
-                    const SizedBox(height: LunoraSpacing.xl),
-                    Text(
-                      'État actuel',
-                      style: LunoraTextStyles.sectionTitle(theme.textTheme),
-                    ),
-                    const SizedBox(height: LunoraSpacing.sm),
-                    DecoratedBox(
-                      decoration: BoxDecoration(
-                        borderRadius: LunoraSpacing.radiusLg,
-                        color: LunoraColors.nightBlueLift.withValues(alpha: 0.75),
-                        border: Border.all(
-                          color: LunoraColors.mist.withValues(alpha: 0.12),
-                        ),
-                      ),
-                      child: Padding(
-                        padding: const EdgeInsets.all(LunoraSpacing.lg),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              isActive
-                                  ? 'Abonnement actif'
-                                  : 'Aucun abonnement actif',
-                              style: theme.textTheme.titleSmall?.copyWith(
-                                color: LunoraColors.warmBeige,
-                                fontWeight: FontWeight.w800,
-                              ),
-                            ),
-                            const SizedBox(height: LunoraSpacing.xs),
-                            Text(
-                              subscription == null
-                                  ? 'Compte : ${effectiveStatus?.name ?? 'none'} · ${user.subscriptionStatus.name}'
-                                  : 'Plan : ${subscription.planId} · statut ${subscription.status.name}',
-                              style: theme.textTheme.bodySmall?.copyWith(
-                                color: LunoraColors.mist.withValues(alpha: 0.75),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
+                    const LunoraPageHeader(
+                      compact: true,
+                      icon: Icons.workspace_premium_rounded,
+                      title: 'Histoires sans friction',
+                      subtitle:
+                          'Le paiement est géré par Stripe. Le statut est synchronisé automatiquement côté backend.',
+                      badge: 'Stripe Checkout sécurisé',
                     ),
                     const SizedBox(height: LunoraSpacing.xl),
-                    Text(
-                      'Offre',
-                      style: LunoraTextStyles.sectionTitle(theme.textTheme),
+                    _StatusCard(
+                      isActive: isActive,
+                      statusLabel: effectiveStatus?.name ?? 'none',
+                      planId: subscription?.planId,
+                      endsAt: subscription?.endsAt,
                     ),
-                    const SizedBox(height: LunoraSpacing.sm),
-                    Material(
-                      color: LunoraColors.nightBlueLift.withValues(alpha: 0.55),
-                      borderRadius: LunoraSpacing.radiusMd,
-                      child: InkWell(
-                        borderRadius: LunoraSpacing.radiusMd,
-                        onTap: () {
-                          context.push(
-                            '/stripe-checkout?planId=${Uri.encodeComponent(_plan.planId)}',
-                          );
-                        },
-                        child: Padding(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: LunoraSpacing.lg,
-                            vertical: LunoraSpacing.md,
-                          ),
-                          child: Row(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Expanded(
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Container(
-                                      padding: const EdgeInsets.symmetric(
-                                        horizontal: LunoraSpacing.xs,
-                                        vertical: 2,
-                                      ),
-                                      decoration: BoxDecoration(
-                                        color: LunoraColors.violetGlow.withValues(alpha: 0.28),
-                                        borderRadius: BorderRadius.circular(999),
-                                      ),
-                                      child: Text(
-                                        _plan.marketingTag,
-                                        style: theme.textTheme.labelSmall?.copyWith(
-                                          color: LunoraColors.warmBeige,
-                                          fontWeight: FontWeight.w700,
-                                        ),
-                                      ),
-                                    ),
-                                    const SizedBox(height: LunoraSpacing.xs),
-                                    Text(
-                                      _plan.displayLabel,
-                                      style: theme.textTheme.titleSmall?.copyWith(
-                                        color: LunoraColors.warmBeige,
-                                        fontWeight: FontWeight.w800,
-                                      ),
-                                    ),
-                                    const SizedBox(height: LunoraSpacing.xxs),
-                                    Text(
-                                      'Histoires d’environ ${_plan.targetStoryMinutes} minutes, adaptées au profil.',
-                                      style: theme.textTheme.bodySmall?.copyWith(
-                                        color: LunoraColors.mist.withValues(alpha: 0.72),
-                                      ),
-                                    ),
-                                    const SizedBox(height: LunoraSpacing.xs),
-                                    Text(
-                                      _plan.monthlyPriceLabel,
-                                      style: theme.textTheme.bodyMedium?.copyWith(
-                                        color: LunoraColors.starGoldSoft,
-                                        fontWeight: FontWeight.w800,
-                                      ),
-                                    ),
-                                    const SizedBox(height: LunoraSpacing.xs),
-                                    ..._plan.keyBenefits.map(
-                                      (benefit) => Padding(
-                                        padding: const EdgeInsets.only(bottom: 2),
-                                        child: Text(
-                                          '• $benefit',
-                                          style: theme.textTheme.bodySmall?.copyWith(
-                                            color: LunoraColors.mist.withValues(alpha: 0.72),
-                                          ),
-                                        ),
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                              Icon(
-                                Icons.chevron_right_rounded,
-                                color: LunoraColors.mist.withValues(alpha: 0.45),
-                              ),
-                            ],
-                          ),
-                        ),
+                    const SizedBox(height: LunoraSpacing.lg),
+                    _PlanCard(
+                      plan: _plan,
+                      isActive: isActive,
+                      onTap: () => context.push(
+                        '/stripe-checkout?planId=${Uri.encodeComponent(_plan.planId)}',
                       ),
                     ),
                     const SizedBox(height: LunoraSpacing.lg),
@@ -209,18 +85,184 @@ class SubscriptionScreen extends ConsumerWidget {
                       icon: isActive
                           ? Icons.manage_accounts_rounded
                           : Icons.lock_rounded,
-                      onPressed: () {
-                        context.push(
-                          '/stripe-checkout?planId=${Uri.encodeComponent(_plan.planId)}',
-                        );
-                      },
+                      onPressed: () => context.push(
+                        '/stripe-checkout?planId=${Uri.encodeComponent(_plan.planId)}',
+                      ),
                     ),
-                    const SizedBox(height: LunoraSpacing.lg),
-                    OutlinedButton(
-                      onPressed: () => context.safePopOrGo('/home'),
-                      child: const Text('Retour'),
+                    const SizedBox(height: LunoraSpacing.sm),
+                    Text(
+                      'Aucune clé Stripe secrète n’est stockée dans l’app mobile.',
+                      textAlign: TextAlign.center,
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        color: LunoraColors.storybookInkMuted,
+                        fontWeight: FontWeight.w600,
+                      ),
                     ),
                   ],
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _StatusCard extends StatelessWidget {
+  const _StatusCard({
+    required this.isActive,
+    required this.statusLabel,
+    this.planId,
+    this.endsAt,
+  });
+
+  final bool isActive;
+  final String statusLabel;
+  final String? planId;
+  final DateTime? endsAt;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return LunoraGlassCard(
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(
+            isActive ? Icons.verified_rounded : Icons.lock_open_rounded,
+            color: isActive
+                ? LunoraColors.forestGreen
+                : LunoraColors.honeyYellowDeep,
+            size: 30,
+          ),
+          const SizedBox(width: LunoraSpacing.md),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  isActive ? 'Abonnement actif' : 'Aucun abonnement actif',
+                  style: theme.textTheme.titleMedium?.copyWith(
+                    color: LunoraColors.storybookInk,
+                    fontWeight: FontWeight.w900,
+                  ),
+                ),
+                const SizedBox(height: LunoraSpacing.xxs),
+                Text(
+                  planId == null
+                      ? 'Statut compte : $statusLabel'
+                      : 'Plan : $planId · statut $statusLabel',
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    color: LunoraColors.storybookInkMuted,
+                    height: 1.35,
+                  ),
+                ),
+                if (endsAt != null) ...[
+                  const SizedBox(height: LunoraSpacing.xs),
+                  Text(
+                    'Fin de période : ${endsAt!.day.toString().padLeft(2, '0')}.${endsAt!.month.toString().padLeft(2, '0')}.${endsAt!.year}',
+                    style: theme.textTheme.bodySmall?.copyWith(
+                      color: LunoraColors.storybookInkMuted,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                ],
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _PlanCard extends StatelessWidget {
+  const _PlanCard({
+    required this.plan,
+    required this.isActive,
+    required this.onTap,
+  });
+
+  final StoryPlan plan;
+  final bool isActive;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Material(
+      color: LunoraColors.storybookSurface,
+      borderRadius: LunoraSpacing.radiusLg,
+      child: InkWell(
+        borderRadius: LunoraSpacing.radiusLg,
+        onTap: onTap,
+        child: Container(
+          padding: const EdgeInsets.all(LunoraSpacing.lg),
+          decoration: BoxDecoration(
+            borderRadius: LunoraSpacing.radiusLg,
+            border: Border.all(
+              color: isActive
+                  ? LunoraColors.forestGreen.withValues(alpha: 0.28)
+                  : LunoraColors.honeyYellowDeep.withValues(alpha: 0.32),
+            ),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Expanded(
+                    child: Text(
+                      plan.displayLabel,
+                      style: theme.textTheme.titleLarge?.copyWith(
+                        color: LunoraColors.storybookInk,
+                        fontWeight: FontWeight.w900,
+                      ),
+                    ),
+                  ),
+                  Text(
+                    plan.monthlyPriceLabel,
+                    style: theme.textTheme.titleMedium?.copyWith(
+                      color: LunoraColors.forestGreen,
+                      fontWeight: FontWeight.w900,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: LunoraSpacing.xs),
+              Text(
+                'Histoires d’environ ${plan.targetStoryMinutes} minutes, adaptées au profil enfant.',
+                style: theme.textTheme.bodyMedium?.copyWith(
+                  color: LunoraColors.storybookInkMuted,
+                  height: 1.38,
+                ),
+              ),
+              const SizedBox(height: LunoraSpacing.md),
+              ...plan.keyBenefits.map(
+                (benefit) => Padding(
+                  padding: const EdgeInsets.only(bottom: LunoraSpacing.xs),
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Icon(
+                        Icons.check_circle_rounded,
+                        size: 18,
+                        color: LunoraColors.forestGreen,
+                      ),
+                      const SizedBox(width: LunoraSpacing.xs),
+                      Expanded(
+                        child: Text(
+                          benefit,
+                          style: theme.textTheme.bodySmall?.copyWith(
+                            color: LunoraColors.storybookInk,
+                            height: 1.32,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
               ),
             ],

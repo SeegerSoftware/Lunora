@@ -4,11 +4,11 @@ import 'package:go_router/go_router.dart';
 import '../../../core/constants/app_sizes.dart';
 import '../../../core/theme/colors.dart';
 import '../../../core/theme/spacing.dart';
-import '../../../core/theme/text_styles.dart';
-import '../../../shared/widgets/custom_button.dart';
-import '../../../shared/widgets/magical/magical_app_button.dart';
 import '../../../shared/widgets/lunora_fade_in.dart';
+import '../../../shared/widgets/lunora_page_header.dart';
+import '../../../shared/widgets/lunora_primary_button.dart';
 import '../../../shared/widgets/lunora_screen_shell.dart';
+import '../../legal/presentation/terms_screen.dart';
 
 class WelcomeScreen extends StatelessWidget {
   const WelcomeScreen({super.key});
@@ -16,7 +16,6 @@ class WelcomeScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final light = theme.brightness == Brightness.light;
 
     return Scaffold(
       body: LunoraScreenShell(
@@ -24,84 +23,136 @@ class WelcomeScreen extends StatelessWidget {
         child: SafeArea(
           child: Padding(
             padding: AppSizes.screenPadding,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                const Spacer(flex: 2),
-                LunoraFadeIn(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        '✨ 📖 🌙 ✨',
-                        textAlign: TextAlign.left,
-                        style: theme.textTheme.headlineSmall?.copyWith(
-                          fontSize: 28,
-                          height: 1.1,
-                        ),
+            child: Center(
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 560),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    const Spacer(),
+                    LunoraFadeIn(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const LunoraPageHeader(
+                            badge: 'Histoires personnalisées pour le soir',
+                            icon: Icons.auto_stories_rounded,
+                            title: 'Elunai',
+                            subtitle:
+                                'Une bibliothèque magique qui s’adapte à l’âge, aux goûts et au rythme de ton enfant.',
+                          ),
+                          const SizedBox(height: LunoraSpacing.xl),
+                          Row(
+                            children: const [
+                              Expanded(
+                                child: _TrustPoint(
+                                  icon: Icons.shield_outlined,
+                                  label: 'Sécurisé',
+                                ),
+                              ),
+                              SizedBox(width: LunoraSpacing.sm),
+                              Expanded(
+                                child: _TrustPoint(
+                                  icon: Icons.bedtime_outlined,
+                                  label: 'Rituel calme',
+                                ),
+                              ),
+                              SizedBox(width: LunoraSpacing.sm),
+                              Expanded(
+                                child: _TrustPoint(
+                                  icon: Icons.favorite_border_rounded,
+                                  label: 'Sur mesure',
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
                       ),
-                      const SizedBox(height: LunoraSpacing.md),
-                      Text(
-                        'Elunai',
-                        style: theme.textTheme.displaySmall?.copyWith(
-                          color: light
-                              ? LunoraColors.storybookInk
-                              : LunoraColors.warmBeige,
-                          fontWeight: FontWeight.w900,
-                          letterSpacing: -0.8,
-                          shadows: [
-                            Shadow(
-                              color:
-                                  (light
-                                          ? LunoraColors.forestGreen
-                                          : LunoraColors.violetSoft)
-                                      .withValues(alpha: 0.28),
-                              blurRadius: 18,
-                              offset: const Offset(0, 4),
+                    ),
+                    const Spacer(),
+                    LunoraFadeIn(
+                      delay: const Duration(milliseconds: 120),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          LunoraPrimaryButton(
+                            label: 'Créer un compte',
+                            icon: Icons.mail_outline_rounded,
+                            onPressed: () => context.push('/signup'),
+                          ),
+                          const SizedBox(height: LunoraSpacing.sm),
+                          OutlinedButton.icon(
+                            onPressed: () => context.push('/signin'),
+                            icon: const Icon(Icons.login_rounded),
+                            label: const Text('J’ai déjà un compte'),
+                          ),
+                          const SizedBox(height: LunoraSpacing.xs),
+                          TextButton(
+                            onPressed: () =>
+                                context.push(TermsScreen.routePath),
+                            child: const Text(
+                              'Conditions générales d’utilisation',
                             ),
-                          ],
-                        ),
-                      ),
-                      const SizedBox(height: LunoraSpacing.sm),
-                      Text(
-                        'Des histoires magiques 0–12 ans qui grandissent avec ton enfant, soir après soir.',
-                        style: LunoraTextStyles.greetingSub(theme.textTheme)
-                            .copyWith(
-                              fontSize: 16,
-                              height: 1.4,
-                              color: light
-                                  ? LunoraColors.storybookInkMuted
-                                  : LunoraColors.mist.withValues(alpha: 0.82),
+                          ),
+                          const SizedBox(height: LunoraSpacing.sm),
+                          Text(
+                            'Pensé pour les parents, doux pour les enfants.',
+                            textAlign: TextAlign.center,
+                            style: theme.textTheme.bodySmall?.copyWith(
+                              color: LunoraColors.storybookInkMuted,
+                              fontWeight: FontWeight.w700,
                             ),
+                          ),
+                        ],
                       ),
-                    ],
-                  ),
+                    ),
+                    const SizedBox(height: LunoraSpacing.lg),
+                  ],
                 ),
-                const Spacer(flex: 3),
-                LunoraFadeIn(
-                  delay: const Duration(milliseconds: 120),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      LunoraCustomButton(
-                        label: 'Créer un compte',
-                        icon: Icons.mail_outline_rounded,
-                        onPressed: () => context.push('/signup'),
-                      ),
-                      const SizedBox(height: LunoraSpacing.md),
-                      LunoraCustomButton(
-                        label: 'J’ai déjà un compte',
-                        variant: MagicalButtonVariant.secondary,
-                        icon: Icons.login_rounded,
-                        onPressed: () => context.push('/signin'),
-                      ),
-                    ],
-                  ),
-                ),
-                const SizedBox(height: LunoraSpacing.xl),
-              ],
+              ),
             ),
           ),
+        ),
+      ),
+    );
+  }
+}
+
+class _TrustPoint extends StatelessWidget {
+  const _TrustPoint({required this.icon, required this.label});
+
+  final IconData icon;
+  final String label;
+
+  @override
+  Widget build(BuildContext context) {
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        color: LunoraColors.storybookSurface.withValues(alpha: 0.86),
+        borderRadius: LunoraSpacing.radiusMd,
+        border: Border.all(
+          color: LunoraColors.forestGreen.withValues(alpha: 0.1),
+        ),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(
+          horizontal: LunoraSpacing.xs,
+          vertical: LunoraSpacing.sm,
+        ),
+        child: Column(
+          children: [
+            Icon(icon, color: LunoraColors.forestGreen, size: 20),
+            const SizedBox(height: LunoraSpacing.xxs),
+            Text(
+              label,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                color: LunoraColors.storybookInk,
+                fontWeight: FontWeight.w900,
+              ),
+            ),
+          ],
         ),
       ),
     );

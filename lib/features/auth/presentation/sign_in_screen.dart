@@ -8,9 +8,11 @@ import '../../../routing/safe_navigation.dart';
 import '../../../core/validation/auth_validators.dart';
 import '../../../shared/widgets/elunai_layout.dart';
 import '../../../shared/widgets/lunora_fade_in.dart';
+import '../../../shared/widgets/lunora_page_header.dart';
 import '../../../shared/widgets/lunora_primary_button.dart';
 import '../../../shared/widgets/lunora_screen_shell.dart';
 import '../../../shared/widgets/lunora_text_field.dart';
+import '../../legal/presentation/terms_screen.dart';
 import 'auth_navigation.dart';
 import 'providers/auth_providers.dart';
 import 'widgets/social_auth_section.dart';
@@ -194,61 +196,81 @@ class _SignInScreenState extends ConsumerState<SignInScreen> {
         child: SafeArea(
           child: Padding(
             padding: AppSizes.screenPadding,
-            child: LunoraFadeIn(
-              child: Form(
-                key: _formKey,
-                autovalidateMode: AutovalidateMode.onUserInteraction,
-                child: SingleChildScrollView(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      const SizedBox(height: AppSizes.lg),
-                      LunoraTextField(
-                        controller: _email,
-                        label: 'Email',
-                        keyboardType: TextInputType.emailAddress,
-                        textInputAction: TextInputAction.next,
-                        validator: AuthValidators.emailError,
+            child: Center(
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 560),
+                child: LunoraFadeIn(
+                  child: Form(
+                    key: _formKey,
+                    autovalidateMode: AutovalidateMode.onUserInteraction,
+                    child: SingleChildScrollView(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          const SizedBox(height: AppSizes.lg),
+                          const LunoraPageHeader(
+                            compact: true,
+                            icon: Icons.login_rounded,
+                            title: 'Bon retour',
+                            subtitle:
+                                'Retrouve les profils, les histoires et les rituels déjà préparés.',
+                          ),
+                          const SizedBox(height: AppSizes.xl),
+                          LunoraTextField(
+                            controller: _email,
+                            label: 'Email',
+                            keyboardType: TextInputType.emailAddress,
+                            textInputAction: TextInputAction.next,
+                            validator: AuthValidators.emailError,
+                          ),
+                          const SizedBox(height: AppSizes.md),
+                          LunoraTextField(
+                            controller: _password,
+                            label: 'Mot de passe',
+                            obscureText: true,
+                            textInputAction: TextInputAction.done,
+                            validator: AuthValidators.passwordError,
+                          ),
+                          const SizedBox(height: AppSizes.xs),
+                          Align(
+                            alignment: Alignment.centerRight,
+                            child: TextButton(
+                              onPressed: (_loading || _resetBusy)
+                                  ? null
+                                  : _forgotPassword,
+                              child: _resetBusy
+                                  ? const SizedBox(
+                                      width: 18,
+                                      height: 18,
+                                      child: CircularProgressIndicator(
+                                        strokeWidth: 2,
+                                      ),
+                                    )
+                                  : const Text('Mot de passe oublié ?'),
+                            ),
+                          ),
+                          const SizedBox(height: AppSizes.lg),
+                          LunoraPrimaryButton(
+                            label: 'Se connecter',
+                            isLoading: _loading,
+                            onPressed: _submit,
+                          ),
+                          TextButton(
+                            onPressed: () => context.push('/signup'),
+                            child: const Text('Créer un compte'),
+                          ),
+                          TextButton(
+                            onPressed: () =>
+                                context.push(TermsScreen.routePath),
+                            child: const Text(
+                              'Conditions générales d’utilisation',
+                            ),
+                          ),
+                          const SizedBox(height: AppSizes.xl),
+                          const SocialAuthSection(),
+                        ],
                       ),
-                      const SizedBox(height: AppSizes.md),
-                      LunoraTextField(
-                        controller: _password,
-                        label: 'Mot de passe',
-                        obscureText: true,
-                        textInputAction: TextInputAction.done,
-                        validator: AuthValidators.passwordError,
-                      ),
-                      const SizedBox(height: AppSizes.xs),
-                      Align(
-                        alignment: Alignment.centerRight,
-                        child: TextButton(
-                          onPressed: (_loading || _resetBusy)
-                              ? null
-                              : _forgotPassword,
-                          child: _resetBusy
-                              ? const SizedBox(
-                                  width: 18,
-                                  height: 18,
-                                  child: CircularProgressIndicator(
-                                    strokeWidth: 2,
-                                  ),
-                                )
-                              : const Text('Mot de passe oublié ?'),
-                        ),
-                      ),
-                      const SizedBox(height: AppSizes.lg),
-                      LunoraPrimaryButton(
-                        label: 'Se connecter',
-                        isLoading: _loading,
-                        onPressed: _submit,
-                      ),
-                      TextButton(
-                        onPressed: () => context.push('/signup'),
-                        child: const Text('Créer un compte'),
-                      ),
-                      const SizedBox(height: AppSizes.xl),
-                      const SocialAuthSection(),
-                    ],
+                    ),
                   ),
                 ),
               ),

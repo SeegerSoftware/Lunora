@@ -9,6 +9,7 @@ import '../features/auth/presentation/welcome_screen.dart';
 import '../features/child_profile/presentation/child_profile_setup_screen.dart';
 import '../features/child_profile/presentation/providers/child_profile_providers.dart';
 import '../features/home/presentation/home_screen.dart';
+import '../features/legal/presentation/terms_screen.dart';
 import '../features/parent/presentation/parent_area_screen.dart';
 import '../features/stories/presentation/story_history_screen.dart';
 import '../features/stories/presentation/instant_story_screen.dart';
@@ -29,24 +30,23 @@ final goRouterProvider = Provider<GoRouter>((ref) {
     routes: <RouteBase>[
       GoRoute(
         path: '/welcome',
-        pageBuilder: (context, state) => lunoraFadePage(
-          key: state.pageKey,
-          child: const WelcomeScreen(),
-        ),
+        pageBuilder: (context, state) =>
+            lunoraFadePage(key: state.pageKey, child: const WelcomeScreen()),
       ),
       GoRoute(
         path: '/signin',
-        pageBuilder: (context, state) => lunoraFadePage(
-          key: state.pageKey,
-          child: const SignInScreen(),
-        ),
+        pageBuilder: (context, state) =>
+            lunoraFadePage(key: state.pageKey, child: const SignInScreen()),
       ),
       GoRoute(
         path: '/signup',
-        pageBuilder: (context, state) => lunoraFadePage(
-          key: state.pageKey,
-          child: const SignUpScreen(),
-        ),
+        pageBuilder: (context, state) =>
+            lunoraFadePage(key: state.pageKey, child: const SignUpScreen()),
+      ),
+      GoRoute(
+        path: TermsScreen.routePath,
+        pageBuilder: (context, state) =>
+            lunoraFadePage(key: state.pageKey, child: const TermsScreen()),
       ),
       GoRoute(
         path: '/setup-child',
@@ -57,10 +57,8 @@ final goRouterProvider = Provider<GoRouter>((ref) {
       ),
       GoRoute(
         path: '/home',
-        pageBuilder: (context, state) => lunoraFadePage(
-          key: state.pageKey,
-          child: const HomeScreen(),
-        ),
+        pageBuilder: (context, state) =>
+            lunoraFadePage(key: state.pageKey, child: const HomeScreen()),
       ),
       GoRoute(
         path: '/generate',
@@ -98,10 +96,8 @@ final goRouterProvider = Provider<GoRouter>((ref) {
       ),
       GoRoute(
         path: '/parent',
-        pageBuilder: (context, state) => lunoraFadePage(
-          key: state.pageKey,
-          child: const ParentAreaScreen(),
-        ),
+        pageBuilder: (context, state) =>
+            lunoraFadePage(key: state.pageKey, child: const ParentAreaScreen()),
       ),
       GoRoute(
         path: '/subscription',
@@ -141,10 +137,17 @@ final goRouterProvider = Provider<GoRouter>((ref) {
       final loc = state.matchedLocation;
 
       if (user == null) {
-        const publicRoutes = <String>{'/welcome', '/signin', '/signup'};
+        const publicRoutes = <String>{
+          '/welcome',
+          '/signin',
+          '/signup',
+          TermsScreen.routePath,
+        };
         if (publicRoutes.contains(loc)) return null;
         return '/welcome';
       }
+
+      if (loc == TermsScreen.routePath) return null;
 
       if (child == null) {
         if (loc == '/setup-child') return null;

@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-class LunoraTextField extends StatelessWidget {
+class LunoraTextField extends StatefulWidget {
   const LunoraTextField({
     super.key,
     required this.controller,
@@ -25,18 +25,44 @@ class LunoraTextField extends StatelessWidget {
   final int? minLines;
 
   @override
+  State<LunoraTextField> createState() => _LunoraTextFieldState();
+}
+
+class _LunoraTextFieldState extends State<LunoraTextField> {
+  late bool _hidden = widget.obscureText;
+
+  @override
   Widget build(BuildContext context) {
+    final obscure = widget.obscureText && _hidden;
     return TextFormField(
-      controller: controller,
-      keyboardType: keyboardType ??
-          (maxLines > 1 ? TextInputType.multiline : null),
-      obscureText: obscureText,
-      textInputAction:
-          maxLines > 1 ? TextInputAction.newline : textInputAction,
-      validator: validator,
-      minLines: minLines,
-      maxLines: maxLines,
-      decoration: InputDecoration(labelText: label, hintText: hint),
+      controller: widget.controller,
+      keyboardType:
+          widget.keyboardType ??
+          (widget.maxLines > 1 ? TextInputType.multiline : null),
+      obscureText: obscure,
+      textInputAction: widget.maxLines > 1
+          ? TextInputAction.newline
+          : widget.textInputAction,
+      validator: widget.validator,
+      minLines: widget.minLines,
+      maxLines: widget.maxLines,
+      decoration: InputDecoration(
+        labelText: widget.label,
+        hintText: widget.hint,
+        suffixIcon: widget.obscureText
+            ? IconButton(
+                tooltip: _hidden
+                    ? 'Afficher le mot de passe'
+                    : 'Masquer le mot de passe',
+                icon: Icon(
+                  _hidden
+                      ? Icons.visibility_outlined
+                      : Icons.visibility_off_outlined,
+                ),
+                onPressed: () => setState(() => _hidden = !_hidden),
+              )
+            : null,
+      ),
     );
   }
 }

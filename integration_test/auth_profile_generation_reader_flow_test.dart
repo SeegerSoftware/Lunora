@@ -34,35 +34,29 @@ Future<void> _tapText(WidgetTester tester, String text) async {
 void main() {
   IntegrationTestWidgetsFlutterBinding.ensureInitialized();
 
-  testWidgets(
-    'auth -> profil -> génération -> lecture',
-    (tester) async {
-      await FirebaseBootstrap.ensureInitialized();
-      final unique = DateTime.now().millisecondsSinceEpoch;
-      final email = 'qa_$unique@lunora.test';
+  testWidgets('auth -> profil -> génération -> lecture', (tester) async {
+    await FirebaseBootstrap.ensureInitialized();
+    final unique = DateTime.now().millisecondsSinceEpoch;
+    final email = 'qa_$unique@lunora.test';
 
-      await tester.pumpWidget(const ProviderScope(child: LunoraApp()));
-      await _pumpUntilVisible(tester, find.text('Créer un compte'));
+    await tester.pumpWidget(const ProviderScope(child: LunoraApp()));
+    await _pumpUntilVisible(tester, find.text('Créer un compte'));
 
-      await _tapText(tester, 'Créer un compte');
-      await tester.enterText(find.byType(TextFormField).at(0), email);
-      await tester.enterText(find.byType(TextFormField).at(1), 'password123');
-      await _tapText(tester, 'Continuer');
+    await _tapText(tester, 'Créer un compte');
+    await tester.enterText(find.byType(TextFormField).at(0), email);
+    await tester.enterText(find.byType(TextFormField).at(1), 'password123');
+    await _tapText(tester, 'Continuer');
 
-      await _pumpUntilVisible(tester, find.text('Profil enfant'));
-      await tester.enterText(find.byType(TextFormField).first, 'Lina');
-      await _tapText(tester, 'Continuer');
-      await _tapText(tester, 'Continuer');
-      await _tapText(tester, 'Enregistrer');
+    await _pumpUntilVisible(tester, find.text('Profil enfant'));
+    await tester.enterText(find.byType(TextFormField).first, 'Lina');
+    await _tapText(tester, 'Continuer');
+    await _tapText(tester, 'Continuer');
+    await _tapText(tester, 'Enregistrer');
 
-      await _pumpUntilVisible(tester, find.text('Histoire du jour'));
-      await _tapText(tester, 'Lire l’histoire');
+    await _pumpUntilVisible(tester, find.text('Histoire du jour'));
+    await _tapText(tester, 'Lire l’histoire');
 
-      await _pumpUntilVisible(tester, find.text('Lecture'));
-      expect(find.textContaining('Lina'), findsWidgets);
-    },
-    skip: !_runBackendIntegration
-        ? 'Run with --dart-define=RUN_BACKEND_INTEGRATION=true, Firebase Emulator, and backend mock.'
-        : false,
-  );
+    await _pumpUntilVisible(tester, find.text('Lecture'));
+    expect(find.textContaining('Lina'), findsWidgets);
+  }, skip: !_runBackendIntegration);
 }

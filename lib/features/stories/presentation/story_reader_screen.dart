@@ -37,11 +37,15 @@ class _StoryReaderScreenState extends ConsumerState<StoryReaderScreen> {
   double _fontSize = 20;
   static const double _minReaderFontSize = 18;
   static const double _maxReaderFontSize = 24;
-  static const StoryAdaptationEngine _adaptationEngine = StoryAdaptationEngine();
+  static const StoryAdaptationEngine _adaptationEngine =
+      StoryAdaptationEngine();
   var _feedbackBusy = false;
 
-  Widget _storySurface({required Widget child}) {
-    return LunoraGlassCard(child: child);
+  Widget _storySurface({required Widget child, EdgeInsetsGeometry? padding}) {
+    return LunoraGlassCard(
+      padding: padding ?? const EdgeInsets.all(LunoraSpacing.lg),
+      child: child,
+    );
   }
 
   Future<void> _submitStoryFeedback(
@@ -51,10 +55,9 @@ class _StoryReaderScreenState extends ConsumerState<StoryReaderScreen> {
   ) async {
     setState(() => _feedbackBusy = true);
     try {
-      await ref.read(storyRepositoryProvider).setStoryUserFeedback(
-            storyId: story.id,
-            feedback: feedback,
-          );
+      await ref
+          .read(storyRepositoryProvider)
+          .setStoryUserFeedback(storyId: story.id, feedback: feedback);
       ref.invalidate(todayStoryProvider);
       final sid = widget.storyId;
       if (sid != null) {
@@ -66,9 +69,9 @@ class _StoryReaderScreenState extends ConsumerState<StoryReaderScreen> {
       );
     } catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Enregistrement impossible : $e')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Enregistrement impossible : $e')));
     } finally {
       if (mounted) setState(() => _feedbackBusy = false);
     }
@@ -116,8 +119,7 @@ class _StoryReaderScreenState extends ConsumerState<StoryReaderScreen> {
                 style: FilledButton.styleFrom(
                   visualDensity: VisualDensity.compact,
                   backgroundColor: sel == -1
-                      ? theme.colorScheme.errorContainer
-                          .withValues(alpha: 0.55)
+                      ? theme.colorScheme.errorContainer.withValues(alpha: 0.55)
                       : null,
                 ),
               ),
@@ -149,8 +151,9 @@ class _StoryReaderScreenState extends ConsumerState<StoryReaderScreen> {
         : _adaptationEngine.fromChildProfile(childProfile);
     final readerScale = adaptation?.readerFontScale ?? 1.0;
     final effectiveFontSize = (_fontSize * readerScale).clamp(17.0, 28.0);
-    final contentMaxWidth =
-        ((adaptation?.preferPagination ?? false) ? 680.0 : 760.0);
+    final contentMaxWidth = ((adaptation?.preferPagination ?? false)
+        ? 680.0
+        : 760.0);
 
     final id = widget.storyId;
     final asyncStory = id == null
@@ -177,7 +180,8 @@ class _StoryReaderScreenState extends ConsumerState<StoryReaderScreen> {
             tooltip: 'Mode liseuse (écran dédié)',
             icon: const Icon(Icons.nights_stay_rounded),
             onPressed: () async {
-              final sid = id ??
+              final sid =
+                  id ??
                   await ref.read(todayStoryProvider.future).then((s) => s?.id);
               if (!context.mounted || sid == null) return;
               context.push('/story/bedtime?id=${Uri.encodeComponent(sid)}');
@@ -186,375 +190,371 @@ class _StoryReaderScreenState extends ConsumerState<StoryReaderScreen> {
         ],
       ),
       child: asyncStory.when(
-            skipLoadingOnReload: true,
-            data: (story) {
-              if (story == null) {
-                return Center(
-                  child: ConstrainedBox(
-                    constraints: const BoxConstraints(
-                      maxWidth: AppSizes.readerMaxWidth,
-                    ),
-                    child: LunoraGlassCard(
-                      child: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Text(
-                            'Aucune histoire disponible pour le moment.',
-                            textAlign: TextAlign.center,
-                            style: theme.textTheme.titleMedium?.copyWith(
-                              color: LunoraColors.warmBeige,
-                            ),
-                          ),
-                          const SizedBox(height: LunoraSpacing.lg),
-                          if (id == null)
-                            LunoraPrimaryButton(
-                              label: 'Générer une histoire',
-                              icon: Icons.auto_stories_outlined,
-                              onPressed: () => ref.invalidate(todayStoryProvider),
-                            )
-                          else
-                            LunoraPrimaryButton(
-                              label: 'Ouvrir la dernière histoire',
-                              icon: Icons.nights_stay_rounded,
-                              onPressed: () => context.go('/story'),
-                            ),
-                        ],
+        skipLoadingOnReload: true,
+        data: (story) {
+          if (story == null) {
+            return Center(
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(
+                  maxWidth: AppSizes.readerMaxWidth,
+                ),
+                child: LunoraGlassCard(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        'Aucune histoire disponible pour le moment.',
+                        textAlign: TextAlign.center,
+                        style: theme.textTheme.titleMedium?.copyWith(
+                          color: LunoraColors.warmBeige,
+                        ),
                       ),
-                    ),
-                  ),
-                );
-              }
-
-              const hi = LunoraColors.warmBeige;
-              const meta = LunoraColors.mist;
-
-              return ScrollConfiguration(
-                behavior: ScrollConfiguration.of(context).copyWith(
-                  physics: const BouncingScrollPhysics(
-                    parent: AlwaysScrollableScrollPhysics(),
+                      const SizedBox(height: LunoraSpacing.lg),
+                      if (id == null)
+                        LunoraPrimaryButton(
+                          label: 'Générer une histoire',
+                          icon: Icons.auto_stories_outlined,
+                          onPressed: () => ref.invalidate(todayStoryProvider),
+                        )
+                      else
+                        LunoraPrimaryButton(
+                          label: 'Ouvrir la dernière histoire',
+                          icon: Icons.nights_stay_rounded,
+                          onPressed: () => context.go('/story'),
+                        ),
+                    ],
                   ),
                 ),
-                child: SingleChildScrollView(
-                  padding: EdgeInsets.zero,
+              ),
+            );
+          }
+
+          const hi = LunoraColors.warmBeige;
+          const meta = LunoraColors.mist;
+
+          return ScrollConfiguration(
+            behavior: ScrollConfiguration.of(context).copyWith(
+              physics: const BouncingScrollPhysics(
+                parent: AlwaysScrollableScrollPhysics(),
+              ),
+            ),
+            child: SingleChildScrollView(
+              padding: EdgeInsets.zero,
+              child: ConstrainedBox(
+                constraints: BoxConstraints(
+                  minHeight: MediaQuery.of(context).size.height - 100,
+                ),
+                child: Center(
                   child: ConstrainedBox(
-                    constraints: BoxConstraints(
-                      minHeight: MediaQuery.of(context).size.height - 100,
-                    ),
-                    child: Center(
-                      child: ConstrainedBox(
-                        constraints: BoxConstraints(maxWidth: contentMaxWidth),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.stretch,
-                          children: [
-                            LunoraFadeIn(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
+                    constraints: BoxConstraints(maxWidth: contentMaxWidth),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        LunoraFadeIn(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              LunoraSectionTitle(
+                                'Histoire',
+                                foregroundColor: hi,
+                              ),
+                              const SizedBox(height: LunoraSpacing.sm),
+                              Text(
+                                'Générée avec ${storyModelLabel(story.generationSource)}',
+                                style: theme.textTheme.bodySmall?.copyWith(
+                                  color: meta.withValues(alpha: 0.88),
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                              const SizedBox(height: LunoraSpacing.xs),
+                              Text(
+                                story.title,
+                                style: theme.textTheme.headlineSmall?.copyWith(
+                                  color: hi,
+                                  fontWeight: FontWeight.w800,
+                                  height: 1.2,
+                                ),
+                              ),
+                              const SizedBox(height: LunoraSpacing.sm),
+                              Wrap(
+                                spacing: LunoraSpacing.xs,
+                                runSpacing: LunoraSpacing.xs,
                                 children: [
-                                  LunoraSectionTitle('Histoire', foregroundColor: hi),
-                                  const SizedBox(height: LunoraSpacing.sm),
-                                  Text(
-                                    'Générée avec ${storyModelLabel(story.generationSource)}',
-                                    style: theme.textTheme.bodySmall?.copyWith(
-                                      color: meta.withValues(alpha: 0.88),
-                                      fontWeight: FontWeight.w600,
+                                  LunoraBadge(
+                                    icon: Icons.timer_outlined,
+                                    label: readingDurationLabel(
+                                      story.estimatedReadingMinutes,
                                     ),
                                   ),
-                                  const SizedBox(height: LunoraSpacing.xs),
-                                  Text(
-                                    story.title,
-                                    style: theme.textTheme.headlineSmall?.copyWith(
-                                      color: hi,
-                                      fontWeight: FontWeight.w800,
-                                      height: 1.2,
+                                  LunoraBadge(
+                                    icon: Icons.menu_book_rounded,
+                                    label: storyFormatLabel(story),
+                                  ),
+                                  if (story.isSerialized)
+                                    LunoraBadge(
+                                      icon: Icons.bookmark_rounded,
+                                      label: 'Chapitre ${story.chapterNumber}',
+                                    ),
+                                  LunoraBadge(
+                                    icon: Icons.auto_awesome_rounded,
+                                    label: storySourceLabel(
+                                      story.generationSource,
                                     ),
                                   ),
-                                  const SizedBox(height: LunoraSpacing.sm),
-                                  Wrap(
-                                    spacing: LunoraSpacing.xs,
-                                    runSpacing: LunoraSpacing.xs,
-                                    children: [
-                                      LunoraBadge(
-                                        icon: Icons.timer_outlined,
-                                        label: readingDurationLabel(
-                                          story.estimatedReadingMinutes,
+                                  if (adaptation != null)
+                                    LunoraBadge(
+                                      icon: Icons.tune_rounded,
+                                      label:
+                                          'Lecture ${adaptation.ageYears} ans',
+                                    ),
+                                  InkWell(
+                                    borderRadius: BorderRadius.circular(999),
+                                    onTap: () async {
+                                      final plainText =
+                                          '${story.title}\n\n${story.content}';
+                                      await Clipboard.setData(
+                                        ClipboardData(text: plainText),
+                                      );
+                                      if (!context.mounted) return;
+                                      ScaffoldMessenger.of(context)
+                                        ..hideCurrentSnackBar()
+                                        ..showSnackBar(
+                                          const SnackBar(
+                                            content: Text(
+                                              'Histoire copiée dans le presse-papiers',
+                                            ),
+                                          ),
+                                        );
+                                    },
+                                    child: Container(
+                                      padding: const EdgeInsets.symmetric(
+                                        horizontal: LunoraSpacing.sm,
+                                        vertical: LunoraSpacing.xxs,
+                                      ),
+                                      decoration: BoxDecoration(
+                                        color: LunoraColors.nightBlueLift
+                                            .withValues(alpha: 0.42),
+                                        borderRadius: BorderRadius.circular(
+                                          999,
+                                        ),
+                                        border: Border.all(
+                                          color: meta.withValues(alpha: 0.25),
                                         ),
                                       ),
-                                      LunoraBadge(
-                                        icon: Icons.menu_book_rounded,
-                                        label: storyFormatLabel(story),
-                                      ),
-                                      if (story.isSerialized)
-                                        LunoraBadge(
-                                          icon: Icons.bookmark_rounded,
-                                          label: 'Chapitre ${story.chapterNumber}',
-                                        ),
-                                      LunoraBadge(
-                                        icon: Icons.auto_awesome_rounded,
-                                        label: storySourceLabel(
-                                          story.generationSource,
-                                        ),
-                                      ),
-                                      if (adaptation != null)
-                                        LunoraBadge(
-                                          icon: Icons.tune_rounded,
-                                          label: 'Lecture ${adaptation.ageYears} ans',
-                                        ),
-                                      InkWell(
-                                        borderRadius: BorderRadius.circular(999),
-                                        onTap: () async {
-                                          final plainText =
-                                              '${story.title}\n\n${story.content}';
-                                          await Clipboard.setData(
-                                            ClipboardData(text: plainText),
-                                          );
-                                          if (!context.mounted) return;
-                                          ScaffoldMessenger.of(context)
-                                            ..hideCurrentSnackBar()
-                                            ..showSnackBar(
-                                              const SnackBar(
-                                                content: Text(
-                                                  'Histoire copiée dans le presse-papiers',
+                                      child: Row(
+                                        mainAxisSize: MainAxisSize.min,
+                                        children: [
+                                          Icon(
+                                            Icons.content_copy_rounded,
+                                            size: 14,
+                                            color: hi.withValues(alpha: 0.94),
+                                          ),
+                                          const SizedBox(
+                                            width: LunoraSpacing.xxs,
+                                          ),
+                                          Text(
+                                            'Copier',
+                                            style: theme.textTheme.labelSmall
+                                                ?.copyWith(
+                                                  color: hi,
+                                                  fontWeight: FontWeight.w700,
                                                 ),
-                                              ),
-                                            );
-                                        },
-                                        child: Container(
-                                          padding: const EdgeInsets.symmetric(
-                                            horizontal: LunoraSpacing.sm,
-                                            vertical: LunoraSpacing.xxs,
                                           ),
-                                          decoration: BoxDecoration(
-                                            color: LunoraColors.nightBlueLift
-                                                .withValues(alpha: 0.42),
-                                            borderRadius: BorderRadius.circular(
-                                              999,
-                                            ),
-                                            border: Border.all(
-                                              color: meta.withValues(alpha: 0.25),
-                                            ),
-                                          ),
-                                          child: Row(
-                                            mainAxisSize: MainAxisSize.min,
-                                            children: [
-                                              Icon(
-                                                Icons.content_copy_rounded,
-                                                size: 14,
-                                                color: hi.withValues(alpha: 0.94),
-                                              ),
-                                              const SizedBox(
-                                                width: LunoraSpacing.xxs,
-                                              ),
-                                              Text(
-                                                'Copier',
-                                                style: theme
-                                                    .textTheme
-                                                    .labelSmall
-                                                    ?.copyWith(
-                                                      color: hi,
-                                                      fontWeight:
-                                                          FontWeight.w700,
-                                                    ),
-                                              ),
-                                            ],
-                                          ),
-                                        ),
+                                        ],
                                       ),
-                                    ],
-                                  ),
-                                  const SizedBox(height: LunoraSpacing.md),
-                                  _storyFeedbackBand(
-                                    context,
-                                    ref,
-                                    story: story,
-                                    hi: hi,
-                                    meta: meta,
+                                    ),
                                   ),
                                 ],
                               ),
+                              const SizedBox(height: LunoraSpacing.md),
+                              _storyFeedbackBand(
+                                context,
+                                ref,
+                                story: story,
+                                hi: hi,
+                                meta: meta,
+                              ),
+                            ],
+                          ),
+                        ),
+                        const SizedBox(height: LunoraSpacing.md),
+                        LunoraFadeIn(
+                          delay: const Duration(milliseconds: 120),
+                          child: _storySurface(
+                            padding: const EdgeInsets.fromLTRB(
+                              LunoraSpacing.lg,
+                              LunoraSpacing.md,
+                              LunoraSpacing.lg,
+                              LunoraSpacing.lg,
                             ),
-                            const SizedBox(height: LunoraSpacing.md),
-                            LunoraFadeIn(
-                              delay: const Duration(milliseconds: 120),
-                              child: _storySurface(
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Row(
+                                  mainAxisAlignment: MainAxisAlignment.end,
                                   children: [
-                                    Row(
-                                      mainAxisAlignment: MainAxisAlignment.end,
-                                      children: [
-                                        _fontAction(
-                                          context,
-                                          label: 'A-',
-                                          onTap: () => setState(() {
-                                            _fontSize = (_fontSize - 0.5).clamp(
-                                              _minReaderFontSize,
-                                              _maxReaderFontSize,
-                                            );
-                                          }),
-                                        ),
-                                        const SizedBox(width: LunoraSpacing.xs),
-                                        _fontAction(
-                                          context,
-                                          label: 'A+',
-                                          onTap: () => setState(() {
-                                            _fontSize = (_fontSize + 0.5).clamp(
-                                              _minReaderFontSize,
-                                              _maxReaderFontSize,
-                                            );
-                                          }),
-                                        ),
-                                      ],
+                                    _fontAction(
+                                      context,
+                                      label: 'A-',
+                                      onTap: () => setState(() {
+                                        _fontSize = (_fontSize - 0.5).clamp(
+                                          _minReaderFontSize,
+                                          _maxReaderFontSize,
+                                        );
+                                      }),
                                     ),
-                                    const SizedBox(height: LunoraSpacing.sm),
-                                    Text(
-                                      'Bonne lecture',
-                                      style: theme.textTheme.labelLarge?.copyWith(
-                                            color: meta.withValues(alpha: 0.82),
-                                            fontWeight: FontWeight.w700,
-                                          ),
-                                    ),
-                                    const SizedBox(height: LunoraSpacing.md),
-                                    SelectionArea(
-                                      child: Column(
-                                        crossAxisAlignment:
-                                            CrossAxisAlignment.stretch,
-                                        children: _paragraphWidgets(
-                                          context,
-                                          story.content,
-                                          effectiveFontSize:
-                                              effectiveFontSize,
-                                        ),
-                                      ),
+                                    const SizedBox(width: LunoraSpacing.xs),
+                                    _fontAction(
+                                      context,
+                                      label: 'A+',
+                                      onTap: () => setState(() {
+                                        _fontSize = (_fontSize + 0.5).clamp(
+                                          _minReaderFontSize,
+                                          _maxReaderFontSize,
+                                        );
+                                      }),
                                     ),
                                   ],
                                 ),
-                              ),
+                                const SizedBox(height: LunoraSpacing.sm),
+                                Text(
+                                  'Bonne lecture',
+                                  style: theme.textTheme.labelLarge?.copyWith(
+                                    color: meta.withValues(alpha: 0.82),
+                                    fontWeight: FontWeight.w700,
+                                  ),
+                                ),
+                                const SizedBox(height: LunoraSpacing.md),
+                                SelectionArea(
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.stretch,
+                                    children: _paragraphWidgets(
+                                      context,
+                                      story.content,
+                                      effectiveFontSize: effectiveFontSize,
+                                    ),
+                                  ),
+                                ),
+                              ],
                             ),
-                            const SizedBox(height: LunoraSpacing.md),
-                            LunoraFadeIn(
-                              delay: const Duration(milliseconds: 160),
-                              child: _storySurface(
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Text(
-                                      'Partager un extrait',
-                                      style: theme.textTheme.titleSmall?.copyWith(
-                                        color: hi,
-                                        fontWeight: FontWeight.w700,
-                                      ),
+                          ),
+                        ),
+                        const SizedBox(height: LunoraSpacing.md),
+                        LunoraFadeIn(
+                          delay: const Duration(milliseconds: 160),
+                          child: _ReaderActionsPanel(
+                            onCopy: () async {
+                              final plainText =
+                                  '${story.title}\n\n${story.content}';
+                              await Clipboard.setData(
+                                ClipboardData(text: plainText),
+                              );
+                              if (!context.mounted) return;
+                              ScaffoldMessenger.of(context)
+                                ..hideCurrentSnackBar()
+                                ..showSnackBar(
+                                  const SnackBar(
+                                    content: Text(
+                                      'Histoire copiée dans le presse-papiers',
                                     ),
-                                    const SizedBox(height: LunoraSpacing.xs),
-                                    Text(
-                                      'On partage uniquement 1/4 de l’histoire.',
-                                      style: theme.textTheme.bodySmall?.copyWith(
-                                        color: meta.withValues(alpha: 0.84),
-                                      ),
-                                    ),
-                                    const SizedBox(height: LunoraSpacing.sm),
-                                    Wrap(
-                                      spacing: LunoraSpacing.xs,
-                                      runSpacing: LunoraSpacing.xs,
-                                      children: [
-                                        _socialShareButton(
-                                          context,
-                                          label: 'WhatsApp',
-                                          icon: Icons.chat_bubble_outline_rounded,
-                                          onTap: () => _shareOnWhatsApp(
-                                            context,
-                                            title: story.title,
-                                            content: story.content,
-                                          ),
-                                        ),
-                                        _socialShareButton(
-                                          context,
-                                          label: 'X',
-                                          icon: Icons.alternate_email_rounded,
-                                          onTap: () => _shareOnX(
-                                            context,
-                                            title: story.title,
-                                            content: story.content,
-                                          ),
-                                        ),
-                                        _socialShareButton(
-                                          context,
-                                          label: 'Facebook',
-                                          icon: Icons.thumb_up_alt_outlined,
-                                          onTap: () => _shareOnFacebook(
-                                            context,
-                                            title: story.title,
-                                            content: story.content,
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                    const SizedBox(height: LunoraSpacing.sm),
-                                    Text(
-                                      'Connecte-toi à Elunai pour plus d’histoires.',
-                                      style: theme.textTheme.bodySmall?.copyWith(
-                                        color: LunoraColors.starGoldSoft
-                                            .withValues(alpha: 0.94),
-                                        fontWeight: FontWeight.w600,
-                                      ),
-                                    ),
-                                  ],
+                                  ),
+                                );
+                            },
+                            shareButtons: [
+                              _socialShareButton(
+                                context,
+                                label: 'WhatsApp',
+                                icon: Icons.chat_bubble_outline_rounded,
+                                onTap: () => _shareOnWhatsApp(
+                                  context,
+                                  title: story.title,
+                                  content: story.content,
                                 ),
                               ),
-                            ),
-                            const SizedBox(height: LunoraSpacing.lg),
-                            LunoraPrimaryButton(
-                              label: 'Terminer l\'histoire',
-                              icon: Icons.check_circle_outline_rounded,
-                              onPressed: () => context.go('/home'),
-                            ),
-                            const SizedBox(height: LunoraSpacing.md),
-                          ],
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
-              );
-            },
-            loading: () => const Center(child: LunoraProgressBar()),
-            error: (err, _) => Padding(
-              padding: const EdgeInsets.all(LunoraSpacing.md),
-              child: Center(
-                child: LunoraFadeIn(
-                  child: LunoraGlassCard(
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Text(
-                          'Impossible d’afficher l’histoire.',
-                          style: theme.textTheme.titleMedium?.copyWith(
-                            color: LunoraColors.warmBeige,
+                              _socialShareButton(
+                                context,
+                                label: 'X',
+                                icon: Icons.alternate_email_rounded,
+                                onTap: () => _shareOnX(
+                                  context,
+                                  title: story.title,
+                                  content: story.content,
+                                ),
+                              ),
+                              _socialShareButton(
+                                context,
+                                label: 'Facebook',
+                                icon: Icons.thumb_up_alt_outlined,
+                                onTap: () => _shareOnFacebook(
+                                  context,
+                                  title: story.title,
+                                  content: story.content,
+                                ),
+                              ),
+                            ],
                           ),
-                          textAlign: TextAlign.center,
-                        ),
-                        const SizedBox(height: LunoraSpacing.sm),
-                        Text(
-                          err is StoryGenerationException
-                              ? err.message
-                              : '$err',
-                          style: theme.textTheme.bodySmall?.copyWith(
-                            color: LunoraColors.mist.withValues(alpha: 0.86),
-                          ),
-                          textAlign: TextAlign.center,
                         ),
                         const SizedBox(height: LunoraSpacing.lg),
-                        if (id == null)
-                          LunoraPrimaryButton(
-                            label: 'Réessayer',
-                            icon: Icons.refresh_rounded,
-                            onPressed: () => ref.invalidate(todayStoryProvider),
-                          ),
+                        _storyFeedbackBand(
+                          context,
+                          ref,
+                          story: story,
+                          hi: hi,
+                          meta: meta,
+                        ),
+                        const SizedBox(height: LunoraSpacing.md),
+                        LunoraPrimaryButton(
+                          label: 'Terminer l\'histoire',
+                          icon: Icons.check_circle_outline_rounded,
+                          onPressed: () => context.go('/home'),
+                        ),
+                        const SizedBox(height: LunoraSpacing.md),
                       ],
                     ),
                   ),
                 ),
               ),
             ),
+          );
+        },
+        loading: () => const Center(child: LunoraProgressBar()),
+        error: (err, _) => Padding(
+          padding: const EdgeInsets.all(LunoraSpacing.md),
+          child: Center(
+            child: LunoraFadeIn(
+              child: LunoraGlassCard(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      'Impossible d’afficher l’histoire.',
+                      style: theme.textTheme.titleMedium?.copyWith(
+                        color: LunoraColors.warmBeige,
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
+                    const SizedBox(height: LunoraSpacing.sm),
+                    Text(
+                      err is StoryGenerationException ? err.message : '$err',
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        color: LunoraColors.mist.withValues(alpha: 0.86),
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
+                    const SizedBox(height: LunoraSpacing.lg),
+                    if (id == null)
+                      LunoraPrimaryButton(
+                        label: 'Réessayer',
+                        icon: Icons.refresh_rounded,
+                        onPressed: () => ref.invalidate(todayStoryProvider),
+                      ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ),
       ),
     );
   }
@@ -583,9 +583,9 @@ class _StoryReaderScreenState extends ConsumerState<StoryReaderScreen> {
         child: Text(
           label,
           style: Theme.of(context).textTheme.labelMedium?.copyWith(
-                color: fg,
-                fontWeight: FontWeight.w800,
-              ),
+            color: fg,
+            fontWeight: FontWeight.w800,
+          ),
         ),
       ),
     );
@@ -603,16 +603,15 @@ class _StoryReaderScreenState extends ConsumerState<StoryReaderScreen> {
         .toList();
     final lh = _lineHeightForFontSize(effectiveFontSize);
     final style = Theme.of(context).textTheme.bodyLarge!.copyWith(
-          fontSize: effectiveFontSize,
-          height: lh,
-          color: LunoraColors.warmBeige.withValues(alpha: 0.97),
-        );
+      fontSize: effectiveFontSize,
+      height: lh,
+      color: LunoraColors.warmBeige.withValues(alpha: 0.97),
+    );
     final paragraphGap = _paragraphGapForFontSize(effectiveFontSize);
     return [
       for (var i = 0; i < paragraphs.length; i++) ...[
         Text(paragraphs[i], style: style),
-        if (i != paragraphs.length - 1)
-          SizedBox(height: paragraphGap),
+        if (i != paragraphs.length - 1) SizedBox(height: paragraphGap),
       ],
     ];
   }
@@ -634,18 +633,12 @@ class _StoryReaderScreenState extends ConsumerState<StoryReaderScreen> {
         decoration: BoxDecoration(
           color: LunoraColors.nightBlueLift.withValues(alpha: 0.5),
           borderRadius: BorderRadius.circular(999),
-          border: Border.all(
-            color: LunoraColors.mist.withValues(alpha: 0.24),
-          ),
+          border: Border.all(color: LunoraColors.mist.withValues(alpha: 0.24)),
         ),
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(
-              icon,
-              size: 14,
-              color: LunoraColors.warmBeige,
-            ),
+            Icon(icon, size: 14, color: LunoraColors.warmBeige),
             const SizedBox(width: LunoraSpacing.xxs),
             Text(
               label,
@@ -687,7 +680,9 @@ class _StoryReaderScreenState extends ConsumerState<StoryReaderScreen> {
     required String content,
   }) async {
     final text = _shareSnippet(title, content);
-    final uri = Uri.parse('https://twitter.com/intent/tweet?text=${Uri.encodeComponent(text)}');
+    final uri = Uri.parse(
+      'https://twitter.com/intent/tweet?text=${Uri.encodeComponent(text)}',
+    );
     await _launchShare(context, uri);
   }
 
@@ -715,17 +710,141 @@ class _StoryReaderScreenState extends ConsumerState<StoryReaderScreen> {
   }
 
   double _lineHeightForFontSize(double fontSize) {
-    final t = ((fontSize - _minReaderFontSize) /
-            (_maxReaderFontSize - _minReaderFontSize))
-        .clamp(0.0, 1.0);
+    final t =
+        ((fontSize - _minReaderFontSize) /
+                (_maxReaderFontSize - _minReaderFontSize))
+            .clamp(0.0, 1.0);
     // Courbe de confort: texte petit => interligne plus ample.
     return 1.7 - (0.12 * t);
   }
 
   double _paragraphGapForFontSize(double fontSize) {
-    final t = ((fontSize - _minReaderFontSize) /
-            (_maxReaderFontSize - _minReaderFontSize))
-        .clamp(0.0, 1.0);
+    final t =
+        ((fontSize - _minReaderFontSize) /
+                (_maxReaderFontSize - _minReaderFontSize))
+            .clamp(0.0, 1.0);
     return 20 - (4 * t);
+  }
+}
+
+class _ReaderActionsPanel extends StatelessWidget {
+  const _ReaderActionsPanel({required this.onCopy, required this.shareButtons});
+
+  final VoidCallback onCopy;
+  final List<Widget> shareButtons;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        color: LunoraColors.nightBlueDeep.withValues(alpha: 0.28),
+        borderRadius: LunoraSpacing.radiusLg,
+        border: Border.all(color: LunoraColors.mist.withValues(alpha: 0.12)),
+      ),
+      child: Theme(
+        data: theme.copyWith(dividerColor: Colors.transparent),
+        child: ExpansionTile(
+          tilePadding: const EdgeInsets.symmetric(
+            horizontal: LunoraSpacing.md,
+            vertical: LunoraSpacing.xs,
+          ),
+          childrenPadding: const EdgeInsets.fromLTRB(
+            LunoraSpacing.md,
+            0,
+            LunoraSpacing.md,
+            LunoraSpacing.md,
+          ),
+          leading: const Icon(
+            Icons.ios_share_rounded,
+            color: LunoraColors.starGoldSoft,
+          ),
+          iconColor: LunoraColors.warmBeige,
+          collapsedIconColor: LunoraColors.warmBeige,
+          title: Text(
+            'Actions après lecture',
+            style: theme.textTheme.titleSmall?.copyWith(
+              color: LunoraColors.warmBeige,
+              fontWeight: FontWeight.w900,
+            ),
+          ),
+          subtitle: Text(
+            'Copier ou partager un extrait, sans interrompre la lecture.',
+            style: theme.textTheme.bodySmall?.copyWith(
+              color: LunoraColors.mist.withValues(alpha: 0.75),
+            ),
+          ),
+          children: [
+            Wrap(
+              spacing: LunoraSpacing.xs,
+              runSpacing: LunoraSpacing.xs,
+              children: [
+                _ReaderActionPill(
+                  icon: Icons.content_copy_rounded,
+                  label: 'Copier',
+                  onTap: onCopy,
+                ),
+                ...shareButtons,
+              ],
+            ),
+            const SizedBox(height: LunoraSpacing.sm),
+            Align(
+              alignment: Alignment.centerLeft,
+              child: Text(
+                'Le partage utilise seulement un extrait de l’histoire.',
+                style: theme.textTheme.bodySmall?.copyWith(
+                  color: LunoraColors.mist.withValues(alpha: 0.68),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _ReaderActionPill extends StatelessWidget {
+  const _ReaderActionPill({
+    required this.icon,
+    required this.label,
+    required this.onTap,
+  });
+
+  final IconData icon;
+  final String label;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      borderRadius: BorderRadius.circular(999),
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.symmetric(
+          horizontal: LunoraSpacing.sm,
+          vertical: LunoraSpacing.xs,
+        ),
+        decoration: BoxDecoration(
+          color: LunoraColors.nightBlueLift.withValues(alpha: 0.5),
+          borderRadius: BorderRadius.circular(999),
+          border: Border.all(color: LunoraColors.mist.withValues(alpha: 0.24)),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(icon, size: 16, color: LunoraColors.warmBeige),
+            const SizedBox(width: LunoraSpacing.xxs),
+            Text(
+              label,
+              style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                color: LunoraColors.warmBeige,
+                fontWeight: FontWeight.w800,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 }

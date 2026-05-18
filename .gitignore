@@ -30,6 +30,10 @@ dart_defines.json
 *.local
 
 # Firebase / Google credentials
+backend/secrets/*
+!backend/secrets/.gitkeep
+backend/*service-account*.json
+backend/firebase-service-account*.json
 android/app/google-services.json
 ios/Runner/GoogleService-Info.plist
 # Généré par FlutterFire (contient des clés API côté client)
