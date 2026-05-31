@@ -22,7 +22,7 @@ class MoonHeader extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         _MoonDisc(),
-        const SizedBox(width: LunoraSpacing.md),
+        const SizedBox(width: ElunaiSpacing.md),
         Expanded(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -30,17 +30,17 @@ class MoonHeader extends StatelessWidget {
               Text(
                 title,
                 style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                  color: LunoraColors.warmBeige,
+                  color: ElunaiColors.warmBeige,
                   fontWeight: FontWeight.w800,
                   letterSpacing: -0.2,
                 ),
               ),
               if (subtitle != null) ...[
-                const SizedBox(height: LunoraSpacing.xxs),
+                const SizedBox(height: ElunaiSpacing.xxs),
                 Text(
                   subtitle!,
                   style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    color: LunoraColors.mist.withValues(alpha: 0.78),
+                    color: ElunaiColors.mist.withValues(alpha: 0.78),
                     fontWeight: FontWeight.w500,
                   ),
                 ),
@@ -64,15 +64,15 @@ class _MoonDisc extends StatelessWidget {
         shape: BoxShape.circle,
         gradient: RadialGradient(
           colors: [
-            LunoraColors.moonIvory,
-            LunoraColors.warmBeigeDim.withValues(alpha: 0.85),
+            ElunaiColors.moonIvory,
+            ElunaiColors.warmBeigeDim.withValues(alpha: 0.85),
           ],
           center: const Alignment(-0.35, -0.35),
           radius: 0.95,
         ),
         boxShadow: [
           BoxShadow(
-            color: LunoraColors.starGold.withValues(alpha: 0.35),
+            color: ElunaiColors.starGold.withValues(alpha: 0.35),
             blurRadius: 18,
             spreadRadius: 0,
           ),
@@ -81,7 +81,7 @@ class _MoonDisc extends StatelessWidget {
       child: Center(
         child: Icon(
           Icons.nightlight_round,
-          color: LunoraColors.nightBlue.withValues(alpha: 0.55),
+          color: ElunaiColors.nightBlue.withValues(alpha: 0.55),
           size: 26,
         ),
       ),

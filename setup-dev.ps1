@@ -1,4 +1,4 @@
-# Lunora — configuration environnement de dev (Windows)
+# Elunai — configuration environnement de dev (Windows)
 # Usage : powershell -ExecutionPolicy Bypass -File .\setup-dev.ps1
 
 $ErrorActionPreference = "Stop"
@@ -24,7 +24,7 @@ function Ensure-FlutterPath {
     Refresh-Path
 }
 
-Write-Host "=== Lunora — setup dev ===" -ForegroundColor Cyan
+Write-Host "=== Elunai — setup dev ===" -ForegroundColor Cyan
 
 Ensure-FlutterPath
 flutter --version

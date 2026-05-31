@@ -6,8 +6,8 @@ import 'joy_atmosphere_layer.dart';
 import 'magical/starfield_background.dart';
 
 /// Fond commun : **crème** en thème clair, ciel magique en thème sombre.
-class LunoraScreenShell extends StatelessWidget {
-  const LunoraScreenShell({
+class ElunaiScreenShell extends StatelessWidget {
+  const ElunaiScreenShell({
     super.key,
     required this.child,
     this.useReaderGradient = false,
@@ -27,15 +27,14 @@ class LunoraScreenShell extends StatelessWidget {
     final isLight = Theme.of(context).brightness == Brightness.light;
 
     if (isLight && !useReaderGradient) {
-      return ColoredBox(
-        color: LunoraColors.storybookCream,
-        child: child,
-      );
+      return ColoredBox(color: ElunaiColors.storybookCream, child: child);
     }
 
     final gradient = useReaderGradient
-        ? LunoraColors.readerCanvasVertical
-        : (joyfulBackdrop ? LunoraColors.joySkyVertical : LunoraColors.nightSkyVertical);
+        ? ElunaiColors.readerCanvasVertical
+        : (joyfulBackdrop
+              ? ElunaiColors.joySkyVertical
+              : ElunaiColors.nightSkyVertical);
 
     return Stack(
       fit: StackFit.expand,
@@ -45,10 +44,7 @@ class LunoraScreenShell extends StatelessWidget {
           const Positioned.fill(child: JoyAtmosphereLayer()),
         if (showStarfield)
           Positioned.fill(
-            child: StarfieldBackground(
-              starCount: starCount,
-              child: child,
-            ),
+            child: StarfieldBackground(starCount: starCount, child: child),
           )
         else
           Positioned.fill(child: child),

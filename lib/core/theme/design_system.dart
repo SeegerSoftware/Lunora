@@ -1,4 +1,4 @@
-/// Point d’entrée unique du design system Lunora (couleurs, espacements, typo, thème).
+/// Point d’entrée unique du design system Elunai (couleurs, espacements, typo, thème).
 library;
 
 export 'app_theme.dart';

@@ -1,4 +1,4 @@
-# Audit UX/UI Lunora
+# Audit UX/UI Elunai
 
 ## Direction produit
 
@@ -37,7 +37,7 @@ Actions :
 Constat : le flow par étapes est le bon modèle. Il reste à peaufiner visuellement les sections et à réduire les textes longs dans les cartes.
 
 Recommandation suivante :
-- harmoniser les cartes avec `LunoraPageHeader` et `LunoraActionTile` ;
+- harmoniser les cartes avec `ElunaiPageHeader` et `ElunaiActionTile` ;
 - ajouter un récapitulatif final avant enregistrement ;
 - rendre la progression plus compacte sur mobile.
 

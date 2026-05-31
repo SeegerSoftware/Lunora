@@ -1,6 +1,8 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:equatable/equatable.dart';
 
+import 'child_profile.dart';
+
 String _readNarrativeText(dynamic value, {String fallback = ''}) {
   if (value == null) return fallback;
   if (value is String) return value.trim();
@@ -294,6 +296,7 @@ class SeriesState extends Equatable {
     required this.nextChapterGoal,
     required this.createdAt,
     required this.updatedAt,
+    this.profileSnapshot,
     this.completedAt,
   });
 
@@ -328,6 +331,7 @@ class SeriesState extends Equatable {
   final String nextChapterGoal;
   final DateTime createdAt;
   final DateTime updatedAt;
+  final ChildProfile? profileSnapshot;
   final DateTime? completedAt;
 
   SeriesState copyWith({
@@ -362,6 +366,7 @@ class SeriesState extends Equatable {
     String? nextChapterGoal,
     DateTime? createdAt,
     DateTime? updatedAt,
+    ChildProfile? profileSnapshot,
     DateTime? completedAt,
     bool clearCompletedAt = false,
   }) {
@@ -398,6 +403,7 @@ class SeriesState extends Equatable {
       nextChapterGoal: nextChapterGoal ?? this.nextChapterGoal,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
+      profileSnapshot: profileSnapshot ?? this.profileSnapshot,
       completedAt: clearCompletedAt ? null : completedAt ?? this.completedAt,
     );
   }
@@ -469,6 +475,11 @@ class SeriesState extends Equatable {
       nextChapterGoal: _readNarrativeText(map['nextChapterGoal']),
       createdAt: readDate(map['createdAt'], now),
       updatedAt: readDate(map['updatedAt'], now),
+      profileSnapshot: map['profileSnapshot'] is Map
+          ? ChildProfile.fromMap(
+              Map<String, dynamic>.from(map['profileSnapshot'] as Map),
+            )
+          : null,
       completedAt: map['completedAt'] == null
           ? null
           : readDate(map['completedAt'], now),
@@ -510,6 +521,7 @@ class SeriesState extends Equatable {
       'nextChapterGoal': nextChapterGoal,
       'createdAt': createdAt.toIso8601String(),
       'updatedAt': updatedAt.toIso8601String(),
+      'profileSnapshot': profileSnapshot?.toMap(),
       'completedAt': completedAt?.toIso8601String(),
     };
   }
@@ -547,6 +559,7 @@ class SeriesState extends Equatable {
     nextChapterGoal,
     createdAt,
     updatedAt,
+    profileSnapshot,
     completedAt,
   ];
 }

@@ -5,7 +5,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/theme/spacing.dart';
 import '../../../core/theme/text_styles.dart';
 import '../../../routing/safe_navigation.dart';
-import '../../../shared/widgets/magical/lunora_progress_bar.dart';
+import '../../../shared/widgets/magical/elunai_progress_bar.dart';
+import '../../../shared/widgets/magical/audio_player_widget.dart';
 import 'providers/story_providers.dart';
 
 /// Lecture minimale pour le coucher : texte seul, contraste doux, luminosité visuelle basse.
@@ -19,7 +20,8 @@ class StoryBedtimeReaderScreen extends ConsumerStatefulWidget {
       _StoryBedtimeReaderScreenState();
 }
 
-class _StoryBedtimeReaderScreenState extends ConsumerState<StoryBedtimeReaderScreen> {
+class _StoryBedtimeReaderScreenState
+    extends ConsumerState<StoryBedtimeReaderScreen> {
   static const _bg = Color(0xFF0E1014);
   static const _ink = Color(0xFFE6D9C8);
   static const _inkMuted = Color(0xFFB8A99A);
@@ -55,7 +57,10 @@ class _StoryBedtimeReaderScreenState extends ConsumerState<StoryBedtimeReaderScr
                   alignment: Alignment.centerLeft,
                   child: IconButton(
                     tooltip: 'Retour',
-                    icon: const Icon(Icons.arrow_back_rounded, color: _inkMuted),
+                    icon: const Icon(
+                      Icons.arrow_back_rounded,
+                      color: _inkMuted,
+                    ),
                     onPressed: () => context.safePopOrGo('/story'),
                   ),
                 ),
@@ -82,10 +87,10 @@ class _StoryBedtimeReaderScreenState extends ConsumerState<StoryBedtimeReaderScr
                           .toList();
                       return ListView(
                         padding: const EdgeInsets.fromLTRB(
-                          LunoraSpacing.lg,
+                          ElunaiSpacing.lg,
                           0,
-                          LunoraSpacing.lg,
-                          LunoraSpacing.xl,
+                          ElunaiSpacing.lg,
+                          ElunaiSpacing.xl,
                         ),
                         children: [
                           Text(
@@ -98,23 +103,30 @@ class _StoryBedtimeReaderScreenState extends ConsumerState<StoryBedtimeReaderScr
                               letterSpacing: 0.2,
                             ),
                           ),
-                          const SizedBox(height: LunoraSpacing.lg),
-                          ...paras.expand((p) => [
-                                Text(
-                                  p,
-                                  style: LunoraTextStyles.ereaderBody(
-                                    _fontSize,
-                                    1.65,
-                                  ).copyWith(color: _ink),
-                                ),
-                                const SizedBox(height: LunoraSpacing.md),
-                              ]),
+                          const SizedBox(height: ElunaiSpacing.lg),
+                          AudioPlayerWidget(
+                            title: story.title,
+                            content: story.content,
+                          ),
+                          const SizedBox(height: ElunaiSpacing.lg),
+                          ...paras.expand(
+                            (p) => [
+                              Text(
+                                p,
+                                style: ElunaiTextStyles.ereaderBody(
+                                  _fontSize,
+                                  1.65,
+                                ).copyWith(color: _ink),
+                              ),
+                              const SizedBox(height: ElunaiSpacing.md),
+                            ],
+                          ),
                         ],
                       );
                     },
-                    loading: () => const Center(child: LunoraProgressBar()),
+                    loading: () => const Center(child: ElunaiProgressBar()),
                     error: (err, _) => Padding(
-                      padding: LunoraSpacing.screen,
+                      padding: ElunaiSpacing.screen,
                       child: Center(
                         child: Text(
                           'Impossible de charger l’histoire.\n\n$err',

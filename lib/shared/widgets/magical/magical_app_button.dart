@@ -75,13 +75,13 @@ class _MagicalAppButtonState extends State<MagicalAppButton>
     if (light) {
       if (isPrimary) {
         gradient = null;
-        solidColor = LunoraColors.forestGreen;
-        fg = LunoraColors.storybookCream;
+        solidColor = ElunaiColors.forestGreen;
+        fg = ElunaiColors.storybookCream;
         border = null;
         shadows = widget.onPressed != null
             ? [
                 BoxShadow(
-                  color: LunoraColors.forestGreen.withValues(alpha: 0.22),
+                  color: ElunaiColors.forestGreen.withValues(alpha: 0.22),
                   blurRadius: 18,
                   offset: const Offset(0, 8),
                 ),
@@ -89,22 +89,24 @@ class _MagicalAppButtonState extends State<MagicalAppButton>
             : null;
       } else {
         gradient = null;
-        solidColor = LunoraColors.storybookSurface;
-        fg = LunoraColors.forestGreen;
+        solidColor = ElunaiColors.storybookSurface;
+        fg = ElunaiColors.forestGreen;
         border = Border.all(
-          color: LunoraColors.forestGreen.withValues(alpha: 0.35),
+          color: ElunaiColors.forestGreen.withValues(alpha: 0.35),
         );
         shadows = null;
       }
     } else {
-      gradient = isPrimary ? LunoraColors.ctaGlow : null;
-      solidColor = isPrimary ? null : LunoraColors.nightBlueLift.withValues(alpha: 0.82);
-      fg = LunoraColors.warmBeige;
+      gradient = isPrimary ? ElunaiColors.ctaGlow : null;
+      solidColor = isPrimary
+          ? null
+          : ElunaiColors.nightBlueLift.withValues(alpha: 0.82);
+      fg = ElunaiColors.warmBeige;
       border = isPrimary
           ? null
-          : Border.all(color: LunoraColors.warmBeige.withValues(alpha: 0.28));
+          : Border.all(color: ElunaiColors.warmBeige.withValues(alpha: 0.28));
       shadows = isPrimary && widget.onPressed != null
-          ? LunoraColors.primaryGlow(opacity: 0.28)
+          ? ElunaiColors.primaryGlow(opacity: 0.28)
           : null;
     }
 
@@ -112,7 +114,7 @@ class _MagicalAppButtonState extends State<MagicalAppButton>
       scale: _scale,
       child: DecoratedBox(
         decoration: BoxDecoration(
-          borderRadius: LunoraSpacing.radiusLg,
+          borderRadius: ElunaiSpacing.radiusLg,
           color: solidColor,
           gradient: gradient,
           border: border,
@@ -121,7 +123,7 @@ class _MagicalAppButtonState extends State<MagicalAppButton>
         child: Material(
           color: Colors.transparent,
           child: InkWell(
-            borderRadius: LunoraSpacing.radiusLg,
+            borderRadius: ElunaiSpacing.radiusLg,
             onTap: widget.onPressed == null
                 ? null
                 : () async {
@@ -138,8 +140,8 @@ class _MagicalAppButtonState extends State<MagicalAppButton>
             },
             child: Padding(
               padding: const EdgeInsets.symmetric(
-                horizontal: LunoraSpacing.lg,
-                vertical: LunoraSpacing.md + 2,
+                horizontal: ElunaiSpacing.lg,
+                vertical: ElunaiSpacing.md + 2,
               ),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.center,
@@ -147,7 +149,7 @@ class _MagicalAppButtonState extends State<MagicalAppButton>
                 children: [
                   if (widget.icon != null) ...[
                     Icon(widget.icon, size: 22, color: fg),
-                    const SizedBox(width: LunoraSpacing.sm),
+                    const SizedBox(width: ElunaiSpacing.sm),
                   ],
                   Flexible(
                     child: Text(

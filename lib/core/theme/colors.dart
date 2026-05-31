@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
 /// Palette « nuit magique » + variant **livre pour enfants** (maquettes crème / vert).
-abstract final class LunoraColors {
+abstract final class ElunaiColors {
   // —— Storybook (jour doux) ——
   static const Color storybookCream = Color(0xFFFDF9F3);
   static const Color storybookCreamDeep = Color(0xFFF3EBE0);
@@ -44,11 +44,7 @@ abstract final class LunoraColors {
   static const LinearGradient readerCanvasVertical = LinearGradient(
     begin: Alignment.topCenter,
     end: Alignment.bottomCenter,
-    colors: [
-      Color(0xFF1A2436),
-      readerInk,
-      readerInkDeep,
-    ],
+    colors: [Color(0xFF1A2436), readerInk, readerInkDeep],
     stops: [0.0, 0.5, 1.0],
   );
 

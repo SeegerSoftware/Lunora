@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
 /// Transitions douces type « apps bien-être » (fade + léger slide).
-CustomTransitionPage<T> lunoraFadePage<T extends Object?>({
+CustomTransitionPage<T> elunaiFadePage<T extends Object?>({
   required LocalKey key,
   required Widget child,
   Duration duration = const Duration(milliseconds: 280),

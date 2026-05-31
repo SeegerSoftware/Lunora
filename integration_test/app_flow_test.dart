@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:integration_test/integration_test.dart';
-import 'package:lunora_v00/app.dart';
+import 'package:elunai_v00/app.dart';
 
 void main() {
   IntegrationTestWidgetsFlutterBinding.ensureInitialized();
@@ -11,13 +11,13 @@ void main() {
     WidgetTester tester,
   ) async {
     final unique = DateTime.now().millisecondsSinceEpoch;
-    final email = 'qa_$unique@lunora.test';
+    final email = 'qa_$unique@elunai.test';
     const password = 'password123';
 
-    await tester.pumpWidget(const ProviderScope(child: LunoraApp()));
+    await tester.pumpWidget(const ProviderScope(child: ElunaiApp()));
     await tester.pumpAndSettle();
 
-    expect(find.text('lunora.v00'), findsOneWidget);
+    expect(find.text('Elunai'), findsOneWidget);
     expect(find.text('Créer un compte'), findsOneWidget);
 
     await tester.tap(find.text('Créer un compte'));

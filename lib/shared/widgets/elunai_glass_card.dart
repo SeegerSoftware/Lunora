@@ -3,11 +3,11 @@ import 'package:flutter/material.dart';
 import '../../core/theme/colors.dart';
 import '../../core/theme/spacing.dart';
 
-class LunoraGlassCard extends StatelessWidget {
-  const LunoraGlassCard({
+class ElunaiGlassCard extends StatelessWidget {
+  const ElunaiGlassCard({
     super.key,
     required this.child,
-    this.padding = const EdgeInsets.all(LunoraSpacing.lg),
+    this.padding = const EdgeInsets.all(ElunaiSpacing.lg),
   });
 
   final Widget child;
@@ -20,17 +20,17 @@ class LunoraGlassCard extends StatelessWidget {
       decoration: BoxDecoration(
         borderRadius: const BorderRadius.all(Radius.circular(28)),
         color: light
-            ? LunoraColors.storybookSurface.withValues(alpha: 0.98)
-            : LunoraColors.nightBlueDeep.withValues(alpha: 0.38),
+            ? ElunaiColors.storybookSurface.withValues(alpha: 0.98)
+            : ElunaiColors.nightBlueDeep.withValues(alpha: 0.38),
         border: Border.all(
           color: light
-              ? LunoraColors.forestGreen.withValues(alpha: 0.1)
-              : LunoraColors.starGoldSoft.withValues(alpha: 0.14),
+              ? ElunaiColors.forestGreen.withValues(alpha: 0.1)
+              : ElunaiColors.starGoldSoft.withValues(alpha: 0.14),
         ),
         boxShadow: light
             ? [
                 BoxShadow(
-                  color: LunoraColors.storybookInk.withValues(alpha: 0.06),
+                  color: ElunaiColors.storybookInk.withValues(alpha: 0.06),
                   blurRadius: 24,
                   offset: const Offset(0, 10),
                 ),
@@ -42,7 +42,7 @@ class LunoraGlassCard extends StatelessWidget {
                   offset: const Offset(0, 14),
                 ),
                 BoxShadow(
-                  color: LunoraColors.violetSoft.withValues(alpha: 0.08),
+                  color: ElunaiColors.violetSoft.withValues(alpha: 0.08),
                   blurRadius: 42,
                   offset: const Offset(0, 8),
                 ),

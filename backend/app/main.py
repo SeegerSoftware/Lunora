@@ -8,6 +8,8 @@ from .account import delete_account_data
 from .auth import verify_app_check, verify_firebase_user
 from .models import StoryGenerationPayload, StripeCheckoutPayload
 from .rate_limit import check_generation_rate_limit
+from .daily_stories import publish_daily_stories
+from .scheduler_auth import verify_scheduler_request
 from .story_generation import generate_series_bible, generate_story
 from .stripe_checkout import create_checkout_session
 from .subscriptions import handle_stripe_webhook
@@ -88,6 +90,11 @@ def stories_generate(
     if kind == "story":
         return {"result": generate_story(data)}
     raise HTTPException(status_code=400, detail="Unsupported generation kind")
+
+
+@app.post("/internal/daily-stories/publish")
+def daily_stories_publish(_: None = Depends(verify_scheduler_request)):
+    return publish_daily_stories()
 
 
 @app.post("/stripe/checkout")

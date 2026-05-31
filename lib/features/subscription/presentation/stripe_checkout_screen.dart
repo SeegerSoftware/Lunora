@@ -12,9 +12,9 @@ import '../../../core/theme/text_styles.dart';
 import '../../../routing/safe_navigation.dart';
 import '../../../shared/models/enums/story_plan.dart';
 import '../../../shared/widgets/elunai_layout.dart';
-import '../../../shared/widgets/lunora_fade_in.dart';
-import '../../../shared/widgets/lunora_primary_button.dart';
-import '../../../shared/widgets/lunora_screen_shell.dart';
+import '../../../shared/widgets/elunai_fade_in.dart';
+import '../../../shared/widgets/elunai_primary_button.dart';
+import '../../../shared/widgets/elunai_screen_shell.dart';
 import '../../auth/presentation/providers/auth_providers.dart';
 import '../../../services/firebase/app_check_token_provider.dart';
 
@@ -121,65 +121,65 @@ class _StripeCheckoutScreenState extends ConsumerState<StripeCheckoutScreen> {
           onPressed: () => context.safePopOrGo('/subscription'),
         ),
       ),
-      body: LunoraScreenShell(
+      body: ElunaiScreenShell(
         showStarfield: true,
         child: SafeArea(
           child: ListView(
-            padding: LunoraSpacing.screen,
+            padding: ElunaiSpacing.screen,
             children: [
-              LunoraFadeIn(
+              ElunaiFadeIn(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
                     Text(
                       'Récapitulatif',
-                      style: LunoraTextStyles.sectionTitle(theme.textTheme),
+                      style: ElunaiTextStyles.sectionTitle(theme.textTheme),
                     ),
-                    const SizedBox(height: LunoraSpacing.sm),
+                    const SizedBox(height: ElunaiSpacing.sm),
                     DecoratedBox(
                       decoration: BoxDecoration(
-                        borderRadius: LunoraSpacing.radiusLg,
-                        color: LunoraColors.nightBlueLift.withValues(
+                        borderRadius: ElunaiSpacing.radiusLg,
+                        color: ElunaiColors.nightBlueLift.withValues(
                           alpha: 0.75,
                         ),
                         border: Border.all(
-                          color: LunoraColors.mist.withValues(alpha: 0.12),
+                          color: ElunaiColors.mist.withValues(alpha: 0.12),
                         ),
                       ),
                       child: Padding(
-                        padding: const EdgeInsets.all(LunoraSpacing.lg),
+                        padding: const EdgeInsets.all(ElunaiSpacing.lg),
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
                               _plan.displayLabel,
                               style: theme.textTheme.titleSmall?.copyWith(
-                                color: LunoraColors.warmBeige,
+                                color: ElunaiColors.warmBeige,
                                 fontWeight: FontWeight.w800,
                               ),
                             ),
-                            const SizedBox(height: LunoraSpacing.xs),
+                            const SizedBox(height: ElunaiSpacing.xs),
                             Text(
                               'Durée cible ~${_plan.targetStoryMinutes} min / histoire',
                               style: theme.textTheme.bodySmall?.copyWith(
-                                color: LunoraColors.mist.withValues(
+                                color: ElunaiColors.mist.withValues(
                                   alpha: 0.75,
                                 ),
                               ),
                             ),
-                            const SizedBox(height: LunoraSpacing.xs),
+                            const SizedBox(height: ElunaiSpacing.xs),
                             Text(
                               _plan.monthlyPriceLabel,
                               style: theme.textTheme.bodyMedium?.copyWith(
-                                color: LunoraColors.starGoldSoft,
+                                color: ElunaiColors.starGoldSoft,
                                 fontWeight: FontWeight.w800,
                               ),
                             ),
-                            const SizedBox(height: LunoraSpacing.sm),
+                            const SizedBox(height: ElunaiSpacing.sm),
                             Text(
                               'Compte : ${user.email}',
                               style: theme.textTheme.bodySmall?.copyWith(
-                                color: LunoraColors.mist.withValues(
+                                color: ElunaiColors.mist.withValues(
                                   alpha: 0.65,
                                 ),
                               ),
@@ -188,24 +188,24 @@ class _StripeCheckoutScreenState extends ConsumerState<StripeCheckoutScreen> {
                         ),
                       ),
                     ),
-                    const SizedBox(height: LunoraSpacing.xl),
+                    const SizedBox(height: ElunaiSpacing.xl),
                     Text(
                       'Paiement sécurisé',
-                      style: LunoraTextStyles.sectionTitle(theme.textTheme),
+                      style: ElunaiTextStyles.sectionTitle(theme.textTheme),
                     ),
-                    const SizedBox(height: LunoraSpacing.sm),
+                    const SizedBox(height: ElunaiSpacing.sm),
                     DecoratedBox(
                       decoration: BoxDecoration(
-                        borderRadius: LunoraSpacing.radiusMd,
-                        color: LunoraColors.nightBlueLift.withValues(
+                        borderRadius: ElunaiSpacing.radiusMd,
+                        color: ElunaiColors.nightBlueLift.withValues(
                           alpha: 0.55,
                         ),
                         border: Border.all(
-                          color: LunoraColors.mist.withValues(alpha: 0.1),
+                          color: ElunaiColors.mist.withValues(alpha: 0.1),
                         ),
                       ),
                       child: Padding(
-                        padding: const EdgeInsets.all(LunoraSpacing.lg),
+                        padding: const EdgeInsets.all(ElunaiSpacing.lg),
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
@@ -217,7 +217,7 @@ class _StripeCheckoutScreenState extends ConsumerState<StripeCheckoutScreen> {
                                   : 'Configure le backend de paiement et '
                                         'ELUNAI_API_BASE_URL côté app.',
                               style: theme.textTheme.bodySmall?.copyWith(
-                                color: LunoraColors.mist.withValues(
+                                color: ElunaiColors.mist.withValues(
                                   alpha: 0.82,
                                 ),
                                 height: 1.45,
@@ -227,8 +227,8 @@ class _StripeCheckoutScreenState extends ConsumerState<StripeCheckoutScreen> {
                         ),
                       ),
                     ),
-                    const SizedBox(height: LunoraSpacing.xl),
-                    LunoraPrimaryButton(
+                    const SizedBox(height: ElunaiSpacing.xl),
+                    ElunaiPrimaryButton(
                       label: stripeReady
                           ? 'Payer avec Stripe'
                           : 'Payer avec Stripe (configurer la clé)',

@@ -8,10 +8,10 @@ import '../../../routing/safe_navigation.dart';
 import '../../../shared/models/enums/story_format.dart';
 import '../../../shared/models/story.dart';
 import '../../../shared/widgets/elunai_layout.dart';
-import '../../../shared/widgets/lunora_fade_in.dart';
-import '../../../shared/widgets/lunora_page_header.dart';
-import '../../../shared/widgets/lunora_screen_shell.dart';
-import '../../../shared/widgets/magical/lunora_progress_bar.dart';
+import '../../../shared/widgets/elunai_fade_in.dart';
+import '../../../shared/widgets/elunai_page_header.dart';
+import '../../../shared/widgets/elunai_screen_shell.dart';
+import '../../../shared/widgets/magical/elunai_progress_bar.dart';
 import '../../auth/presentation/providers/auth_providers.dart';
 import 'providers/story_providers.dart';
 
@@ -39,7 +39,7 @@ class StoryHistoryScreen extends ConsumerWidget {
           onPressed: () => context.safePopOrGo('/home'),
         ),
       ),
-      body: LunoraScreenShell(
+      body: ElunaiScreenShell(
         showStarfield: true,
         child: SafeArea(
           child: historyAsync.when(
@@ -47,12 +47,12 @@ class StoryHistoryScreen extends ConsumerWidget {
             data: (stories) {
               final blocks = _timelineBlocks(stories);
               return ListView(
-                padding: LunoraSpacing.screen.copyWith(
-                  bottom: LunoraSpacing.xxl,
+                padding: ElunaiSpacing.screen.copyWith(
+                  bottom: ElunaiSpacing.xxl,
                 ),
                 children: [
-                  const LunoraFadeIn(
-                    child: LunoraPageHeader(
+                  const ElunaiFadeIn(
+                    child: ElunaiPageHeader(
                       compact: true,
                       icon: Icons.local_library_rounded,
                       title: 'Bibliothèque du soir',
@@ -60,16 +60,16 @@ class StoryHistoryScreen extends ConsumerWidget {
                           'Toutes les histoires restent accessibles pour relire, reprendre une série ou retrouver un moment préféré.',
                     ),
                   ),
-                  const SizedBox(height: LunoraSpacing.xl),
+                  const SizedBox(height: ElunaiSpacing.xl),
                   if (blocks.isEmpty)
                     const _EmptyLibrary()
                   else
                     ...blocks.asMap().entries.map(
                       (entry) => Padding(
                         padding: const EdgeInsets.only(
-                          bottom: LunoraSpacing.md,
+                          bottom: ElunaiSpacing.md,
                         ),
-                        child: LunoraFadeIn(
+                        child: ElunaiFadeIn(
                           delay: Duration(
                             milliseconds: 40 * entry.key.clamp(0, 8),
                           ),
@@ -92,10 +92,10 @@ class StoryHistoryScreen extends ConsumerWidget {
                 ],
               );
             },
-            loading: () => const Center(child: LunoraProgressBar()),
+            loading: () => const Center(child: ElunaiProgressBar()),
             error: (err, _) => Center(
               child: Padding(
-                padding: LunoraSpacing.screen,
+                padding: ElunaiSpacing.screen,
                 child: Text(
                   'Impossible de charger la bibliothèque : $err',
                   textAlign: TextAlign.center,
@@ -119,12 +119,12 @@ class _EmptyLibrary extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     return Container(
-      padding: const EdgeInsets.all(LunoraSpacing.lg),
+      padding: const EdgeInsets.all(ElunaiSpacing.lg),
       decoration: BoxDecoration(
-        color: LunoraColors.storybookSurface,
-        borderRadius: LunoraSpacing.radiusLg,
+        color: ElunaiColors.storybookSurface,
+        borderRadius: ElunaiSpacing.radiusLg,
         border: Border.all(
-          color: LunoraColors.forestGreen.withValues(alpha: 0.1),
+          color: ElunaiColors.forestGreen.withValues(alpha: 0.1),
         ),
       ),
       child: Column(
@@ -132,23 +132,23 @@ class _EmptyLibrary extends StatelessWidget {
           const Icon(
             Icons.auto_stories_rounded,
             size: 44,
-            color: LunoraColors.forestGreen,
+            color: ElunaiColors.forestGreen,
           ),
-          const SizedBox(height: LunoraSpacing.md),
+          const SizedBox(height: ElunaiSpacing.md),
           Text(
             'La première histoire apparaîtra ici',
             textAlign: TextAlign.center,
             style: theme.textTheme.titleMedium?.copyWith(
-              color: LunoraColors.storybookInk,
+              color: ElunaiColors.storybookInk,
               fontWeight: FontWeight.w900,
             ),
           ),
-          const SizedBox(height: LunoraSpacing.xs),
+          const SizedBox(height: ElunaiSpacing.xs),
           Text(
             'Après la génération, elle sera sauvegardée automatiquement dans cette bibliothèque.',
             textAlign: TextAlign.center,
             style: theme.textTheme.bodyMedium?.copyWith(
-              color: LunoraColors.storybookInkMuted,
+              color: ElunaiColors.storybookInkMuted,
               height: 1.4,
             ),
           ),
@@ -256,17 +256,17 @@ class _LibraryTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Material(
-      color: LunoraColors.storybookSurface,
-      borderRadius: LunoraSpacing.radiusLg,
+      color: ElunaiColors.storybookSurface,
+      borderRadius: ElunaiSpacing.radiusLg,
       child: InkWell(
-        borderRadius: LunoraSpacing.radiusLg,
+        borderRadius: ElunaiSpacing.radiusLg,
         onTap: onTap,
         child: Container(
-          padding: const EdgeInsets.all(LunoraSpacing.md),
+          padding: const EdgeInsets.all(ElunaiSpacing.md),
           decoration: BoxDecoration(
-            borderRadius: LunoraSpacing.radiusLg,
+            borderRadius: ElunaiSpacing.radiusLg,
             border: Border.all(
-              color: LunoraColors.forestGreen.withValues(alpha: 0.1),
+              color: ElunaiColors.forestGreen.withValues(alpha: 0.1),
             ),
           ),
           child: Row(
@@ -276,12 +276,12 @@ class _LibraryTile extends StatelessWidget {
                 width: 52,
                 height: 52,
                 decoration: BoxDecoration(
-                  color: LunoraColors.honeyYellow.withValues(alpha: 0.36),
-                  borderRadius: LunoraSpacing.radiusMd,
+                  color: ElunaiColors.honeyYellow.withValues(alpha: 0.36),
+                  borderRadius: ElunaiSpacing.radiusMd,
                 ),
-                child: Icon(icon, color: LunoraColors.forestGreen),
+                child: Icon(icon, color: ElunaiColors.forestGreen),
               ),
-              const SizedBox(width: LunoraSpacing.md),
+              const SizedBox(width: ElunaiSpacing.md),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -291,38 +291,38 @@ class _LibraryTile extends StatelessWidget {
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
                       style: theme.textTheme.titleSmall?.copyWith(
-                        color: LunoraColors.storybookInk,
+                        color: ElunaiColors.storybookInk,
                         fontWeight: FontWeight.w900,
                         height: 1.22,
                       ),
                     ),
-                    const SizedBox(height: LunoraSpacing.xxs),
+                    const SizedBox(height: ElunaiSpacing.xxs),
                     Text(
                       subtitle,
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
                       style: theme.textTheme.bodySmall?.copyWith(
-                        color: LunoraColors.storybookInkMuted,
+                        color: ElunaiColors.storybookInkMuted,
                         height: 1.34,
                       ),
                     ),
                     if (progress != null) ...[
-                      const SizedBox(height: LunoraSpacing.sm),
+                      const SizedBox(height: ElunaiSpacing.sm),
                       ClipRRect(
                         borderRadius: BorderRadius.circular(999),
                         child: LinearProgressIndicator(
                           value: progress,
                           minHeight: 7,
-                          backgroundColor: LunoraColors.storybookCreamDeep,
-                          color: LunoraColors.forestGreen,
+                          backgroundColor: ElunaiColors.storybookCreamDeep,
+                          color: ElunaiColors.forestGreen,
                         ),
                       ),
                     ],
-                    const SizedBox(height: LunoraSpacing.sm),
+                    const SizedBox(height: ElunaiSpacing.sm),
                     Text(
                       meta,
                       style: theme.textTheme.labelSmall?.copyWith(
-                        color: LunoraColors.forestGreen,
+                        color: ElunaiColors.forestGreen,
                         fontWeight: FontWeight.w900,
                       ),
                     ),
@@ -331,7 +331,7 @@ class _LibraryTile extends StatelessWidget {
               ),
               const Icon(
                 Icons.chevron_right_rounded,
-                color: LunoraColors.storybookInkMuted,
+                color: ElunaiColors.storybookInkMuted,
               ),
             ],
           ),

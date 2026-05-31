@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:uuid/uuid.dart';
 
+import '../../../core/config/admin_config.dart';
 import '../../../core/theme/colors.dart';
 import '../../../core/validation/child_profile_rules.dart';
 import '../../../core/theme/spacing.dart';
@@ -19,8 +20,8 @@ import '../../child_profile/presentation/providers/child_profile_providers.dart'
 import '../../legal/presentation/terms_screen.dart';
 import '../../stories/presentation/providers/story_providers.dart';
 import '../../../shared/widgets/elunai_layout.dart';
-import '../../../shared/widgets/lunora_fade_in.dart';
-import '../../../shared/widgets/lunora_screen_shell.dart';
+import '../../../shared/widgets/elunai_fade_in.dart';
+import '../../../shared/widgets/elunai_screen_shell.dart';
 import '../../../shared/widgets/magical/magical.dart';
 
 /// Espace parent : stats simples + accès rapides (logique = navigation existante).
@@ -42,33 +43,33 @@ class ParentAreaScreen extends ConsumerWidget {
           onPressed: () => context.safePopOrGo('/home'),
         ),
       ),
-      body: LunoraScreenShell(
+      body: ElunaiScreenShell(
         showStarfield: true,
         child: SafeArea(
           child: ListView(
-            padding: LunoraSpacing.screen,
+            padding: ElunaiSpacing.screen,
             children: [
-              LunoraFadeIn(
+              ElunaiFadeIn(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
                     Text(
                       'Espace parent',
-                      style: LunoraTextStyles.sectionTitle(theme.textTheme),
+                      style: ElunaiTextStyles.sectionTitle(theme.textTheme),
                     ),
-                    const SizedBox(height: LunoraSpacing.sm),
+                    const SizedBox(height: ElunaiSpacing.sm),
                     Text(
                       user == null
                           ? 'Connecte-toi pour voir l’activité.'
                           : '👋 ${user.email}',
                       style: theme.textTheme.bodyMedium?.copyWith(
-                        color: LunoraColors.storybookInk.withValues(
+                        color: ElunaiColors.storybookInk.withValues(
                           alpha: 0.78,
                         ),
                         height: 1.4,
                       ),
                     ),
-                    const SizedBox(height: LunoraSpacing.xl),
+                    const SizedBox(height: ElunaiSpacing.xl),
                     historyAsync.when(
                       skipLoadingOnReload: true,
                       data: (stories) {
@@ -85,7 +86,7 @@ class ParentAreaScreen extends ConsumerWidget {
                                 hint: 'dans ton espace',
                               ),
                             ),
-                            const SizedBox(width: LunoraSpacing.md),
+                            const SizedBox(width: ElunaiSpacing.md),
                             Expanded(
                               child: _StatCard(
                                 label: 'Dernière',
@@ -100,7 +101,7 @@ class ParentAreaScreen extends ConsumerWidget {
                       },
                       loading: () => const SizedBox(
                         height: 100,
-                        child: Center(child: LunoraProgressBar()),
+                        child: Center(child: ElunaiProgressBar()),
                       ),
                       error: (e, _) => Text(
                         'Stats indisponibles.',
@@ -109,50 +110,60 @@ class ParentAreaScreen extends ConsumerWidget {
                         ),
                       ),
                     ),
-                    const SizedBox(height: LunoraSpacing.xl),
+                    const SizedBox(height: ElunaiSpacing.xl),
                     Text(
                       'Raccourcis',
-                      style: LunoraTextStyles.sectionTitle(theme.textTheme),
+                      style: ElunaiTextStyles.sectionTitle(theme.textTheme),
                     ),
-                    const SizedBox(height: LunoraSpacing.sm),
+                    const SizedBox(height: ElunaiSpacing.sm),
                     MagicalAppButton(
                       label: 'Historique des histoires',
                       icon: Icons.history_rounded,
                       variant: MagicalButtonVariant.secondary,
                       onPressed: () => context.push('/history'),
                     ),
-                    const SizedBox(height: LunoraSpacing.sm),
+                    const SizedBox(height: ElunaiSpacing.sm),
                     MagicalAppButton(
-                      label: 'Générer une histoire (test)',
-                      icon: Icons.auto_stories_rounded,
-                      onPressed: user == null
-                          ? null
-                          : () => _openQuickStoryGenerator(
-                              context: context,
-                              ref: ref,
-                              user: user,
-                            ),
+                      label: 'Voix de lecture audio',
+                      icon: Icons.record_voice_over_rounded,
+                      variant: MagicalButtonVariant.secondary,
+                      onPressed: () => showDialog<void>(
+                        context: context,
+                        builder: (_) => const AudioVoiceSettingsDialog(),
+                      ),
                     ),
-                    const SizedBox(height: LunoraSpacing.sm),
+                    const SizedBox(height: ElunaiSpacing.sm),
+                    if (user != null && AdminConfig.isAdminUser(user)) ...[
+                      MagicalAppButton(
+                        label: 'Générer une histoire (test)',
+                        icon: Icons.auto_stories_rounded,
+                        onPressed: () => _openQuickStoryGenerator(
+                          context: context,
+                          ref: ref,
+                          user: user,
+                        ),
+                      ),
+                      const SizedBox(height: ElunaiSpacing.sm),
+                    ],
                     MagicalAppButton(
                       label: 'Abonnement',
                       icon: Icons.workspace_premium_rounded,
                       variant: MagicalButtonVariant.secondary,
                       onPressed: () => context.push('/subscription'),
                     ),
-                    const SizedBox(height: LunoraSpacing.sm),
+                    const SizedBox(height: ElunaiSpacing.sm),
                     MagicalAppButton(
                       label: 'Conditions d’utilisation',
                       icon: Icons.article_rounded,
                       variant: MagicalButtonVariant.secondary,
                       onPressed: () => context.push(TermsScreen.routePath),
                     ),
-                    const SizedBox(height: LunoraSpacing.xl),
+                    const SizedBox(height: ElunaiSpacing.xl),
                     Text(
                       'Compte',
-                      style: LunoraTextStyles.sectionTitle(theme.textTheme),
+                      style: ElunaiTextStyles.sectionTitle(theme.textTheme),
                     ),
-                    const SizedBox(height: LunoraSpacing.sm),
+                    const SizedBox(height: ElunaiSpacing.sm),
                     OutlinedButton.icon(
                       onPressed: user == null
                           ? null
@@ -373,11 +384,11 @@ class _StatCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     return Container(
-      padding: const EdgeInsets.all(LunoraSpacing.md),
+      padding: const EdgeInsets.all(ElunaiSpacing.md),
       decoration: BoxDecoration(
-        borderRadius: LunoraSpacing.radiusMd,
-        gradient: LunoraColors.cardAura,
-        border: Border.all(color: LunoraColors.mist.withValues(alpha: 0.12)),
+        borderRadius: ElunaiSpacing.radiusMd,
+        gradient: ElunaiColors.cardAura,
+        border: Border.all(color: ElunaiColors.mist.withValues(alpha: 0.12)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -385,25 +396,25 @@ class _StatCard extends StatelessWidget {
           Text(
             label,
             style: theme.textTheme.labelMedium?.copyWith(
-              color: LunoraColors.mist.withValues(alpha: 0.75),
+              color: ElunaiColors.mist.withValues(alpha: 0.75),
               fontWeight: FontWeight.w700,
             ),
           ),
-          const SizedBox(height: LunoraSpacing.xs),
+          const SizedBox(height: ElunaiSpacing.xs),
           Text(
             value,
             style: theme.textTheme.headlineSmall?.copyWith(
-              color: LunoraColors.warmBeige,
+              color: ElunaiColors.warmBeige,
               fontWeight: FontWeight.w900,
             ),
           ),
-          const SizedBox(height: LunoraSpacing.xxs),
+          const SizedBox(height: ElunaiSpacing.xxs),
           Text(
             hint,
             maxLines: 2,
             overflow: TextOverflow.ellipsis,
             style: theme.textTheme.bodySmall?.copyWith(
-              color: LunoraColors.mist.withValues(alpha: 0.65),
+              color: ElunaiColors.mist.withValues(alpha: 0.65),
             ),
           ),
         ],

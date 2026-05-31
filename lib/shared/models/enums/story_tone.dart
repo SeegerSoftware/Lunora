@@ -5,9 +5,9 @@ extension StoryToneX on StoryTone {
 
   String get displayLabel => switch (this) {
     StoryTone.reassuring => 'Rassurant',
-    StoryTone.gentleAdventure => 'Aventure douce',
+    StoryTone.gentleAdventure => 'Aventurier',
     StoryTone.poetic => 'Poétique',
-    StoryTone.playfulSoft => 'Ludique doux',
+    StoryTone.playfulSoft => 'Drôle',
   };
 
   static StoryTone parse(String? raw) {

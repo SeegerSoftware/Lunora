@@ -18,7 +18,7 @@ import '../features/stories/presentation/story_reader_screen.dart';
 import '../features/subscription/presentation/stripe_checkout_screen.dart';
 import '../features/subscription/presentation/payment_result_screen.dart';
 import '../features/subscription/presentation/subscription_screen.dart';
-import 'lunora_page_transitions.dart';
+import 'elunai_page_transitions.dart';
 import 'router_refresh.dart';
 
 final goRouterProvider = Provider<GoRouter>((ref) {
@@ -31,26 +31,26 @@ final goRouterProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/welcome',
         pageBuilder: (context, state) =>
-            lunoraFadePage(key: state.pageKey, child: const WelcomeScreen()),
+            elunaiFadePage(key: state.pageKey, child: const WelcomeScreen()),
       ),
       GoRoute(
         path: '/signin',
         pageBuilder: (context, state) =>
-            lunoraFadePage(key: state.pageKey, child: const SignInScreen()),
+            elunaiFadePage(key: state.pageKey, child: const SignInScreen()),
       ),
       GoRoute(
         path: '/signup',
         pageBuilder: (context, state) =>
-            lunoraFadePage(key: state.pageKey, child: const SignUpScreen()),
+            elunaiFadePage(key: state.pageKey, child: const SignUpScreen()),
       ),
       GoRoute(
         path: TermsScreen.routePath,
         pageBuilder: (context, state) =>
-            lunoraFadePage(key: state.pageKey, child: const TermsScreen()),
+            elunaiFadePage(key: state.pageKey, child: const TermsScreen()),
       ),
       GoRoute(
         path: '/setup-child',
-        pageBuilder: (context, state) => lunoraFadePage(
+        pageBuilder: (context, state) => elunaiFadePage(
           key: state.pageKey,
           child: const ChildProfileSetupScreen(),
         ),
@@ -58,11 +58,11 @@ final goRouterProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/home',
         pageBuilder: (context, state) =>
-            lunoraFadePage(key: state.pageKey, child: const HomeScreen()),
+            elunaiFadePage(key: state.pageKey, child: const HomeScreen()),
       ),
       GoRoute(
         path: '/generate',
-        pageBuilder: (context, state) => lunoraFadePage(
+        pageBuilder: (context, state) => elunaiFadePage(
           key: state.pageKey,
           child: const InstantStoryScreen(),
         ),
@@ -71,7 +71,7 @@ final goRouterProvider = Provider<GoRouter>((ref) {
         path: '/story',
         pageBuilder: (context, state) {
           final id = state.uri.queryParameters['id'];
-          return lunoraFadePage(
+          return elunaiFadePage(
             key: state.pageKey,
             child: StoryReaderScreen(storyId: id),
           );
@@ -81,7 +81,7 @@ final goRouterProvider = Provider<GoRouter>((ref) {
         path: '/story/bedtime',
         pageBuilder: (context, state) {
           final id = state.uri.queryParameters['id'];
-          return lunoraFadePage(
+          return elunaiFadePage(
             key: state.pageKey,
             child: StoryBedtimeReaderScreen(storyId: id),
           );
@@ -89,7 +89,7 @@ final goRouterProvider = Provider<GoRouter>((ref) {
       ),
       GoRoute(
         path: '/history',
-        pageBuilder: (context, state) => lunoraFadePage(
+        pageBuilder: (context, state) => elunaiFadePage(
           key: state.pageKey,
           child: const StoryHistoryScreen(),
         ),
@@ -97,11 +97,11 @@ final goRouterProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/parent',
         pageBuilder: (context, state) =>
-            lunoraFadePage(key: state.pageKey, child: const ParentAreaScreen()),
+            elunaiFadePage(key: state.pageKey, child: const ParentAreaScreen()),
       ),
       GoRoute(
         path: '/subscription',
-        pageBuilder: (context, state) => lunoraFadePage(
+        pageBuilder: (context, state) => elunaiFadePage(
           key: state.pageKey,
           child: const SubscriptionScreen(),
         ),
@@ -110,7 +110,7 @@ final goRouterProvider = Provider<GoRouter>((ref) {
         path: '/stripe-checkout',
         pageBuilder: (context, state) {
           final planId = state.uri.queryParameters['planId'] ?? 'plan_elunai';
-          return lunoraFadePage(
+          return elunaiFadePage(
             key: state.pageKey,
             child: StripeCheckoutScreen(initialPlanId: planId),
           );
@@ -118,14 +118,14 @@ final goRouterProvider = Provider<GoRouter>((ref) {
       ),
       GoRoute(
         path: '/subscription/success',
-        pageBuilder: (context, state) => lunoraFadePage(
+        pageBuilder: (context, state) => elunaiFadePage(
           key: state.pageKey,
           child: const PaymentResultScreen(success: true),
         ),
       ),
       GoRoute(
         path: '/subscription/cancel',
-        pageBuilder: (context, state) => lunoraFadePage(
+        pageBuilder: (context, state) => elunaiFadePage(
           key: state.pageKey,
           child: const PaymentResultScreen(success: false),
         ),

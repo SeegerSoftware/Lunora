@@ -10,14 +10,14 @@ import '../../../shared/models/child_profile.dart';
 import '../../../shared/models/story.dart';
 import '../../../shared/models/story_universe.dart';
 import '../../../shared/models/user_model.dart';
-import '../../../shared/widgets/lunora_badge.dart';
-import '../../../shared/widgets/lunora_fade_in.dart';
-import '../../../shared/widgets/lunora_glass_card.dart';
-import '../../../shared/widgets/lunora_night_scaffold.dart';
-import '../../../shared/widgets/lunora_page_header.dart';
-import '../../../shared/widgets/lunora_primary_button.dart';
-import '../../../shared/widgets/lunora_section_title.dart';
-import '../../../shared/widgets/magical/lunora_progress_bar.dart';
+import '../../../shared/widgets/elunai_badge.dart';
+import '../../../shared/widgets/elunai_fade_in.dart';
+import '../../../shared/widgets/elunai_glass_card.dart';
+import '../../../shared/widgets/elunai_night_scaffold.dart';
+import '../../../shared/widgets/elunai_page_header.dart';
+import '../../../shared/widgets/elunai_primary_button.dart';
+import '../../../shared/widgets/elunai_section_title.dart';
+import '../../../shared/widgets/magical/elunai_progress_bar.dart';
 import '../../../shared/widgets/story_ui_labels.dart';
 import '../../auth/presentation/providers/auth_providers.dart';
 import '../../child_profile/presentation/providers/child_profile_providers.dart';
@@ -57,7 +57,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
         : child.firstName.trim();
     final theme = Theme.of(context);
 
-    return LunoraNightScaffold(
+    return ElunaiNightScaffold(
       scrollable: true,
       joyfulBackdrop: false,
       showStarryOverlay: false,
@@ -93,7 +93,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             Text(
               'Elunai',
               style: theme.textTheme.titleMedium?.copyWith(
-                color: LunoraColors.forestGreen,
+                color: ElunaiColors.forestGreen,
                 fontWeight: FontWeight.w900,
                 letterSpacing: 0.2,
               ),
@@ -101,7 +101,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             Text(
               'Histoires pour enfants',
               style: theme.textTheme.bodySmall?.copyWith(
-                color: LunoraColors.storybookInkMuted,
+                color: ElunaiColors.storybookInkMuted,
                 fontWeight: FontWeight.w700,
               ),
             ),
@@ -109,6 +109,41 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
         ),
         centerTitle: true,
         actions: [
+          if (AdminConfig.isAdminUser(user))
+            PopupMenuButton<String>(
+              tooltip: 'Actions administrateur',
+              icon: Icon(
+                Icons.admin_panel_settings_rounded,
+                color: ElunaiColors.forestGreen,
+              ),
+              onSelected: (value) {
+                if (value == 'regenerate_today') {
+                  _runAdminStoryRegeneration(context, ref, user, child);
+                  return;
+                }
+                if (value == 'generate_unique') {
+                  _runAdminUniqueStoryGeneration(context, ref, user, child);
+                  return;
+                }
+                if (value == 'generate_series') {
+                  _runAdminSevenChapterGeneration(context, ref, user, child);
+                }
+              },
+              itemBuilder: (context) => const [
+                PopupMenuItem(
+                  value: 'regenerate_today',
+                  child: Text('Régénérer l’histoire du jour'),
+                ),
+                PopupMenuItem(
+                  value: 'generate_unique',
+                  child: Text('Nouvelle histoire unique'),
+                ),
+                PopupMenuItem(
+                  value: 'generate_series',
+                  child: Text('Histoire complète de 7 chapitres'),
+                ),
+              ],
+            ),
           IconButton(
             tooltip: 'Réglages',
             icon: Icon(
@@ -151,8 +186,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              LunoraFadeIn(
-                child: LunoraPageHeader(
+              ElunaiFadeIn(
+                child: ElunaiPageHeader(
                   badge: 'Rituel du soir',
                   icon: Icons.bedtime_rounded,
                   title: 'Bonsoir, $childName',
@@ -161,8 +196,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                   compact: true,
                 ),
               ),
-              const SizedBox(height: LunoraSpacing.lg),
-              LunoraFadeIn(
+              const SizedBox(height: ElunaiSpacing.lg),
+              ElunaiFadeIn(
                 delay: const Duration(milliseconds: 60),
                 child: _StoryHubCard(
                   user: user,
@@ -176,8 +211,29 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                       _runAdminStoryRegeneration(context, ref, user, child),
                 ),
               ),
-              const SizedBox(height: LunoraSpacing.md),
-              LunoraFadeIn(
+              if (AdminConfig.isAdminUser(user)) ...[
+                const SizedBox(height: ElunaiSpacing.md),
+                ElunaiFadeIn(
+                  delay: const Duration(milliseconds: 75),
+                  child: _AdminStoryActionsCard(
+                    onGenerateUnique: () => _runAdminUniqueStoryGeneration(
+                      context,
+                      ref,
+                      user,
+                      child,
+                    ),
+                    onGenerateSevenChapters: () =>
+                        _runAdminSevenChapterGeneration(
+                          context,
+                          ref,
+                          user,
+                          child,
+                        ),
+                  ),
+                ),
+              ],
+              const SizedBox(height: ElunaiSpacing.md),
+              ElunaiFadeIn(
                 delay: const Duration(milliseconds: 90),
                 child: _QuickActions(
                   onLibrary: () => context.push('/history'),
@@ -185,8 +241,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                   onSubscription: () => context.push('/subscription'),
                 ),
               ),
-              const SizedBox(height: LunoraSpacing.xl),
-              LunoraFadeIn(
+              const SizedBox(height: ElunaiSpacing.xl),
+              ElunaiFadeIn(
                 delay: const Duration(milliseconds: 120),
                 child: _RecentStoriesSection(
                   historyAsync: historyAsync,
@@ -197,7 +253,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                   ),
                 ),
               ),
-              const SizedBox(height: LunoraSpacing.lg),
+              const SizedBox(height: ElunaiSpacing.lg),
             ],
           ),
         ),
@@ -241,7 +297,7 @@ class _QuickActions extends StatelessWidget {
             onTap: onLibrary,
           ),
         ),
-        const SizedBox(width: LunoraSpacing.sm),
+        const SizedBox(width: ElunaiSpacing.sm),
         Expanded(
           child: _CompactAction(
             icon: Icons.child_care_rounded,
@@ -249,7 +305,7 @@ class _QuickActions extends StatelessWidget {
             onTap: onProfile,
           ),
         ),
-        const SizedBox(width: LunoraSpacing.sm),
+        const SizedBox(width: ElunaiSpacing.sm),
         Expanded(
           child: _CompactAction(
             icon: Icons.workspace_premium_rounded,
@@ -277,35 +333,35 @@ class _CompactAction extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     return Material(
-      color: LunoraColors.storybookSurface,
-      borderRadius: LunoraSpacing.radiusMd,
+      color: ElunaiColors.storybookSurface,
+      borderRadius: ElunaiSpacing.radiusMd,
       child: InkWell(
-        borderRadius: LunoraSpacing.radiusMd,
+        borderRadius: ElunaiSpacing.radiusMd,
         onTap: onTap,
         child: Container(
           constraints: const BoxConstraints(minHeight: 82),
           padding: const EdgeInsets.symmetric(
-            horizontal: LunoraSpacing.sm,
-            vertical: LunoraSpacing.md,
+            horizontal: ElunaiSpacing.sm,
+            vertical: ElunaiSpacing.md,
           ),
           decoration: BoxDecoration(
-            borderRadius: LunoraSpacing.radiusMd,
+            borderRadius: ElunaiSpacing.radiusMd,
             border: Border.all(
-              color: LunoraColors.forestGreen.withValues(alpha: 0.1),
+              color: ElunaiColors.forestGreen.withValues(alpha: 0.1),
             ),
           ),
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(icon, color: LunoraColors.forestGreen, size: 24),
-              const SizedBox(height: LunoraSpacing.xs),
+              Icon(icon, color: ElunaiColors.forestGreen, size: 24),
+              const SizedBox(height: ElunaiSpacing.xs),
               Text(
                 label,
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
                 textAlign: TextAlign.center,
                 style: theme.textTheme.labelMedium?.copyWith(
-                  color: LunoraColors.storybookInk,
+                  color: ElunaiColors.storybookInk,
                   fontWeight: FontWeight.w900,
                 ),
               ),
@@ -342,7 +398,7 @@ class _RecentStoriesSection extends StatelessWidget {
               child: Text(
                 'Dernières histoires',
                 style: theme.textTheme.titleLarge?.copyWith(
-                  color: LunoraColors.forestGreen,
+                  color: ElunaiColors.forestGreen,
                   fontWeight: FontWeight.w900,
                 ),
               ),
@@ -353,22 +409,22 @@ class _RecentStoriesSection extends StatelessWidget {
             ),
           ],
         ),
-        const SizedBox(height: LunoraSpacing.sm),
+        const SizedBox(height: ElunaiSpacing.sm),
         SizedBox(
           height: 196,
           child: historyAsync.when(
             skipLoadingOnReload: true,
-            loading: () => const Center(child: LunoraProgressBar()),
+            loading: () => const Center(child: ElunaiProgressBar()),
             error: (Object? err, StackTrace? st) => const SizedBox.shrink(),
             data: (hist) {
               final stories = _storiesForStrip(todayStory, hist);
               if (stories.isEmpty) return _PlaceholderStoryStrip();
               return ListView.separated(
                 scrollDirection: Axis.horizontal,
-                padding: const EdgeInsets.only(right: LunoraSpacing.sm),
+                padding: const EdgeInsets.only(right: ElunaiSpacing.sm),
                 itemCount: stories.length,
                 separatorBuilder: (ctx, i) =>
-                    const SizedBox(width: LunoraSpacing.sm),
+                    const SizedBox(width: ElunaiSpacing.sm),
                 itemBuilder: (context, i) {
                   final story = stories[i];
                   return _StoryCoverCard(
@@ -398,11 +454,11 @@ class _StoryCoverCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     return Material(
-      color: LunoraColors.storybookSurface,
+      color: ElunaiColors.storybookSurface,
       borderRadius: BorderRadius.circular(20),
       clipBehavior: Clip.antiAlias,
       elevation: 0,
-      shadowColor: LunoraColors.storybookInk.withValues(alpha: 0.08),
+      shadowColor: ElunaiColors.storybookInk.withValues(alpha: 0.08),
       child: InkWell(
         onTap: onTap,
         child: SizedBox(
@@ -419,8 +475,8 @@ class _StoryCoverCard extends StatelessWidget {
                       begin: Alignment.topCenter,
                       end: Alignment.bottomCenter,
                       colors: [
-                        LunoraColors.forestGreenSoft.withValues(alpha: 0.35),
-                        LunoraColors.storybookCreamDeep.withValues(alpha: 0.5),
+                        ElunaiColors.forestGreenSoft.withValues(alpha: 0.35),
+                        ElunaiColors.storybookCreamDeep.withValues(alpha: 0.5),
                       ],
                     ),
                   ),
@@ -428,7 +484,7 @@ class _StoryCoverCard extends StatelessWidget {
                     child: Icon(
                       Icons.auto_stories_rounded,
                       size: 40,
-                      color: LunoraColors.forestGreen.withValues(alpha: 0.75),
+                      color: ElunaiColors.forestGreen.withValues(alpha: 0.75),
                     ),
                   ),
                 ),
@@ -444,7 +500,7 @@ class _StoryCoverCard extends StatelessWidget {
                       overflow: TextOverflow.ellipsis,
                       textAlign: TextAlign.center,
                       style: theme.textTheme.titleSmall?.copyWith(
-                        color: LunoraColors.storybookInk,
+                        color: ElunaiColors.storybookInk,
                         fontWeight: FontWeight.w800,
                         height: 1.2,
                         fontSize: 13,
@@ -469,16 +525,16 @@ class _PlaceholderStoryStrip extends StatelessWidget {
     return ListView.separated(
       scrollDirection: Axis.horizontal,
       itemCount: samples.length,
-      separatorBuilder: (ctx, i) => const SizedBox(width: LunoraSpacing.sm),
+      separatorBuilder: (ctx, i) => const SizedBox(width: ElunaiSpacing.sm),
       itemBuilder: (context, i) {
         final u = samples[i];
         final m = u.meta;
         return Container(
           width: 150,
           height: _StoryCoverCard._cardHeight,
-          padding: const EdgeInsets.all(LunoraSpacing.md),
+          padding: const EdgeInsets.all(ElunaiSpacing.md),
           decoration: BoxDecoration(
-            color: LunoraColors.storybookSurface,
+            color: ElunaiColors.storybookSurface,
             borderRadius: BorderRadius.circular(20),
             border: Border.all(color: m.accentColor.withValues(alpha: 0.35)),
           ),
@@ -492,7 +548,7 @@ class _PlaceholderStoryStrip extends StatelessWidget {
                 maxLines: 2,
                 overflow: TextOverflow.ellipsis,
                 style: theme.textTheme.titleSmall?.copyWith(
-                  color: LunoraColors.storybookInk,
+                  color: ElunaiColors.storybookInk,
                   fontWeight: FontWeight.w800,
                   fontSize: 13,
                 ),
@@ -501,7 +557,7 @@ class _PlaceholderStoryStrip extends StatelessWidget {
               Text(
                 'Bientôt ici',
                 style: theme.textTheme.labelSmall?.copyWith(
-                  color: LunoraColors.storybookInkMuted,
+                  color: ElunaiColors.storybookInkMuted,
                 ),
               ),
             ],
@@ -565,6 +621,166 @@ Future<void> _runAdminStoryRegeneration(
   }
 }
 
+Future<void> _runAdminUniqueStoryGeneration(
+  BuildContext context,
+  WidgetRef ref,
+  UserModel user,
+  ChildProfile child,
+) async {
+  final confirmed = await _confirmAdminGeneration(
+    context: context,
+    title: 'Générer une nouvelle histoire unique ?',
+    message:
+        'Une histoire indépendante sera ajoutée à la bibliothèque sans remplacer '
+        'l’histoire du jour. Cette action peut consommer 1 appel IA.',
+    confirmLabel: 'Générer',
+  );
+  if (!confirmed || !context.mounted) return;
+
+  await _runAdminGeneration(
+    context: context,
+    ref: ref,
+    generate: () => ref
+        .read(storyRepositoryProvider)
+        .adminGenerateUniqueStory(user: user, child: child),
+    onSuccess: (story) {
+      if (context.mounted) {
+        context.push('/story?id=${Uri.encodeComponent(story.id)}');
+      }
+    },
+  );
+}
+
+Future<void> _runAdminSevenChapterGeneration(
+  BuildContext context,
+  WidgetRef ref,
+  UserModel user,
+  ChildProfile child,
+) async {
+  final confirmed = await _confirmAdminGeneration(
+    context: context,
+    title: 'Générer une histoire complète en 7 chapitres ?',
+    message:
+        'Les 7 chapitres seront générés et archivés immédiatement. Cette action '
+        'peut consommer environ 8 appels IA : 1 bible de série et 7 chapitres.',
+    confirmLabel: 'Générer les 7 chapitres',
+  );
+  if (!confirmed || !context.mounted) return;
+
+  await _runAdminGeneration(
+    context: context,
+    ref: ref,
+    generate: () => ref
+        .read(storyRepositoryProvider)
+        .adminGenerateSevenChapterStory(user: user, child: child),
+    onSuccess: (stories) {
+      if (!context.mounted || stories.isEmpty) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Les 7 chapitres ont été générés.')),
+      );
+      context.push('/story?id=${Uri.encodeComponent(stories.first.id)}');
+    },
+  );
+}
+
+Future<bool> _confirmAdminGeneration({
+  required BuildContext context,
+  required String title,
+  required String message,
+  required String confirmLabel,
+}) async {
+  return await showDialog<bool>(
+        context: context,
+        builder: (ctx) => AlertDialog(
+          title: Text(title),
+          content: Text(message),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(ctx, false),
+              child: const Text('Annuler'),
+            ),
+            FilledButton(
+              onPressed: () => Navigator.pop(ctx, true),
+              child: Text(confirmLabel),
+            ),
+          ],
+        ),
+      ) ??
+      false;
+}
+
+Future<void> _runAdminGeneration<T>({
+  required BuildContext context,
+  required WidgetRef ref,
+  required Future<T> Function() generate,
+  required void Function(T value) onSuccess,
+}) async {
+  T? result;
+  var succeeded = false;
+  showDialog<void>(
+    context: context,
+    barrierDismissible: false,
+    builder: (_) => const Center(child: CircularProgressIndicator()),
+  );
+  try {
+    result = await generate();
+    ref.invalidate(storyHistoryProvider);
+    succeeded = true;
+  } catch (e) {
+    if (context.mounted) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Génération impossible : $e')));
+    }
+  } finally {
+    if (context.mounted) {
+      Navigator.of(context, rootNavigator: true).pop();
+    }
+  }
+  if (succeeded && context.mounted) onSuccess(result as T);
+}
+
+class _AdminStoryActionsCard extends StatelessWidget {
+  const _AdminStoryActionsCard({
+    required this.onGenerateUnique,
+    required this.onGenerateSevenChapters,
+  });
+
+  final VoidCallback onGenerateUnique;
+  final VoidCallback onGenerateSevenChapters;
+
+  @override
+  Widget build(BuildContext context) {
+    return ElunaiGlassCard(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          const ElunaiSectionTitle('Actions administrateur'),
+          const SizedBox(height: ElunaiSpacing.xs),
+          Text(
+            'Générations de test conservées dans la bibliothèque.',
+            style: Theme.of(context).textTheme.bodySmall?.copyWith(
+              color: Theme.of(context).colorScheme.onSurfaceVariant,
+            ),
+          ),
+          const SizedBox(height: ElunaiSpacing.md),
+          ElunaiPrimaryButton(
+            label: 'Générer une nouvelle histoire unique',
+            icon: Icons.auto_awesome_rounded,
+            onPressed: onGenerateUnique,
+          ),
+          const SizedBox(height: ElunaiSpacing.sm),
+          OutlinedButton.icon(
+            onPressed: onGenerateSevenChapters,
+            icon: const Icon(Icons.library_books_rounded),
+            label: const Text('Générer une histoire de 7 chapitres'),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
 class _StoryHubCard extends StatelessWidget {
   const _StoryHubCard({
     required this.user,
@@ -584,32 +800,32 @@ class _StoryHubCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return LunoraGlassCard(
+    return ElunaiGlassCard(
       child: asyncStory.when(
         skipLoadingOnReload: true,
         loading: () => const SizedBox(
           height: 120,
-          child: Center(child: LunoraProgressBar()),
+          child: Center(child: ElunaiProgressBar()),
         ),
         error: (Object? err, StackTrace? st) => Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const LunoraSectionTitle('Histoire du soir'),
-            const SizedBox(height: LunoraSpacing.sm),
+            const ElunaiSectionTitle('Histoire du soir'),
+            const SizedBox(height: ElunaiSpacing.sm),
             Text(
               'Impossible de préparer une histoire pour le moment.',
               style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                 color: Theme.of(context).colorScheme.onSurface,
               ),
             ),
-            const SizedBox(height: LunoraSpacing.md),
-            LunoraPrimaryButton(
+            const SizedBox(height: ElunaiSpacing.md),
+            ElunaiPrimaryButton(
               label: 'Réessayer',
               icon: Icons.refresh_rounded,
               onPressed: onGenerate,
             ),
             if (AdminConfig.isAdminUser(user)) ...[
-              const SizedBox(height: LunoraSpacing.sm),
+              const SizedBox(height: ElunaiSpacing.sm),
               TextButton(
                 onPressed: onAdminRegenerate,
                 child: const Text('Régénérer (admin)'),
@@ -622,17 +838,17 @@ class _StoryHubCard extends StatelessWidget {
             return Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const LunoraSectionTitle('Histoire du soir'),
-                const SizedBox(height: LunoraSpacing.sm),
+                const ElunaiSectionTitle('Histoire du soir'),
+                const SizedBox(height: ElunaiSpacing.sm),
                 Text(
-                  'Aucune histoire prête pour le moment. Lance une génération quand le profil est prêt.',
+                  'La prochaine histoire sera préparée automatiquement à midi, juste à temps pour le rituel du soir.',
                   style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                     color: Theme.of(context).colorScheme.onSurfaceVariant,
                   ),
                 ),
-                const SizedBox(height: LunoraSpacing.md),
-                LunoraPrimaryButton(
-                  label: 'Créer l’histoire du soir',
+                const SizedBox(height: ElunaiSpacing.md),
+                ElunaiPrimaryButton(
+                  label: 'Préparer maintenant',
                   icon: Icons.bedtime_rounded,
                   onPressed: onGenerate,
                 ),
@@ -649,60 +865,60 @@ class _StoryHubCard extends StatelessWidget {
             children: [
               Row(
                 children: [
-                  const Expanded(child: LunoraSectionTitle('Prête à lire')),
+                  const Expanded(child: ElunaiSectionTitle('Prête à lire')),
                   Icon(
                     Icons.nights_stay_rounded,
-                    color: LunoraColors.forestGreen.withValues(alpha: 0.78),
+                    color: ElunaiColors.forestGreen.withValues(alpha: 0.78),
                   ),
                 ],
               ),
-              const SizedBox(height: LunoraSpacing.sm),
+              const SizedBox(height: ElunaiSpacing.sm),
               Text(
                 story.title,
                 style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                  color: LunoraColors.forestGreen,
+                  color: ElunaiColors.forestGreen,
                   fontWeight: FontWeight.w800,
                 ),
               ),
-              const SizedBox(height: LunoraSpacing.sm),
+              const SizedBox(height: ElunaiSpacing.sm),
               Text(
                 'Pour $childName · lecture calme de ${story.estimatedReadingMinutes} min.',
                 style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                   color: Theme.of(context).colorScheme.onSurfaceVariant,
                 ),
               ),
-              const SizedBox(height: LunoraSpacing.md),
+              const SizedBox(height: ElunaiSpacing.md),
               Wrap(
-                spacing: LunoraSpacing.xs,
-                runSpacing: LunoraSpacing.xs,
+                spacing: ElunaiSpacing.xs,
+                runSpacing: ElunaiSpacing.xs,
                 children: [
-                  LunoraBadge(
+                  ElunaiBadge(
                     label: readingDurationLabel(story.estimatedReadingMinutes),
                     icon: Icons.timer_outlined,
                   ),
-                  LunoraBadge(
+                  ElunaiBadge(
                     label: storyFormatLabel(story),
                     icon: Icons.menu_book_rounded,
                   ),
-                  LunoraBadge(
+                  ElunaiBadge(
                     label: storySourceLabel(story.generationSource),
                     icon: Icons.auto_awesome_rounded,
                   ),
                   if (story.isSerialized)
-                    LunoraBadge(
+                    ElunaiBadge(
                       label: 'Chapitre ${story.chapterNumber}',
                       icon: Icons.bookmark_rounded,
                     ),
                 ],
               ),
-              const SizedBox(height: LunoraSpacing.lg),
-              LunoraPrimaryButton(
+              const SizedBox(height: ElunaiSpacing.lg),
+              ElunaiPrimaryButton(
                 label: 'Commencer la lecture',
                 icon: Icons.play_arrow_rounded,
                 onPressed: () => onRead(story),
               ),
               if (AdminConfig.isAdminUser(user)) ...[
-                const SizedBox(height: LunoraSpacing.sm),
+                const SizedBox(height: ElunaiSpacing.sm),
                 TextButton(
                   onPressed: onAdminRegenerate,
                   child: const Text('Régénérer (admin)'),

@@ -4,10 +4,10 @@ import 'package:go_router/go_router.dart';
 import '../../../core/theme/colors.dart';
 import '../../../core/theme/spacing.dart';
 import '../../../shared/widgets/elunai_layout.dart';
-import '../../../shared/widgets/lunora_glass_card.dart';
-import '../../../shared/widgets/lunora_page_header.dart';
-import '../../../shared/widgets/lunora_primary_button.dart';
-import '../../../shared/widgets/lunora_screen_shell.dart';
+import '../../../shared/widgets/elunai_glass_card.dart';
+import '../../../shared/widgets/elunai_page_header.dart';
+import '../../../shared/widgets/elunai_primary_button.dart';
+import '../../../shared/widgets/elunai_screen_shell.dart';
 
 class PaymentResultScreen extends StatelessWidget {
   const PaymentResultScreen({super.key, required this.success});
@@ -26,19 +26,19 @@ class PaymentResultScreen extends StatelessWidget {
     return Scaffold(
       extendBodyBehindAppBar: true,
       appBar: const ElunaiAppBar(title: 'Paiement'),
-      body: LunoraScreenShell(
+      body: ElunaiScreenShell(
         showStarfield: true,
         child: SafeArea(
           child: Center(
             child: SingleChildScrollView(
-              padding: LunoraSpacing.screen,
+              padding: ElunaiSpacing.screen,
               child: ConstrainedBox(
                 constraints: const BoxConstraints(maxWidth: 560),
-                child: LunoraGlassCard(
+                child: ElunaiGlassCard(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
-                      LunoraPageHeader(
+                      ElunaiPageHeader(
                         compact: true,
                         icon: icon,
                         title: title,
@@ -47,35 +47,35 @@ class PaymentResultScreen extends StatelessWidget {
                             ? 'Abonnement en cours d’activation'
                             : 'Aucune action requise',
                       ),
-                      const SizedBox(height: LunoraSpacing.xl),
+                      const SizedBox(height: ElunaiSpacing.xl),
                       DecoratedBox(
                         decoration: BoxDecoration(
-                          borderRadius: LunoraSpacing.radiusLg,
-                          color: LunoraColors.forestGreen.withValues(
+                          borderRadius: ElunaiSpacing.radiusLg,
+                          color: ElunaiColors.forestGreen.withValues(
                             alpha: 0.08,
                           ),
                         ),
                         child: Padding(
-                          padding: const EdgeInsets.all(LunoraSpacing.md),
+                          padding: const EdgeInsets.all(ElunaiSpacing.md),
                           child: Text(
                             success
                                 ? 'Si le statut n’apparaît pas immédiatement, patiente quelques secondes puis rouvre l’écran abonnement.'
                                 : 'Tes données et ton profil restent inchangés.',
                             style: theme.textTheme.bodyMedium?.copyWith(
-                              color: LunoraColors.storybookInkMuted,
+                              color: ElunaiColors.storybookInkMuted,
                               height: 1.4,
                               fontWeight: FontWeight.w600,
                             ),
                           ),
                         ),
                       ),
-                      const SizedBox(height: LunoraSpacing.xl),
-                      LunoraPrimaryButton(
+                      const SizedBox(height: ElunaiSpacing.xl),
+                      ElunaiPrimaryButton(
                         label: 'Voir mon abonnement',
                         icon: Icons.workspace_premium_rounded,
                         onPressed: () => context.go('/subscription'),
                       ),
-                      const SizedBox(height: LunoraSpacing.sm),
+                      const SizedBox(height: ElunaiSpacing.sm),
                       TextButton(
                         onPressed: () => context.go('/home'),
                         child: const Text('Retour à l’accueil'),

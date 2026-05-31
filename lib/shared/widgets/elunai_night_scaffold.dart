@@ -6,16 +6,17 @@ import 'elunai_layout.dart';
 import 'joy_atmosphere_layer.dart';
 import 'starry_background.dart';
 
-class LunoraNightScaffold extends StatelessWidget {
-  const LunoraNightScaffold({
+class ElunaiNightScaffold extends StatelessWidget {
+  const ElunaiNightScaffold({
     super.key,
     this.appBar,
     this.scrollable = false,
-    this.padding = LunoraSpacing.screen,
+    this.padding = ElunaiSpacing.screen,
     this.starCount = ElunaiLayout.starCount,
     this.joyfulBackdrop = true,
     this.backgroundGradient,
     this.showStarryOverlay = true,
+
     /// Garde ciel étoilé / nuit même si le thème global est clair (ex. lecteur d’histoire).
     this.forceNightBackdrop = false,
     this.bottomNavigationBar,
@@ -49,14 +50,17 @@ class LunoraNightScaffold extends StatelessWidget {
       return Scaffold(
         extendBodyBehindAppBar: true,
         appBar: appBar,
-        backgroundColor: LunoraColors.storybookCream,
+        backgroundColor: ElunaiColors.storybookCream,
         body: content,
         bottomNavigationBar: bottomNavigationBar,
       );
     }
 
-    final gradient = backgroundGradient ??
-        (joyfulBackdrop ? LunoraColors.joySkyVertical : LunoraColors.nightSkyVertical);
+    final gradient =
+        backgroundGradient ??
+        (joyfulBackdrop
+            ? ElunaiColors.joySkyVertical
+            : ElunaiColors.nightSkyVertical);
 
     return Scaffold(
       extendBodyBehindAppBar: true,

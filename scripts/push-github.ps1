@@ -10,7 +10,7 @@ function Get-GitAuthor {
     return $null
 }
 
-Write-Host "=== Lunora - Push GitHub ===" -ForegroundColor Cyan
+Write-Host "=== Elunai - Push GitHub ===" -ForegroundColor Cyan
 git status
 
 $porcelain = git status --porcelain
@@ -48,7 +48,7 @@ else {
                     git push origin main
                     if ($LASTEXITCODE -eq 0) {
                         Write-Host ""
-                        Write-Host "Pousse sur https://github.com/SeegerSoftware/Lunora" -ForegroundColor Green
+                        Write-Host "Pousse sur https://github.com/SeegerSoftware/Elunai" -ForegroundColor Green
                     }
                 }
             }

@@ -4,7 +4,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'colors.dart';
 
 /// Typo douce (Nunito) — hiérarchie simple pour enfants + parents.
-abstract final class LunoraTextStyles {
+abstract final class ElunaiTextStyles {
   static TextTheme nunitoTextTheme(TextTheme base) {
     final n = GoogleFonts.nunitoTextTheme(base);
     return n.copyWith(
@@ -43,7 +43,7 @@ abstract final class LunoraTextStyles {
       fontSize: 26,
       fontWeight: FontWeight.w800,
       height: 1.2,
-      color: LunoraColors.warmBeige,
+      color: ElunaiColors.warmBeige,
       letterSpacing: -0.4,
     );
   }
@@ -53,7 +53,7 @@ abstract final class LunoraTextStyles {
       fontSize: 15,
       fontWeight: FontWeight.w500,
       height: 1.35,
-      color: LunoraColors.mist.withValues(alpha: 0.82),
+      color: ElunaiColors.mist.withValues(alpha: 0.82),
     );
   }
 
@@ -62,7 +62,7 @@ abstract final class LunoraTextStyles {
       fontSize: 26,
       fontWeight: FontWeight.w800,
       height: 1.25,
-      color: LunoraColors.warmBeige,
+      color: ElunaiColors.warmBeige,
     );
   }
 
@@ -70,7 +70,7 @@ abstract final class LunoraTextStyles {
     return GoogleFonts.nunito(
       fontSize: 15,
       fontWeight: FontWeight.w600,
-      color: LunoraColors.mist.withValues(alpha: 0.88),
+      color: ElunaiColors.mist.withValues(alpha: 0.88),
     );
   }
 
@@ -80,7 +80,7 @@ abstract final class LunoraTextStyles {
       fontWeight: FontWeight.w500,
       height: 1.78,
       letterSpacing: 0.08,
-      color: LunoraColors.readerTextPrimary.withValues(alpha: 0.98),
+      color: ElunaiColors.readerTextPrimary.withValues(alpha: 0.98),
     );
   }
 
@@ -91,7 +91,7 @@ abstract final class LunoraTextStyles {
       fontWeight: FontWeight.w400,
       height: height,
       letterSpacing: 0.02,
-      color: LunoraColors.ereaderInk,
+      color: ElunaiColors.ereaderInk,
     );
   }
 
@@ -100,7 +100,7 @@ abstract final class LunoraTextStyles {
     return GoogleFonts.nunito(
       fontSize: 14,
       fontWeight: FontWeight.w600,
-      color: LunoraColors.readerTextSecondary.withValues(alpha: 0.95),
+      color: ElunaiColors.readerTextSecondary.withValues(alpha: 0.95),
     );
   }
 
@@ -109,7 +109,7 @@ abstract final class LunoraTextStyles {
     return GoogleFonts.nunito(
       fontSize: 17,
       fontWeight: FontWeight.w800,
-      color: LunoraColors.storybookInk,
+      color: ElunaiColors.storybookInk,
     );
   }
 }

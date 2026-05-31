@@ -72,6 +72,39 @@ pytest
 
 Les tests utilisent `ALLOW_TEST_BEARER_TOKEN=true`, `OPENAI_MOCK=true` et `STRIPE_MOCK=true`.
 
+## Histoires quotidiennes et notifications
+
+L'endpoint interne `POST /internal/daily-stories/publish` genere au maximum une
+histoire par enfant et par jour. Son identifiant Firestore deterministe evite une
+double publication lors d'une relance. L'appel est reserve au jeton OIDC du
+compte de service Cloud Scheduler.
+
+Apres le deploiement Cloud Run, provisionner le job de midi :
+
+```powershell
+.\scripts\deploy-daily-story-scheduler.ps1
+```
+
+Le job s'execute a `12:00` avec le fuseau `Europe/Zurich`. Le plafond
+`DAILY_STORY_MAX_PROFILES=500` limite le cout maximal d'une execution. Pour
+depasser ce volume, remplacer le scan par lots par une file de taches.
+
+Les appareils Android enregistrent leur jeton dans `notification_devices`.
+Activer Cloud Messaging dans Firebase. Sur iOS, la cle APNs et les capabilities
+Push Notifications doivent aussi etre configurees dans Apple Developer/Xcode.
+
+## Provisionnement admin
+
+Le script `scripts/provision_admin.py` crée ou promeut un compte administrateur :
+
+```bash
+python scripts/provision_admin.py --email gaetan.seeger@gmail.com --create-if-missing
+```
+
+Il exige les credentials Firebase Admin du backend, ajoute le claim `admin`, marque
+`users/{uid}.isAdmin=true` et active l'accès Elunai. Il ne contient et ne génère aucun secret.
+L'utilisateur doit ensuite se déconnecter puis se reconnecter pour rafraîchir son token Firebase.
+
 ## Prochaines étapes (hors périmètre actuel)
 
 - Vérification Firebase ID token sur les routes protégées

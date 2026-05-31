@@ -5,8 +5,8 @@ import 'core/theme/app_theme.dart';
 import 'features/auth/presentation/providers/auth_providers.dart';
 import 'routing/app_router.dart';
 
-class LunoraApp extends ConsumerWidget {
-  const LunoraApp({super.key});
+class ElunaiApp extends ConsumerWidget {
+  const ElunaiApp({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {

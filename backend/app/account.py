@@ -11,6 +11,7 @@ USER_SCOPED_COLLECTIONS = {
     "child_series_state": "userId",
     "story_worlds": "userId",
     "story_memory_snapshots": "userId",
+    "notification_devices": "userId",
     "generation_rate_limits": "uid",
 }
 

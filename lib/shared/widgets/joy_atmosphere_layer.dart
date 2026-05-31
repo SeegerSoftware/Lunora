@@ -14,19 +14,19 @@ class JoyAtmosphereLayer extends StatelessWidget {
         children: [
           _glow(
             alignment: Alignment.topRight,
-            color: LunoraColors.joyPeach.withValues(alpha: 0.22),
+            color: ElunaiColors.joyPeach.withValues(alpha: 0.22),
             size: 280,
             offset: const Offset(60, -40),
           ),
           _glow(
             alignment: Alignment.bottomLeft,
-            color: LunoraColors.joyMint.withValues(alpha: 0.18),
+            color: ElunaiColors.joyMint.withValues(alpha: 0.18),
             size: 320,
             offset: const Offset(-80, 40),
           ),
           _glow(
             alignment: Alignment.center,
-            color: LunoraColors.joySun.withValues(alpha: 0.08),
+            color: ElunaiColors.joySun.withValues(alpha: 0.08),
             size: 420,
             offset: Offset.zero,
           ),
@@ -51,10 +51,7 @@ class JoyAtmosphereLayer extends StatelessWidget {
           decoration: BoxDecoration(
             shape: BoxShape.circle,
             gradient: RadialGradient(
-              colors: [
-                color,
-                color.withValues(alpha: 0),
-              ],
+              colors: [color, color.withValues(alpha: 0)],
             ),
           ),
         ),

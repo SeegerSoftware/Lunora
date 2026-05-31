@@ -1,11 +1,11 @@
 {
-    "name": "lunora.v00",
-    "short_name": "lunora.v00",
+    "name": "Elunai",
+    "short_name": "Elunai",
     "start_url": ".",
     "display": "standalone",
     "background_color": "#0175C2",
     "theme_color": "#0175C2",
-    "description": "A new Flutter project.",
+    "description": "Histoires du soir personnalisées pour enfants.",
     "orientation": "portrait-primary",
     "prefer_related_applications": false,
     "icons": [

@@ -7,11 +7,11 @@ import '../../../core/constants/app_sizes.dart';
 import '../../../routing/safe_navigation.dart';
 import '../../../core/validation/auth_validators.dart';
 import '../../../shared/widgets/elunai_layout.dart';
-import '../../../shared/widgets/lunora_fade_in.dart';
-import '../../../shared/widgets/lunora_page_header.dart';
-import '../../../shared/widgets/lunora_primary_button.dart';
-import '../../../shared/widgets/lunora_screen_shell.dart';
-import '../../../shared/widgets/lunora_text_field.dart';
+import '../../../shared/widgets/elunai_fade_in.dart';
+import '../../../shared/widgets/elunai_page_header.dart';
+import '../../../shared/widgets/elunai_primary_button.dart';
+import '../../../shared/widgets/elunai_screen_shell.dart';
+import '../../../shared/widgets/elunai_text_field.dart';
 import '../../legal/presentation/terms_screen.dart';
 import 'auth_navigation.dart';
 import 'providers/auth_providers.dart';
@@ -191,7 +191,7 @@ class _SignInScreenState extends ConsumerState<SignInScreen> {
           onPressed: () => context.safePopOrGo('/welcome'),
         ),
       ),
-      body: LunoraScreenShell(
+      body: ElunaiScreenShell(
         showStarfield: true,
         child: SafeArea(
           child: Padding(
@@ -199,7 +199,7 @@ class _SignInScreenState extends ConsumerState<SignInScreen> {
             child: Center(
               child: ConstrainedBox(
                 constraints: const BoxConstraints(maxWidth: 560),
-                child: LunoraFadeIn(
+                child: ElunaiFadeIn(
                   child: Form(
                     key: _formKey,
                     autovalidateMode: AutovalidateMode.onUserInteraction,
@@ -208,7 +208,7 @@ class _SignInScreenState extends ConsumerState<SignInScreen> {
                         crossAxisAlignment: CrossAxisAlignment.stretch,
                         children: [
                           const SizedBox(height: AppSizes.lg),
-                          const LunoraPageHeader(
+                          const ElunaiPageHeader(
                             compact: true,
                             icon: Icons.login_rounded,
                             title: 'Bon retour',
@@ -216,7 +216,7 @@ class _SignInScreenState extends ConsumerState<SignInScreen> {
                                 'Retrouve les profils, les histoires et les rituels déjà préparés.',
                           ),
                           const SizedBox(height: AppSizes.xl),
-                          LunoraTextField(
+                          ElunaiTextField(
                             controller: _email,
                             label: 'Email',
                             keyboardType: TextInputType.emailAddress,
@@ -224,7 +224,7 @@ class _SignInScreenState extends ConsumerState<SignInScreen> {
                             validator: AuthValidators.emailError,
                           ),
                           const SizedBox(height: AppSizes.md),
-                          LunoraTextField(
+                          ElunaiTextField(
                             controller: _password,
                             label: 'Mot de passe',
                             obscureText: true,
@@ -250,7 +250,7 @@ class _SignInScreenState extends ConsumerState<SignInScreen> {
                             ),
                           ),
                           const SizedBox(height: AppSizes.lg),
-                          LunoraPrimaryButton(
+                          ElunaiPrimaryButton(
                             label: 'Se connecter',
                             isLoading: _loading,
                             onPressed: _submit,

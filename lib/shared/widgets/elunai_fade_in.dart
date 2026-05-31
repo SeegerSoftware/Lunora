@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 
 /// Apparition douce au montage (micro-animation premium, discrète).
-class LunoraFadeIn extends StatefulWidget {
-  const LunoraFadeIn({
+class ElunaiFadeIn extends StatefulWidget {
+  const ElunaiFadeIn({
     super.key,
     required this.child,
     this.delay = Duration.zero,
@@ -14,10 +14,10 @@ class LunoraFadeIn extends StatefulWidget {
   final Duration duration;
 
   @override
-  State<LunoraFadeIn> createState() => _LunoraFadeInState();
+  State<ElunaiFadeIn> createState() => _ElunaiFadeInState();
 }
 
-class _LunoraFadeInState extends State<LunoraFadeIn>
+class _ElunaiFadeInState extends State<ElunaiFadeIn>
     with SingleTickerProviderStateMixin {
   late final AnimationController _c;
   late final Animation<double> _opacity;
@@ -47,10 +47,7 @@ class _LunoraFadeInState extends State<LunoraFadeIn>
   Widget build(BuildContext context) {
     return FadeTransition(
       opacity: _opacity,
-      child: SlideTransition(
-        position: _slide,
-        child: widget.child,
-      ),
+      child: SlideTransition(position: _slide, child: widget.child),
     );
   }
 }

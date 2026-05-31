@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
-class LunoraTextField extends StatefulWidget {
-  const LunoraTextField({
+class ElunaiTextField extends StatefulWidget {
+  const ElunaiTextField({
     super.key,
     required this.controller,
     this.label,
@@ -25,10 +25,10 @@ class LunoraTextField extends StatefulWidget {
   final int? minLines;
 
   @override
-  State<LunoraTextField> createState() => _LunoraTextFieldState();
+  State<ElunaiTextField> createState() => _ElunaiTextFieldState();
 }
 
-class _LunoraTextFieldState extends State<LunoraTextField> {
+class _ElunaiTextFieldState extends State<ElunaiTextField> {
   late bool _hidden = widget.obscureText;
 
   @override

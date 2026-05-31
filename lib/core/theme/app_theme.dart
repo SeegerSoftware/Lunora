@@ -3,21 +3,21 @@ import 'package:flutter/material.dart';
 import 'text_styles.dart';
 import 'theme.dart';
 
-/// Point d’entrée historique : délègue au design system [LunoraTheme].
+/// Point d’entrée historique : délègue au design system [ElunaiTheme].
 abstract final class AppTheme {
-  static ThemeData get dark => LunoraTheme.dark;
+  static ThemeData get dark => ElunaiTheme.dark;
 
-  static ThemeData get light => LunoraTheme.light;
+  static ThemeData get light => ElunaiTheme.light;
 
   static TextStyle storyReaderTitle(TextTheme textTheme) =>
-      LunoraTextStyles.storyReaderTitle(textTheme);
+      ElunaiTextStyles.storyReaderTitle(textTheme);
 
   static TextStyle storyReaderChapterMeta(TextTheme textTheme) =>
-      LunoraTextStyles.storyReaderChapterMeta(textTheme);
+      ElunaiTextStyles.storyReaderChapterMeta(textTheme);
 
   static TextStyle storyReaderBody(TextTheme textTheme) =>
-      LunoraTextStyles.storyReaderBody(textTheme);
+      ElunaiTextStyles.storyReaderBody(textTheme);
 
   static TextStyle storyReaderMetaOnCard(TextTheme textTheme) =>
-      LunoraTextStyles.storyReaderMetaOnCard(textTheme);
+      ElunaiTextStyles.storyReaderMetaOnCard(textTheme);
 }

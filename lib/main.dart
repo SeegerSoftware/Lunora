@@ -12,5 +12,5 @@ Future<void> main() async {
   if (BackendConfig.useFirebase) {
     await GoogleSignInInitializer.ensureInitialized();
   }
-  runApp(const ProviderScope(child: LunoraApp()));
+  runApp(const ProviderScope(child: ElunaiApp()));
 }

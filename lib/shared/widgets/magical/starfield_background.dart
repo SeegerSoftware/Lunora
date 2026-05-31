@@ -79,7 +79,7 @@ class _StarfieldPainter extends CustomPainter {
       final r = i % 5 == 0 ? 1.6 : 1.0;
       final gold = i % 7 == 0;
       final paint = Paint()
-        ..color = (gold ? LunoraColors.starGold : LunoraColors.moonIvory)
+        ..color = (gold ? ElunaiColors.starGold : ElunaiColors.moonIvory)
             .withValues(alpha: twinkle * (gold ? 0.55 : 0.35))
         ..isAntiAlias = true;
       canvas.drawCircle(Offset(x, y), r, paint);
@@ -88,7 +88,7 @@ class _StarfieldPainter extends CustomPainter {
     final mist = Paint()
       ..shader = RadialGradient(
         colors: [
-          LunoraColors.violetSoft.withValues(alpha: 0.12),
+          ElunaiColors.violetSoft.withValues(alpha: 0.12),
           Colors.transparent,
         ],
         radius: 0.55,

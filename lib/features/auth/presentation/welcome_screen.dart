@@ -4,10 +4,10 @@ import 'package:go_router/go_router.dart';
 import '../../../core/constants/app_sizes.dart';
 import '../../../core/theme/colors.dart';
 import '../../../core/theme/spacing.dart';
-import '../../../shared/widgets/lunora_fade_in.dart';
-import '../../../shared/widgets/lunora_page_header.dart';
-import '../../../shared/widgets/lunora_primary_button.dart';
-import '../../../shared/widgets/lunora_screen_shell.dart';
+import '../../../shared/widgets/elunai_fade_in.dart';
+import '../../../shared/widgets/elunai_page_header.dart';
+import '../../../shared/widgets/elunai_primary_button.dart';
+import '../../../shared/widgets/elunai_screen_shell.dart';
 import '../../legal/presentation/terms_screen.dart';
 
 class WelcomeScreen extends StatelessWidget {
@@ -18,7 +18,7 @@ class WelcomeScreen extends StatelessWidget {
     final theme = Theme.of(context);
 
     return Scaffold(
-      body: LunoraScreenShell(
+      body: ElunaiScreenShell(
         showStarfield: true,
         child: SafeArea(
           child: Padding(
@@ -30,18 +30,18 @@ class WelcomeScreen extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
                     const Spacer(),
-                    LunoraFadeIn(
+                    ElunaiFadeIn(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          const LunoraPageHeader(
+                          const ElunaiPageHeader(
                             badge: 'Histoires personnalisées pour le soir',
                             icon: Icons.auto_stories_rounded,
                             title: 'Elunai',
                             subtitle:
                                 'Une bibliothèque magique qui s’adapte à l’âge, aux goûts et au rythme de ton enfant.',
                           ),
-                          const SizedBox(height: LunoraSpacing.xl),
+                          const SizedBox(height: ElunaiSpacing.xl),
                           Row(
                             children: const [
                               Expanded(
@@ -50,14 +50,14 @@ class WelcomeScreen extends StatelessWidget {
                                   label: 'Sécurisé',
                                 ),
                               ),
-                              SizedBox(width: LunoraSpacing.sm),
+                              SizedBox(width: ElunaiSpacing.sm),
                               Expanded(
                                 child: _TrustPoint(
                                   icon: Icons.bedtime_outlined,
                                   label: 'Rituel calme',
                                 ),
                               ),
-                              SizedBox(width: LunoraSpacing.sm),
+                              SizedBox(width: ElunaiSpacing.sm),
                               Expanded(
                                 child: _TrustPoint(
                                   icon: Icons.favorite_border_rounded,
@@ -70,23 +70,23 @@ class WelcomeScreen extends StatelessWidget {
                       ),
                     ),
                     const Spacer(),
-                    LunoraFadeIn(
+                    ElunaiFadeIn(
                       delay: const Duration(milliseconds: 120),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.stretch,
                         children: [
-                          LunoraPrimaryButton(
+                          ElunaiPrimaryButton(
                             label: 'Créer un compte',
                             icon: Icons.mail_outline_rounded,
                             onPressed: () => context.push('/signup'),
                           ),
-                          const SizedBox(height: LunoraSpacing.sm),
+                          const SizedBox(height: ElunaiSpacing.sm),
                           OutlinedButton.icon(
                             onPressed: () => context.push('/signin'),
                             icon: const Icon(Icons.login_rounded),
                             label: const Text('J’ai déjà un compte'),
                           ),
-                          const SizedBox(height: LunoraSpacing.xs),
+                          const SizedBox(height: ElunaiSpacing.xs),
                           TextButton(
                             onPressed: () =>
                                 context.push(TermsScreen.routePath),
@@ -94,19 +94,19 @@ class WelcomeScreen extends StatelessWidget {
                               'Conditions générales d’utilisation',
                             ),
                           ),
-                          const SizedBox(height: LunoraSpacing.sm),
+                          const SizedBox(height: ElunaiSpacing.sm),
                           Text(
                             'Pensé pour les parents, doux pour les enfants.',
                             textAlign: TextAlign.center,
                             style: theme.textTheme.bodySmall?.copyWith(
-                              color: LunoraColors.storybookInkMuted,
+                              color: ElunaiColors.storybookInkMuted,
                               fontWeight: FontWeight.w700,
                             ),
                           ),
                         ],
                       ),
                     ),
-                    const SizedBox(height: LunoraSpacing.lg),
+                    const SizedBox(height: ElunaiSpacing.lg),
                   ],
                 ),
               ),
@@ -128,27 +128,27 @@ class _TrustPoint extends StatelessWidget {
   Widget build(BuildContext context) {
     return DecoratedBox(
       decoration: BoxDecoration(
-        color: LunoraColors.storybookSurface.withValues(alpha: 0.86),
-        borderRadius: LunoraSpacing.radiusMd,
+        color: ElunaiColors.storybookSurface.withValues(alpha: 0.86),
+        borderRadius: ElunaiSpacing.radiusMd,
         border: Border.all(
-          color: LunoraColors.forestGreen.withValues(alpha: 0.1),
+          color: ElunaiColors.forestGreen.withValues(alpha: 0.1),
         ),
       ),
       child: Padding(
         padding: const EdgeInsets.symmetric(
-          horizontal: LunoraSpacing.xs,
-          vertical: LunoraSpacing.sm,
+          horizontal: ElunaiSpacing.xs,
+          vertical: ElunaiSpacing.sm,
         ),
         child: Column(
           children: [
-            Icon(icon, color: LunoraColors.forestGreen, size: 20),
-            const SizedBox(height: LunoraSpacing.xxs),
+            Icon(icon, color: ElunaiColors.forestGreen, size: 20),
+            const SizedBox(height: ElunaiSpacing.xxs),
             Text(
               label,
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
               style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                color: LunoraColors.storybookInk,
+                color: ElunaiColors.storybookInk,
                 fontWeight: FontWeight.w900,
               ),
             ),

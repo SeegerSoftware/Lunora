@@ -11,7 +11,7 @@ final todayStoryProvider = FutureProvider<Story?>((ref) async {
   if (user == null || child == null) return null;
   return ref
       .read(storyRepositoryProvider)
-      .ensureTodayStory(user: user, child: child);
+      .findTodayStory(user: user, child: child);
 });
 
 final storyHistoryProvider = FutureProvider<List<Story>>((ref) async {

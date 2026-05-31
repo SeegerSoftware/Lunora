@@ -26,19 +26,19 @@ class StoryCard extends StatelessWidget {
     return Material(
       color: Colors.transparent,
       child: InkWell(
-        borderRadius: LunoraSpacing.radiusMd,
+        borderRadius: ElunaiSpacing.radiusMd,
         onTap: onTap,
         child: Ink(
-          width: LunoraSpacing.storyCardWidth,
+          width: ElunaiSpacing.storyCardWidth,
           decoration: BoxDecoration(
-            borderRadius: LunoraSpacing.radiusMd,
-            gradient: LunoraColors.cardAura,
+            borderRadius: ElunaiSpacing.radiusMd,
+            gradient: ElunaiColors.cardAura,
             border: Border.all(
-              color: LunoraColors.mist.withValues(alpha: 0.12),
+              color: ElunaiColors.mist.withValues(alpha: 0.12),
             ),
             boxShadow: [
               BoxShadow(
-                color: LunoraColors.violetSoft.withValues(alpha: 0.14),
+                color: ElunaiColors.violetSoft.withValues(alpha: 0.14),
                 blurRadius: 20,
                 offset: const Offset(0, 10),
               ),
@@ -57,7 +57,7 @@ class StoryCard extends StatelessWidget {
                   top: Radius.circular(18),
                 ),
                 child: SizedBox(
-                  height: LunoraSpacing.storyCardImageHeight,
+                  height: ElunaiSpacing.storyCardImageHeight,
                   child: Stack(
                     fit: StackFit.expand,
                     children: [
@@ -68,7 +68,7 @@ class StoryCard extends StatelessWidget {
                             end: Alignment.bottomRight,
                             colors: [
                               Color(0xFF2B3F68),
-                              LunoraColors.nightBlueLift,
+                              ElunaiColors.nightBlueLift,
                             ],
                           ),
                         ),
@@ -77,22 +77,22 @@ class StoryCard extends StatelessWidget {
                         child: Icon(
                           Icons.auto_stories_rounded,
                           size: 44,
-                          color: LunoraColors.starGold.withValues(alpha: 0.65),
+                          color: ElunaiColors.starGold.withValues(alpha: 0.65),
                         ),
                       ),
                       Positioned(
-                        top: LunoraSpacing.sm,
-                        right: LunoraSpacing.sm,
+                        top: ElunaiSpacing.sm,
+                        right: ElunaiSpacing.sm,
                         child: Container(
                           padding: const EdgeInsets.symmetric(
-                            horizontal: LunoraSpacing.sm,
-                            vertical: LunoraSpacing.xxs,
+                            horizontal: ElunaiSpacing.sm,
+                            vertical: ElunaiSpacing.xxs,
                           ),
                           decoration: BoxDecoration(
-                            color: LunoraColors.nightBlue.withValues(
+                            color: ElunaiColors.nightBlue.withValues(
                               alpha: 0.45,
                             ),
-                            borderRadius: LunoraSpacing.radiusSm,
+                            borderRadius: ElunaiSpacing.radiusSm,
                           ),
                           child: Row(
                             mainAxisSize: MainAxisSize.min,
@@ -100,7 +100,7 @@ class StoryCard extends StatelessWidget {
                               Icon(
                                 Icons.timer_outlined,
                                 size: 14,
-                                color: LunoraColors.warmBeige.withValues(
+                                color: ElunaiColors.warmBeige.withValues(
                                   alpha: 0.85,
                                 ),
                               ),
@@ -108,7 +108,7 @@ class StoryCard extends StatelessWidget {
                               Text(
                                 '$readingMinutes min',
                                 style: theme.textTheme.labelSmall?.copyWith(
-                                  color: LunoraColors.warmBeige.withValues(
+                                  color: ElunaiColors.warmBeige.withValues(
                                     alpha: 0.9,
                                   ),
                                   fontWeight: FontWeight.w700,
@@ -124,10 +124,10 @@ class StoryCard extends StatelessWidget {
               ),
               Padding(
                 padding: const EdgeInsets.fromLTRB(
-                  LunoraSpacing.md,
-                  LunoraSpacing.sm,
-                  LunoraSpacing.md,
-                  LunoraSpacing.md,
+                  ElunaiSpacing.md,
+                  ElunaiSpacing.sm,
+                  ElunaiSpacing.md,
+                  ElunaiSpacing.md,
                 ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -137,27 +137,27 @@ class StoryCard extends StatelessWidget {
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
                       style: theme.textTheme.titleSmall?.copyWith(
-                        color: LunoraColors.warmBeige,
+                        color: ElunaiColors.warmBeige,
                         fontWeight: FontWeight.w800,
                         height: 1.2,
                       ),
                     ),
-                    const SizedBox(height: LunoraSpacing.xxs),
+                    const SizedBox(height: ElunaiSpacing.xxs),
                     Text(
                       subtitle,
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
                       style: theme.textTheme.bodySmall?.copyWith(
-                        color: LunoraColors.mist.withValues(alpha: 0.75),
+                        color: ElunaiColors.mist.withValues(alpha: 0.75),
                         height: 1.25,
                       ),
                     ),
                     if (chapterLabel != null) ...[
-                      const SizedBox(height: LunoraSpacing.xs),
+                      const SizedBox(height: ElunaiSpacing.xs),
                       Text(
                         chapterLabel!,
                         style: theme.textTheme.labelSmall?.copyWith(
-                          color: LunoraColors.starGoldSoft.withValues(
+                          color: ElunaiColors.starGoldSoft.withValues(
                             alpha: 0.85,
                           ),
                           fontWeight: FontWeight.w700,

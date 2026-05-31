@@ -6,11 +6,11 @@ import '../../../core/constants/app_sizes.dart';
 import '../../../core/validation/auth_validators.dart';
 import '../../../routing/safe_navigation.dart';
 import '../../../shared/widgets/elunai_layout.dart';
-import '../../../shared/widgets/lunora_fade_in.dart';
-import '../../../shared/widgets/lunora_page_header.dart';
-import '../../../shared/widgets/lunora_primary_button.dart';
-import '../../../shared/widgets/lunora_screen_shell.dart';
-import '../../../shared/widgets/lunora_text_field.dart';
+import '../../../shared/widgets/elunai_fade_in.dart';
+import '../../../shared/widgets/elunai_page_header.dart';
+import '../../../shared/widgets/elunai_primary_button.dart';
+import '../../../shared/widgets/elunai_screen_shell.dart';
+import '../../../shared/widgets/elunai_text_field.dart';
 import '../../legal/presentation/terms_screen.dart';
 import 'auth_navigation.dart';
 import 'providers/auth_providers.dart';
@@ -75,7 +75,7 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
           onPressed: () => context.safePopOrGo('/welcome'),
         ),
       ),
-      body: LunoraScreenShell(
+      body: ElunaiScreenShell(
         showStarfield: true,
         child: SafeArea(
           child: Padding(
@@ -83,7 +83,7 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
             child: Center(
               child: ConstrainedBox(
                 constraints: const BoxConstraints(maxWidth: 560),
-                child: LunoraFadeIn(
+                child: ElunaiFadeIn(
                   child: Form(
                     key: _formKey,
                     autovalidateMode: AutovalidateMode.onUserInteraction,
@@ -92,7 +92,7 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
                         crossAxisAlignment: CrossAxisAlignment.stretch,
                         children: [
                           const SizedBox(height: AppSizes.lg),
-                          const LunoraPageHeader(
+                          const ElunaiPageHeader(
                             compact: true,
                             icon: Icons.auto_awesome_rounded,
                             title: 'Créer ton espace',
@@ -100,7 +100,7 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
                                 'Deux informations suffisent pour commencer. Le profil enfant vient juste après.',
                           ),
                           const SizedBox(height: AppSizes.xl),
-                          LunoraTextField(
+                          ElunaiTextField(
                             controller: _email,
                             label: 'Email',
                             keyboardType: TextInputType.emailAddress,
@@ -108,7 +108,7 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
                             validator: AuthValidators.emailError,
                           ),
                           const SizedBox(height: AppSizes.md),
-                          LunoraTextField(
+                          ElunaiTextField(
                             controller: _password,
                             label: 'Mot de passe',
                             obscureText: true,
@@ -140,7 +140,7 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
                             ),
                           ),
                           const SizedBox(height: AppSizes.sm),
-                          LunoraPrimaryButton(
+                          ElunaiPrimaryButton(
                             label: 'Continuer',
                             isLoading: _loading,
                             onPressed: _submit,

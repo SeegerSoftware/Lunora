@@ -1,4 +1,4 @@
-# Lance Lunora dans Chrome (debug)
+# Lance Elunai dans Chrome (debug)
 $ProjectRoot = (Resolve-Path (Join-Path $PSScriptRoot "..")).Path
 
 $flutterBin = "C:\src\flutter\bin"
@@ -7,7 +7,7 @@ if (Test-Path $flutterBin) {
 }
 
 Set-Location $ProjectRoot
-Write-Host "Lunora - lancement (Chrome)..." -ForegroundColor Cyan
+Write-Host "Elunai - lancement (Chrome)..." -ForegroundColor Cyan
 & (Join-Path $ProjectRoot "run.ps1") -d chrome
 
 if ($LASTEXITCODE -ne 0) {

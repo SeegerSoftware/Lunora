@@ -1,12 +1,12 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:lunora_v00/services/story_generation/models/story_generation_request.dart';
-import 'package:lunora_v00/services/story_generation/story_generation_json.dart';
-import 'package:lunora_v00/shared/models/child_profile.dart';
-import 'package:lunora_v00/shared/models/enums/story_format.dart';
-import 'package:lunora_v00/shared/models/enums/story_tone.dart';
-import 'package:lunora_v00/shared/models/enums/subscription_status.dart';
-import 'package:lunora_v00/shared/models/story_universe.dart';
-import 'package:lunora_v00/shared/models/user_model.dart';
+import 'package:elunai_v00/services/story_generation/models/story_generation_request.dart';
+import 'package:elunai_v00/services/story_generation/story_generation_json.dart';
+import 'package:elunai_v00/shared/models/child_profile.dart';
+import 'package:elunai_v00/shared/models/enums/story_format.dart';
+import 'package:elunai_v00/shared/models/enums/story_tone.dart';
+import 'package:elunai_v00/shared/models/enums/subscription_status.dart';
+import 'package:elunai_v00/shared/models/story_universe.dart';
+import 'package:elunai_v00/shared/models/user_model.dart';
 
 void main() {
   test('extractObject accepts fenced JSON with surrounding text', () {

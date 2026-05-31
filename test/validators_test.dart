@@ -1,10 +1,10 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:lunora_v00/core/validation/auth_validators.dart';
-import 'package:lunora_v00/core/validation/child_profile_rules.dart';
-import 'package:lunora_v00/shared/models/child_profile.dart';
-import 'package:lunora_v00/shared/models/enums/story_format.dart';
-import 'package:lunora_v00/shared/models/enums/story_tone.dart';
-import 'package:lunora_v00/shared/models/story_universe.dart';
+import 'package:elunai_v00/core/validation/auth_validators.dart';
+import 'package:elunai_v00/core/validation/child_profile_rules.dart';
+import 'package:elunai_v00/shared/models/child_profile.dart';
+import 'package:elunai_v00/shared/models/enums/story_format.dart';
+import 'package:elunai_v00/shared/models/enums/story_tone.dart';
+import 'package:elunai_v00/shared/models/story_universe.dart';
 
 void main() {
   group('AuthValidators', () {

@@ -4,11 +4,7 @@ import '../../core/theme/colors.dart';
 
 /// Pastille enfant douce (initiale + halo), pour personnaliser l’accueil.
 class ChildAvatarWidget extends StatelessWidget {
-  const ChildAvatarWidget({
-    super.key,
-    required this.firstName,
-    this.size = 52,
-  });
+  const ChildAvatarWidget({super.key, required this.firstName, this.size = 52});
 
   final String firstName;
   final double size;
@@ -23,10 +19,10 @@ class ChildAvatarWidget extends StatelessWidget {
       height: size,
       decoration: BoxDecoration(
         shape: BoxShape.circle,
-        gradient: LunoraColors.ctaGlow,
-        boxShadow: LunoraColors.primaryGlow(opacity: 0.25),
+        gradient: ElunaiColors.ctaGlow,
+        boxShadow: ElunaiColors.primaryGlow(opacity: 0.25),
         border: Border.all(
-          color: LunoraColors.moonIvory.withValues(alpha: 0.35),
+          color: ElunaiColors.moonIvory.withValues(alpha: 0.35),
           width: 1.5,
         ),
       ),
@@ -34,10 +30,10 @@ class ChildAvatarWidget extends StatelessWidget {
       child: Text(
         letter,
         style: Theme.of(context).textTheme.titleLarge?.copyWith(
-              color: LunoraColors.nightBlue,
-              fontWeight: FontWeight.w900,
-              fontSize: size * 0.38,
-            ),
+          color: ElunaiColors.nightBlue,
+          fontWeight: FontWeight.w900,
+          fontSize: size * 0.38,
+        ),
       ),
     );
   }

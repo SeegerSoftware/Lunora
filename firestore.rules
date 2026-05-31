@@ -89,5 +89,13 @@ service cloud.firestore {
       allow update: if ownerMatchesOnWrite();
       allow delete: if ownerMatchesUserId();
     }
+
+    // Jetons FCM propres a chaque appareil connecte.
+    match /notification_devices/{deviceId} {
+      allow read: if ownerMatchesUserId();
+      allow create: if ownerMatchesUserIdOnCreate();
+      allow update: if ownerMatchesOnWrite();
+      allow delete: if ownerMatchesUserId();
+    }
   }
 }

@@ -23,6 +23,7 @@ class ElunaiAppBar extends StatelessWidget implements PreferredSizeWidget {
   final Widget? leading;
   final List<Widget>? actions;
   final bool centerTitle;
+
   /// Couleur du titre et des icônes (ex. mode liseuse).
   final Color? titleColor;
 
@@ -32,21 +33,18 @@ class ElunaiAppBar extends StatelessWidget implements PreferredSizeWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final fg = titleColor ??
+    final fg =
+        titleColor ??
         (theme.brightness == Brightness.light
-            ? LunoraColors.storybookInk
-            : LunoraColors.warmBeige);
+            ? ElunaiColors.storybookInk
+            : ElunaiColors.warmBeige);
     return AppBar(
       backgroundColor: Colors.transparent,
       elevation: 0,
       scrolledUnderElevation: 0,
       centerTitle: centerTitle,
-      iconTheme: IconThemeData(
-        color: fg.withValues(alpha: 0.92),
-      ),
-      actionsIconTheme: IconThemeData(
-        color: fg.withValues(alpha: 0.92),
-      ),
+      iconTheme: IconThemeData(color: fg.withValues(alpha: 0.92)),
+      actionsIconTheme: IconThemeData(color: fg.withValues(alpha: 0.92)),
       leading: leading,
       actions: actions,
       title: Text(

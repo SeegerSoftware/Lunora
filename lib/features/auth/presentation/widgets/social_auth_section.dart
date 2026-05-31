@@ -48,18 +48,18 @@ class _SocialAuthSectionState extends ConsumerState<SocialAuthSection> {
             Expanded(
               child: Divider(
                 color: light
-                    ? LunoraColors.storybookInkMuted.withValues(alpha: 0.2)
-                    : LunoraColors.mist.withValues(alpha: 0.25),
+                    ? ElunaiColors.storybookInkMuted.withValues(alpha: 0.2)
+                    : ElunaiColors.mist.withValues(alpha: 0.25),
               ),
             ),
             Padding(
-              padding: const EdgeInsets.symmetric(horizontal: LunoraSpacing.md),
+              padding: const EdgeInsets.symmetric(horizontal: ElunaiSpacing.md),
               child: Text(
                 'connexion rapide',
                 style: theme.textTheme.labelMedium?.copyWith(
                   color: light
-                      ? LunoraColors.storybookInkMuted
-                      : LunoraColors.mist.withValues(alpha: 0.65),
+                      ? ElunaiColors.storybookInkMuted
+                      : ElunaiColors.mist.withValues(alpha: 0.65),
                   fontWeight: FontWeight.w600,
                 ),
               ),
@@ -67,13 +67,13 @@ class _SocialAuthSectionState extends ConsumerState<SocialAuthSection> {
             Expanded(
               child: Divider(
                 color: light
-                    ? LunoraColors.storybookInkMuted.withValues(alpha: 0.2)
-                    : LunoraColors.mist.withValues(alpha: 0.25),
+                    ? ElunaiColors.storybookInkMuted.withValues(alpha: 0.2)
+                    : ElunaiColors.mist.withValues(alpha: 0.25),
               ),
             ),
           ],
         ),
-        const SizedBox(height: LunoraSpacing.md),
+        const SizedBox(height: ElunaiSpacing.md),
         _SocialTile(
           icon: Icons.g_mobiledata_rounded,
           label: 'Google',
@@ -106,34 +106,34 @@ class _SocialTile extends StatelessWidget {
     final light = Theme.of(context).brightness == Brightness.light;
     return Material(
       color: light
-          ? LunoraColors.storybookSurface
-          : LunoraColors.nightBlueLift.withValues(alpha: 0.65),
-      borderRadius: LunoraSpacing.radiusMd,
+          ? ElunaiColors.storybookSurface
+          : ElunaiColors.nightBlueLift.withValues(alpha: 0.65),
+      borderRadius: ElunaiSpacing.radiusMd,
       child: InkWell(
-        borderRadius: LunoraSpacing.radiusMd,
+        borderRadius: ElunaiSpacing.radiusMd,
         onTap: busy ? null : onTap,
         child: Padding(
           padding: const EdgeInsets.symmetric(
-            horizontal: LunoraSpacing.lg,
-            vertical: LunoraSpacing.md,
+            horizontal: ElunaiSpacing.lg,
+            vertical: ElunaiSpacing.md,
           ),
           child: Row(
             children: [
               Icon(
                 icon,
                 color: light
-                    ? LunoraColors.forestGreen
-                    : LunoraColors.warmBeige,
+                    ? ElunaiColors.forestGreen
+                    : ElunaiColors.warmBeige,
                 size: 26,
               ),
-              const SizedBox(width: LunoraSpacing.md),
+              const SizedBox(width: ElunaiSpacing.md),
               Expanded(
                 child: Text(
                   label,
                   style: Theme.of(context).textTheme.titleSmall?.copyWith(
                     color: light
-                        ? LunoraColors.storybookInk
-                        : LunoraColors.warmBeige,
+                        ? ElunaiColors.storybookInk
+                        : ElunaiColors.warmBeige,
                     fontWeight: FontWeight.w800,
                   ),
                 ),
@@ -148,8 +148,8 @@ class _SocialTile extends StatelessWidget {
                 Icon(
                   Icons.chevron_right_rounded,
                   color: light
-                      ? LunoraColors.storybookInkMuted.withValues(alpha: 0.55)
-                      : LunoraColors.mist.withValues(alpha: 0.45),
+                      ? ElunaiColors.storybookInkMuted.withValues(alpha: 0.55)
+                      : ElunaiColors.mist.withValues(alpha: 0.45),
                 ),
             ],
           ),

@@ -14,13 +14,14 @@ import '../../../services/story_generation/story_adaptation_engine.dart';
 import '../../../services/story_generation/story_generation_exception.dart';
 import '../../../shared/models/story.dart';
 import '../../../shared/widgets/elunai_layout.dart';
-import '../../../shared/widgets/lunora_badge.dart';
-import '../../../shared/widgets/lunora_fade_in.dart';
-import '../../../shared/widgets/lunora_glass_card.dart';
-import '../../../shared/widgets/lunora_night_scaffold.dart';
-import '../../../shared/widgets/lunora_primary_button.dart';
-import '../../../shared/widgets/lunora_section_title.dart';
-import '../../../shared/widgets/magical/lunora_progress_bar.dart';
+import '../../../shared/widgets/elunai_badge.dart';
+import '../../../shared/widgets/elunai_fade_in.dart';
+import '../../../shared/widgets/elunai_glass_card.dart';
+import '../../../shared/widgets/elunai_night_scaffold.dart';
+import '../../../shared/widgets/elunai_primary_button.dart';
+import '../../../shared/widgets/elunai_section_title.dart';
+import '../../../shared/widgets/magical/elunai_progress_bar.dart';
+import '../../../shared/widgets/magical/audio_player_widget.dart';
 import '../../../shared/widgets/story_ui_labels.dart';
 import 'providers/story_providers.dart';
 
@@ -42,8 +43,8 @@ class _StoryReaderScreenState extends ConsumerState<StoryReaderScreen> {
   var _feedbackBusy = false;
 
   Widget _storySurface({required Widget child, EdgeInsetsGeometry? padding}) {
-    return LunoraGlassCard(
-      padding: padding ?? const EdgeInsets.all(LunoraSpacing.lg),
+    return ElunaiGlassCard(
+      padding: padding ?? const EdgeInsets.all(ElunaiSpacing.lg),
       child: child,
     );
   }
@@ -88,7 +89,7 @@ class _StoryReaderScreenState extends ConsumerState<StoryReaderScreen> {
     final sel = story.userFeedback;
     return DecoratedBox(
       decoration: BoxDecoration(
-        color: LunoraColors.nightBlueLift.withValues(alpha: 0.48),
+        color: ElunaiColors.nightBlueLift.withValues(alpha: 0.48),
         borderRadius: BorderRadius.circular(20),
         border: Border.all(color: meta.withValues(alpha: 0.22)),
       ),
@@ -131,7 +132,7 @@ class _StoryReaderScreenState extends ConsumerState<StoryReaderScreen> {
                 style: FilledButton.styleFrom(
                   visualDensity: VisualDensity.compact,
                   backgroundColor: sel == 1
-                      ? LunoraColors.joyMint.withValues(alpha: 0.35)
+                      ? ElunaiColors.joyMint.withValues(alpha: 0.35)
                       : null,
                 ),
               ),
@@ -159,9 +160,9 @@ class _StoryReaderScreenState extends ConsumerState<StoryReaderScreen> {
     final asyncStory = id == null
         ? ref.watch(todayStoryProvider)
         : ref.watch(storyByIdProvider(id));
-    final appBarFg = LunoraColors.warmBeige.withValues(alpha: 0.95);
+    final appBarFg = ElunaiColors.warmBeige.withValues(alpha: 0.95);
 
-    return LunoraNightScaffold(
+    return ElunaiNightScaffold(
       scrollable: false,
       joyfulBackdrop: true,
       showStarryOverlay: true,
@@ -198,7 +199,7 @@ class _StoryReaderScreenState extends ConsumerState<StoryReaderScreen> {
                 constraints: const BoxConstraints(
                   maxWidth: AppSizes.readerMaxWidth,
                 ),
-                child: LunoraGlassCard(
+                child: ElunaiGlassCard(
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
                     children: [
@@ -206,18 +207,18 @@ class _StoryReaderScreenState extends ConsumerState<StoryReaderScreen> {
                         'Aucune histoire disponible pour le moment.',
                         textAlign: TextAlign.center,
                         style: theme.textTheme.titleMedium?.copyWith(
-                          color: LunoraColors.warmBeige,
+                          color: ElunaiColors.warmBeige,
                         ),
                       ),
-                      const SizedBox(height: LunoraSpacing.lg),
+                      const SizedBox(height: ElunaiSpacing.lg),
                       if (id == null)
-                        LunoraPrimaryButton(
+                        ElunaiPrimaryButton(
                           label: 'Générer une histoire',
                           icon: Icons.auto_stories_outlined,
                           onPressed: () => ref.invalidate(todayStoryProvider),
                         )
                       else
-                        LunoraPrimaryButton(
+                        ElunaiPrimaryButton(
                           label: 'Ouvrir la dernière histoire',
                           icon: Icons.nights_stay_rounded,
                           onPressed: () => context.go('/story'),
@@ -229,8 +230,8 @@ class _StoryReaderScreenState extends ConsumerState<StoryReaderScreen> {
             );
           }
 
-          const hi = LunoraColors.warmBeige;
-          const meta = LunoraColors.mist;
+          const hi = ElunaiColors.warmBeige;
+          const meta = ElunaiColors.mist;
 
           return ScrollConfiguration(
             behavior: ScrollConfiguration.of(context).copyWith(
@@ -250,15 +251,15 @@ class _StoryReaderScreenState extends ConsumerState<StoryReaderScreen> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
-                        LunoraFadeIn(
+                        ElunaiFadeIn(
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              LunoraSectionTitle(
+                              ElunaiSectionTitle(
                                 'Histoire',
                                 foregroundColor: hi,
                               ),
-                              const SizedBox(height: LunoraSpacing.sm),
+                              const SizedBox(height: ElunaiSpacing.sm),
                               Text(
                                 'Générée avec ${storyModelLabel(story.generationSource)}',
                                 style: theme.textTheme.bodySmall?.copyWith(
@@ -266,7 +267,7 @@ class _StoryReaderScreenState extends ConsumerState<StoryReaderScreen> {
                                   fontWeight: FontWeight.w600,
                                 ),
                               ),
-                              const SizedBox(height: LunoraSpacing.xs),
+                              const SizedBox(height: ElunaiSpacing.xs),
                               Text(
                                 story.title,
                                 style: theme.textTheme.headlineSmall?.copyWith(
@@ -275,34 +276,34 @@ class _StoryReaderScreenState extends ConsumerState<StoryReaderScreen> {
                                   height: 1.2,
                                 ),
                               ),
-                              const SizedBox(height: LunoraSpacing.sm),
+                              const SizedBox(height: ElunaiSpacing.sm),
                               Wrap(
-                                spacing: LunoraSpacing.xs,
-                                runSpacing: LunoraSpacing.xs,
+                                spacing: ElunaiSpacing.xs,
+                                runSpacing: ElunaiSpacing.xs,
                                 children: [
-                                  LunoraBadge(
+                                  ElunaiBadge(
                                     icon: Icons.timer_outlined,
                                     label: readingDurationLabel(
                                       story.estimatedReadingMinutes,
                                     ),
                                   ),
-                                  LunoraBadge(
+                                  ElunaiBadge(
                                     icon: Icons.menu_book_rounded,
                                     label: storyFormatLabel(story),
                                   ),
                                   if (story.isSerialized)
-                                    LunoraBadge(
+                                    ElunaiBadge(
                                       icon: Icons.bookmark_rounded,
                                       label: 'Chapitre ${story.chapterNumber}',
                                     ),
-                                  LunoraBadge(
+                                  ElunaiBadge(
                                     icon: Icons.auto_awesome_rounded,
                                     label: storySourceLabel(
                                       story.generationSource,
                                     ),
                                   ),
                                   if (adaptation != null)
-                                    LunoraBadge(
+                                    ElunaiBadge(
                                       icon: Icons.tune_rounded,
                                       label:
                                           'Lecture ${adaptation.ageYears} ans',
@@ -328,11 +329,11 @@ class _StoryReaderScreenState extends ConsumerState<StoryReaderScreen> {
                                     },
                                     child: Container(
                                       padding: const EdgeInsets.symmetric(
-                                        horizontal: LunoraSpacing.sm,
-                                        vertical: LunoraSpacing.xxs,
+                                        horizontal: ElunaiSpacing.sm,
+                                        vertical: ElunaiSpacing.xxs,
                                       ),
                                       decoration: BoxDecoration(
-                                        color: LunoraColors.nightBlueLift
+                                        color: ElunaiColors.nightBlueLift
                                             .withValues(alpha: 0.42),
                                         borderRadius: BorderRadius.circular(
                                           999,
@@ -350,7 +351,7 @@ class _StoryReaderScreenState extends ConsumerState<StoryReaderScreen> {
                                             color: hi.withValues(alpha: 0.94),
                                           ),
                                           const SizedBox(
-                                            width: LunoraSpacing.xxs,
+                                            width: ElunaiSpacing.xxs,
                                           ),
                                           Text(
                                             'Copier',
@@ -366,7 +367,12 @@ class _StoryReaderScreenState extends ConsumerState<StoryReaderScreen> {
                                   ),
                                 ],
                               ),
-                              const SizedBox(height: LunoraSpacing.md),
+                              const SizedBox(height: ElunaiSpacing.md),
+                              AudioPlayerWidget(
+                                title: story.title,
+                                content: story.content,
+                              ),
+                              const SizedBox(height: ElunaiSpacing.md),
                               _storyFeedbackBand(
                                 context,
                                 ref,
@@ -377,15 +383,15 @@ class _StoryReaderScreenState extends ConsumerState<StoryReaderScreen> {
                             ],
                           ),
                         ),
-                        const SizedBox(height: LunoraSpacing.md),
-                        LunoraFadeIn(
+                        const SizedBox(height: ElunaiSpacing.md),
+                        ElunaiFadeIn(
                           delay: const Duration(milliseconds: 120),
                           child: _storySurface(
                             padding: const EdgeInsets.fromLTRB(
-                              LunoraSpacing.lg,
-                              LunoraSpacing.md,
-                              LunoraSpacing.lg,
-                              LunoraSpacing.lg,
+                              ElunaiSpacing.lg,
+                              ElunaiSpacing.md,
+                              ElunaiSpacing.lg,
+                              ElunaiSpacing.lg,
                             ),
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
@@ -403,7 +409,7 @@ class _StoryReaderScreenState extends ConsumerState<StoryReaderScreen> {
                                         );
                                       }),
                                     ),
-                                    const SizedBox(width: LunoraSpacing.xs),
+                                    const SizedBox(width: ElunaiSpacing.xs),
                                     _fontAction(
                                       context,
                                       label: 'A+',
@@ -416,7 +422,7 @@ class _StoryReaderScreenState extends ConsumerState<StoryReaderScreen> {
                                     ),
                                   ],
                                 ),
-                                const SizedBox(height: LunoraSpacing.sm),
+                                const SizedBox(height: ElunaiSpacing.sm),
                                 Text(
                                   'Bonne lecture',
                                   style: theme.textTheme.labelLarge?.copyWith(
@@ -424,7 +430,7 @@ class _StoryReaderScreenState extends ConsumerState<StoryReaderScreen> {
                                     fontWeight: FontWeight.w700,
                                   ),
                                 ),
-                                const SizedBox(height: LunoraSpacing.md),
+                                const SizedBox(height: ElunaiSpacing.md),
                                 SelectionArea(
                                   child: Column(
                                     crossAxisAlignment:
@@ -440,8 +446,8 @@ class _StoryReaderScreenState extends ConsumerState<StoryReaderScreen> {
                             ),
                           ),
                         ),
-                        const SizedBox(height: LunoraSpacing.md),
-                        LunoraFadeIn(
+                        const SizedBox(height: ElunaiSpacing.md),
+                        ElunaiFadeIn(
                           delay: const Duration(milliseconds: 160),
                           child: _ReaderActionsPanel(
                             onCopy: () async {
@@ -495,7 +501,7 @@ class _StoryReaderScreenState extends ConsumerState<StoryReaderScreen> {
                             ],
                           ),
                         ),
-                        const SizedBox(height: LunoraSpacing.lg),
+                        const SizedBox(height: ElunaiSpacing.lg),
                         _storyFeedbackBand(
                           context,
                           ref,
@@ -503,13 +509,13 @@ class _StoryReaderScreenState extends ConsumerState<StoryReaderScreen> {
                           hi: hi,
                           meta: meta,
                         ),
-                        const SizedBox(height: LunoraSpacing.md),
-                        LunoraPrimaryButton(
+                        const SizedBox(height: ElunaiSpacing.md),
+                        ElunaiPrimaryButton(
                           label: 'Terminer l\'histoire',
                           icon: Icons.check_circle_outline_rounded,
                           onPressed: () => context.go('/home'),
                         ),
-                        const SizedBox(height: LunoraSpacing.md),
+                        const SizedBox(height: ElunaiSpacing.md),
                       ],
                     ),
                   ),
@@ -518,35 +524,35 @@ class _StoryReaderScreenState extends ConsumerState<StoryReaderScreen> {
             ),
           );
         },
-        loading: () => const Center(child: LunoraProgressBar()),
+        loading: () => const Center(child: ElunaiProgressBar()),
         error: (err, _) => Padding(
-          padding: const EdgeInsets.all(LunoraSpacing.md),
+          padding: const EdgeInsets.all(ElunaiSpacing.md),
           child: Center(
-            child: LunoraFadeIn(
-              child: LunoraGlassCard(
+            child: ElunaiFadeIn(
+              child: ElunaiGlassCard(
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     Text(
                       'Impossible d’afficher l’histoire.',
                       style: theme.textTheme.titleMedium?.copyWith(
-                        color: LunoraColors.warmBeige,
+                        color: ElunaiColors.warmBeige,
                       ),
                       textAlign: TextAlign.center,
                     ),
-                    const SizedBox(height: LunoraSpacing.sm),
+                    const SizedBox(height: ElunaiSpacing.sm),
                     Text(
                       err is StoryGenerationException
                           ? err.message
                           : 'Une erreur de chargement est survenue. Réessaie dans un instant.',
                       style: theme.textTheme.bodySmall?.copyWith(
-                        color: LunoraColors.mist.withValues(alpha: 0.86),
+                        color: ElunaiColors.mist.withValues(alpha: 0.86),
                       ),
                       textAlign: TextAlign.center,
                     ),
-                    const SizedBox(height: LunoraSpacing.lg),
+                    const SizedBox(height: ElunaiSpacing.lg),
                     if (id == null)
-                      LunoraPrimaryButton(
+                      ElunaiPrimaryButton(
                         label: 'Réessayer',
                         icon: Icons.refresh_rounded,
                         onPressed: () => ref.invalidate(todayStoryProvider),
@@ -566,20 +572,20 @@ class _StoryReaderScreenState extends ConsumerState<StoryReaderScreen> {
     required String label,
     required VoidCallback onTap,
   }) {
-    const fg = LunoraColors.warmBeige;
+    const fg = ElunaiColors.warmBeige;
     return InkWell(
       borderRadius: BorderRadius.circular(999),
       onTap: onTap,
       child: Container(
         padding: const EdgeInsets.symmetric(
-          horizontal: LunoraSpacing.sm + 2,
-          vertical: LunoraSpacing.xxs + 3,
+          horizontal: ElunaiSpacing.sm + 2,
+          vertical: ElunaiSpacing.xxs + 3,
         ),
         decoration: BoxDecoration(
-          color: LunoraColors.nightBlueLift.withValues(alpha: 0.52),
+          color: ElunaiColors.nightBlueLift.withValues(alpha: 0.52),
           borderRadius: BorderRadius.circular(999),
           border: Border.all(
-            color: LunoraColors.starGoldSoft.withValues(alpha: 0.2),
+            color: ElunaiColors.starGoldSoft.withValues(alpha: 0.2),
           ),
         ),
         child: Text(
@@ -607,7 +613,7 @@ class _StoryReaderScreenState extends ConsumerState<StoryReaderScreen> {
     final style = Theme.of(context).textTheme.bodyLarge!.copyWith(
       fontSize: effectiveFontSize,
       height: lh,
-      color: LunoraColors.warmBeige.withValues(alpha: 0.97),
+      color: ElunaiColors.warmBeige.withValues(alpha: 0.97),
     );
     final paragraphGap = _paragraphGapForFontSize(effectiveFontSize);
     return [
@@ -629,23 +635,23 @@ class _StoryReaderScreenState extends ConsumerState<StoryReaderScreen> {
       onTap: onTap,
       child: Container(
         padding: const EdgeInsets.symmetric(
-          horizontal: LunoraSpacing.sm,
-          vertical: LunoraSpacing.xxs + 2,
+          horizontal: ElunaiSpacing.sm,
+          vertical: ElunaiSpacing.xxs + 2,
         ),
         decoration: BoxDecoration(
-          color: LunoraColors.nightBlueLift.withValues(alpha: 0.5),
+          color: ElunaiColors.nightBlueLift.withValues(alpha: 0.5),
           borderRadius: BorderRadius.circular(999),
-          border: Border.all(color: LunoraColors.mist.withValues(alpha: 0.24)),
+          border: Border.all(color: ElunaiColors.mist.withValues(alpha: 0.24)),
         ),
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(icon, size: 14, color: LunoraColors.warmBeige),
-            const SizedBox(width: LunoraSpacing.xxs),
+            Icon(icon, size: 14, color: ElunaiColors.warmBeige),
+            const SizedBox(width: ElunaiSpacing.xxs),
             Text(
               label,
               style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                color: LunoraColors.warmBeige,
+                color: ElunaiColors.warmBeige,
                 fontWeight: FontWeight.w700,
               ),
             ),
@@ -740,46 +746,46 @@ class _ReaderActionsPanel extends StatelessWidget {
     final theme = Theme.of(context);
     return DecoratedBox(
       decoration: BoxDecoration(
-        color: LunoraColors.nightBlueDeep.withValues(alpha: 0.28),
-        borderRadius: LunoraSpacing.radiusLg,
-        border: Border.all(color: LunoraColors.mist.withValues(alpha: 0.12)),
+        color: ElunaiColors.nightBlueDeep.withValues(alpha: 0.28),
+        borderRadius: ElunaiSpacing.radiusLg,
+        border: Border.all(color: ElunaiColors.mist.withValues(alpha: 0.12)),
       ),
       child: Theme(
         data: theme.copyWith(dividerColor: Colors.transparent),
         child: ExpansionTile(
           tilePadding: const EdgeInsets.symmetric(
-            horizontal: LunoraSpacing.md,
-            vertical: LunoraSpacing.xs,
+            horizontal: ElunaiSpacing.md,
+            vertical: ElunaiSpacing.xs,
           ),
           childrenPadding: const EdgeInsets.fromLTRB(
-            LunoraSpacing.md,
+            ElunaiSpacing.md,
             0,
-            LunoraSpacing.md,
-            LunoraSpacing.md,
+            ElunaiSpacing.md,
+            ElunaiSpacing.md,
           ),
           leading: const Icon(
             Icons.ios_share_rounded,
-            color: LunoraColors.starGoldSoft,
+            color: ElunaiColors.starGoldSoft,
           ),
-          iconColor: LunoraColors.warmBeige,
-          collapsedIconColor: LunoraColors.warmBeige,
+          iconColor: ElunaiColors.warmBeige,
+          collapsedIconColor: ElunaiColors.warmBeige,
           title: Text(
             'Actions après lecture',
             style: theme.textTheme.titleSmall?.copyWith(
-              color: LunoraColors.warmBeige,
+              color: ElunaiColors.warmBeige,
               fontWeight: FontWeight.w900,
             ),
           ),
           subtitle: Text(
             'Copier ou partager un extrait, sans interrompre la lecture.',
             style: theme.textTheme.bodySmall?.copyWith(
-              color: LunoraColors.mist.withValues(alpha: 0.75),
+              color: ElunaiColors.mist.withValues(alpha: 0.75),
             ),
           ),
           children: [
             Wrap(
-              spacing: LunoraSpacing.xs,
-              runSpacing: LunoraSpacing.xs,
+              spacing: ElunaiSpacing.xs,
+              runSpacing: ElunaiSpacing.xs,
               children: [
                 _ReaderActionPill(
                   icon: Icons.content_copy_rounded,
@@ -789,13 +795,13 @@ class _ReaderActionsPanel extends StatelessWidget {
                 ...shareButtons,
               ],
             ),
-            const SizedBox(height: LunoraSpacing.sm),
+            const SizedBox(height: ElunaiSpacing.sm),
             Align(
               alignment: Alignment.centerLeft,
               child: Text(
                 'Le partage utilise seulement un extrait de l’histoire.',
                 style: theme.textTheme.bodySmall?.copyWith(
-                  color: LunoraColors.mist.withValues(alpha: 0.68),
+                  color: ElunaiColors.mist.withValues(alpha: 0.68),
                 ),
               ),
             ),
@@ -824,23 +830,23 @@ class _ReaderActionPill extends StatelessWidget {
       onTap: onTap,
       child: Container(
         padding: const EdgeInsets.symmetric(
-          horizontal: LunoraSpacing.sm,
-          vertical: LunoraSpacing.xs,
+          horizontal: ElunaiSpacing.sm,
+          vertical: ElunaiSpacing.xs,
         ),
         decoration: BoxDecoration(
-          color: LunoraColors.nightBlueLift.withValues(alpha: 0.5),
+          color: ElunaiColors.nightBlueLift.withValues(alpha: 0.5),
           borderRadius: BorderRadius.circular(999),
-          border: Border.all(color: LunoraColors.mist.withValues(alpha: 0.24)),
+          border: Border.all(color: ElunaiColors.mist.withValues(alpha: 0.24)),
         ),
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(icon, size: 16, color: LunoraColors.warmBeige),
-            const SizedBox(width: LunoraSpacing.xxs),
+            Icon(icon, size: 16, color: ElunaiColors.warmBeige),
+            const SizedBox(width: ElunaiSpacing.xxs),
             Text(
               label,
               style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                color: LunoraColors.warmBeige,
+                color: ElunaiColors.warmBeige,
                 fontWeight: FontWeight.w800,
               ),
             ),

@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:integration_test/integration_test.dart';
-import 'package:lunora_v00/app.dart';
-import 'package:lunora_v00/services/firebase/firebase_bootstrap.dart';
+import 'package:elunai_v00/app.dart';
+import 'package:elunai_v00/services/firebase/firebase_bootstrap.dart';
 
 const _runBackendIntegration = bool.fromEnvironment(
   'RUN_BACKEND_INTEGRATION',
@@ -37,9 +37,9 @@ void main() {
   testWidgets('auth -> profil -> génération -> lecture', (tester) async {
     await FirebaseBootstrap.ensureInitialized();
     final unique = DateTime.now().millisecondsSinceEpoch;
-    final email = 'qa_$unique@lunora.test';
+    final email = 'qa_$unique@elunai.test';
 
-    await tester.pumpWidget(const ProviderScope(child: LunoraApp()));
+    await tester.pumpWidget(const ProviderScope(child: ElunaiApp()));
     await _pumpUntilVisible(tester, find.text('Créer un compte'));
 
     await _tapText(tester, 'Créer un compte');

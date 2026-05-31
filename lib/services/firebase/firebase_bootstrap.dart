@@ -3,10 +3,11 @@ import 'package:firebase_app_check/firebase_app_check.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/foundation.dart';
-import 'package:lunora_v00/firebase_options.dart';
+import 'package:elunai_v00/firebase_options.dart';
 
 import '../../core/config/backend_config.dart';
 import '../../core/config/firebase_emulator_config.dart';
+import 'push_notification_service.dart';
 
 abstract final class FirebaseBootstrap {
   static Future<void> ensureInitialized() async {
@@ -42,6 +43,7 @@ abstract final class FirebaseBootstrap {
         debugPrint('FirebaseAppCheck activation skipped: $e');
         debugPrint('$st');
       }
+      PushNotificationService.start();
     } catch (e, st) {
       debugPrint('FirebaseBootstrap: $e');
       debugPrint('$st');

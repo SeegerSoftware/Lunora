@@ -5,45 +5,45 @@ import 'colors.dart';
 import 'spacing.dart';
 import 'text_styles.dart';
 
-/// Thème principal Lunora (nuit douce + violet pastel).
-abstract final class LunoraTheme {
+/// Thème principal Elunai (nuit douce + violet pastel).
+abstract final class ElunaiTheme {
   static ThemeData get dark {
     final base = ThemeData(
       useMaterial3: true,
       brightness: Brightness.dark,
       colorScheme: ColorScheme(
         brightness: Brightness.dark,
-        primary: LunoraColors.violetSoft,
-        onPrimary: LunoraColors.warmBeige,
-        primaryContainer: LunoraColors.violetMuted,
-        onPrimaryContainer: LunoraColors.warmBeige,
-        secondary: LunoraColors.violetGlow,
-        onSecondary: LunoraColors.nightBlue,
-        tertiary: LunoraColors.joySun,
-        onTertiary: LunoraColors.nightBlueDeep,
+        primary: ElunaiColors.violetSoft,
+        onPrimary: ElunaiColors.warmBeige,
+        primaryContainer: ElunaiColors.violetMuted,
+        onPrimaryContainer: ElunaiColors.warmBeige,
+        secondary: ElunaiColors.violetGlow,
+        onSecondary: ElunaiColors.nightBlue,
+        tertiary: ElunaiColors.joySun,
+        onTertiary: ElunaiColors.nightBlueDeep,
         error: const Color(0xFFFF9A9A),
-        onError: LunoraColors.nightBlue,
-        surface: LunoraColors.nightBlueLift,
-        onSurface: LunoraColors.warmBeige,
-        onSurfaceVariant: LunoraColors.mist.withValues(alpha: 0.75),
-        outline: LunoraColors.mist.withValues(alpha: 0.2),
-        outlineVariant: LunoraColors.mist.withValues(alpha: 0.12),
+        onError: ElunaiColors.nightBlue,
+        surface: ElunaiColors.nightBlueLift,
+        onSurface: ElunaiColors.warmBeige,
+        onSurfaceVariant: ElunaiColors.mist.withValues(alpha: 0.75),
+        outline: ElunaiColors.mist.withValues(alpha: 0.2),
+        outlineVariant: ElunaiColors.mist.withValues(alpha: 0.12),
         shadow: Colors.black.withValues(alpha: 0.35),
         scrim: Colors.black.withValues(alpha: 0.55),
-        inverseSurface: LunoraColors.warmBeige,
-        onInverseSurface: LunoraColors.nightBlue,
-        inversePrimary: LunoraColors.violetMuted,
-        surfaceContainerHighest: LunoraColors.nightBlueLift.withValues(
+        inverseSurface: ElunaiColors.warmBeige,
+        onInverseSurface: ElunaiColors.nightBlue,
+        inversePrimary: ElunaiColors.violetMuted,
+        surfaceContainerHighest: ElunaiColors.nightBlueLift.withValues(
           alpha: 0.9,
         ),
       ),
-      scaffoldBackgroundColor: LunoraColors.nightBlue,
-      dividerColor: LunoraColors.mist.withValues(alpha: 0.1),
+      scaffoldBackgroundColor: ElunaiColors.nightBlue,
+      dividerColor: ElunaiColors.mist.withValues(alpha: 0.1),
     );
 
-    final textTheme = LunoraTextStyles.nunitoTextTheme(base.textTheme).apply(
-      bodyColor: LunoraColors.warmBeige,
-      displayColor: LunoraColors.warmBeige,
+    final textTheme = ElunaiTextStyles.nunitoTextTheme(base.textTheme).apply(
+      bodyColor: ElunaiColors.warmBeige,
+      displayColor: ElunaiColors.warmBeige,
     );
 
     return base.copyWith(
@@ -53,14 +53,14 @@ abstract final class LunoraTheme {
         scrolledUnderElevation: 0,
         centerTitle: true,
         backgroundColor: Colors.transparent,
-        foregroundColor: LunoraColors.warmBeige,
+        foregroundColor: ElunaiColors.warmBeige,
         titleTextStyle: textTheme.titleLarge?.copyWith(
           fontWeight: FontWeight.w800,
-          color: LunoraColors.warmBeige,
+          color: ElunaiColors.warmBeige,
         ),
       ),
       cardTheme: CardThemeData(
-        color: LunoraColors.nightBlueLift.withValues(alpha: 0.92),
+        color: ElunaiColors.nightBlueLift.withValues(alpha: 0.92),
         elevation: 0,
         shape: RoundedRectangleBorder(borderRadius: AppSizes.cardRadius),
         margin: EdgeInsets.zero,
@@ -68,7 +68,7 @@ abstract final class LunoraTheme {
       ),
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
-        fillColor: LunoraColors.warmBeige.withValues(alpha: 0.08),
+        fillColor: ElunaiColors.warmBeige.withValues(alpha: 0.08),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(16),
           borderSide: BorderSide.none,
@@ -76,64 +76,64 @@ abstract final class LunoraTheme {
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(16),
           borderSide: const BorderSide(
-            color: LunoraColors.violetGlow,
+            color: ElunaiColors.violetGlow,
             width: 1.4,
           ),
         ),
         contentPadding: const EdgeInsets.symmetric(
-          horizontal: LunoraSpacing.md,
-          vertical: LunoraSpacing.sm + 2,
+          horizontal: ElunaiSpacing.md,
+          vertical: ElunaiSpacing.sm + 2,
         ),
-        hintStyle: TextStyle(color: LunoraColors.mist.withValues(alpha: 0.5)),
+        hintStyle: TextStyle(color: ElunaiColors.mist.withValues(alpha: 0.5)),
       ),
       elevatedButtonTheme: ElevatedButtonThemeData(
         style: ElevatedButton.styleFrom(
           elevation: 0,
           padding: const EdgeInsets.symmetric(
-            horizontal: LunoraSpacing.lg,
-            vertical: LunoraSpacing.md,
+            horizontal: ElunaiSpacing.lg,
+            vertical: ElunaiSpacing.md,
           ),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(20),
           ),
-          backgroundColor: LunoraColors.violetSoft,
-          foregroundColor: LunoraColors.warmBeige,
-          shadowColor: LunoraColors.violetSoft.withValues(alpha: 0.4),
+          backgroundColor: ElunaiColors.violetSoft,
+          foregroundColor: ElunaiColors.warmBeige,
+          shadowColor: ElunaiColors.violetSoft.withValues(alpha: 0.4),
         ),
       ),
       filledButtonTheme: FilledButtonThemeData(
         style: FilledButton.styleFrom(
           elevation: 0,
           padding: const EdgeInsets.symmetric(
-            horizontal: LunoraSpacing.lg,
-            vertical: LunoraSpacing.md,
+            horizontal: ElunaiSpacing.lg,
+            vertical: ElunaiSpacing.md,
           ),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(20),
           ),
-          backgroundColor: LunoraColors.violetSoft,
-          foregroundColor: LunoraColors.warmBeige,
+          backgroundColor: ElunaiColors.violetSoft,
+          foregroundColor: ElunaiColors.warmBeige,
         ),
       ),
       outlinedButtonTheme: OutlinedButtonThemeData(
         style: OutlinedButton.styleFrom(
           padding: const EdgeInsets.symmetric(
-            horizontal: LunoraSpacing.lg,
-            vertical: LunoraSpacing.md,
+            horizontal: ElunaiSpacing.lg,
+            vertical: ElunaiSpacing.md,
           ),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(20),
           ),
           side: BorderSide(
-            color: LunoraColors.warmBeige.withValues(alpha: 0.28),
+            color: ElunaiColors.warmBeige.withValues(alpha: 0.28),
           ),
-          foregroundColor: LunoraColors.warmBeige,
+          foregroundColor: ElunaiColors.warmBeige,
         ),
       ),
       snackBarTheme: SnackBarThemeData(
         behavior: SnackBarBehavior.floating,
-        backgroundColor: LunoraColors.nightBlueLift,
-        contentTextStyle: const TextStyle(color: LunoraColors.warmBeige),
+        backgroundColor: ElunaiColors.nightBlueLift,
+        contentTextStyle: const TextStyle(color: ElunaiColors.warmBeige),
       ),
       pageTransitionsTheme: const PageTransitionsTheme(
         builders: {
@@ -153,35 +153,35 @@ abstract final class LunoraTheme {
       brightness: Brightness.light,
       colorScheme: ColorScheme(
         brightness: Brightness.light,
-        primary: LunoraColors.forestGreen,
-        onPrimary: LunoraColors.storybookCream,
-        primaryContainer: LunoraColors.forestGreenSoft,
-        onPrimaryContainer: LunoraColors.storybookCream,
-        secondary: LunoraColors.forestGreenSoft,
-        onSecondary: LunoraColors.storybookCream,
-        tertiary: LunoraColors.honeyYellow,
-        onTertiary: LunoraColors.storybookInk,
+        primary: ElunaiColors.forestGreen,
+        onPrimary: ElunaiColors.storybookCream,
+        primaryContainer: ElunaiColors.forestGreenSoft,
+        onPrimaryContainer: ElunaiColors.storybookCream,
+        secondary: ElunaiColors.forestGreenSoft,
+        onSecondary: ElunaiColors.storybookCream,
+        tertiary: ElunaiColors.honeyYellow,
+        onTertiary: ElunaiColors.storybookInk,
         error: const Color(0xFFB3261E),
         onError: Colors.white,
-        surface: LunoraColors.storybookSurface,
-        onSurface: LunoraColors.storybookInk,
-        onSurfaceVariant: LunoraColors.storybookInkMuted,
-        outline: LunoraColors.forestGreen.withValues(alpha: 0.22),
-        outlineVariant: LunoraColors.storybookInkMuted.withValues(alpha: 0.2),
-        shadow: LunoraColors.storybookInk.withValues(alpha: 0.08),
+        surface: ElunaiColors.storybookSurface,
+        onSurface: ElunaiColors.storybookInk,
+        onSurfaceVariant: ElunaiColors.storybookInkMuted,
+        outline: ElunaiColors.forestGreen.withValues(alpha: 0.22),
+        outlineVariant: ElunaiColors.storybookInkMuted.withValues(alpha: 0.2),
+        shadow: ElunaiColors.storybookInk.withValues(alpha: 0.08),
         scrim: Colors.black.withValues(alpha: 0.35),
-        inverseSurface: LunoraColors.forestGreen,
-        onInverseSurface: LunoraColors.storybookCream,
-        inversePrimary: LunoraColors.honeyYellow,
-        surfaceContainerHighest: LunoraColors.storybookCreamDeep,
+        inverseSurface: ElunaiColors.forestGreen,
+        onInverseSurface: ElunaiColors.storybookCream,
+        inversePrimary: ElunaiColors.honeyYellow,
+        surfaceContainerHighest: ElunaiColors.storybookCreamDeep,
       ),
-      scaffoldBackgroundColor: LunoraColors.storybookCream,
-      dividerColor: LunoraColors.storybookInk.withValues(alpha: 0.08),
+      scaffoldBackgroundColor: ElunaiColors.storybookCream,
+      dividerColor: ElunaiColors.storybookInk.withValues(alpha: 0.08),
     );
 
-    final textTheme = LunoraTextStyles.nunitoTextTheme(base.textTheme).apply(
-      bodyColor: LunoraColors.storybookInk,
-      displayColor: LunoraColors.forestGreen,
+    final textTheme = ElunaiTextStyles.nunitoTextTheme(base.textTheme).apply(
+      bodyColor: ElunaiColors.storybookInk,
+      displayColor: ElunaiColors.forestGreen,
     );
 
     return base.copyWith(
@@ -191,23 +191,23 @@ abstract final class LunoraTheme {
         scrolledUnderElevation: 0,
         centerTitle: true,
         backgroundColor: Colors.transparent,
-        foregroundColor: LunoraColors.storybookInk,
+        foregroundColor: ElunaiColors.storybookInk,
         titleTextStyle: textTheme.titleLarge?.copyWith(
           fontWeight: FontWeight.w800,
-          color: LunoraColors.storybookInk,
+          color: ElunaiColors.storybookInk,
         ),
       ),
       cardTheme: CardThemeData(
-        color: LunoraColors.storybookSurface,
+        color: ElunaiColors.storybookSurface,
         elevation: 0,
         shape: RoundedRectangleBorder(borderRadius: AppSizes.cardRadius),
         margin: EdgeInsets.zero,
         clipBehavior: Clip.antiAlias,
-        shadowColor: LunoraColors.storybookInk.withValues(alpha: 0.06),
+        shadowColor: ElunaiColors.storybookInk.withValues(alpha: 0.06),
       ),
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
-        fillColor: LunoraColors.storybookCreamDeep,
+        fillColor: ElunaiColors.storybookCreamDeep,
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(16),
           borderSide: BorderSide.none,
@@ -215,67 +215,67 @@ abstract final class LunoraTheme {
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(16),
           borderSide: const BorderSide(
-            color: LunoraColors.forestGreen,
+            color: ElunaiColors.forestGreen,
             width: 1.4,
           ),
         ),
         contentPadding: const EdgeInsets.symmetric(
-          horizontal: LunoraSpacing.md,
-          vertical: LunoraSpacing.sm + 2,
+          horizontal: ElunaiSpacing.md,
+          vertical: ElunaiSpacing.sm + 2,
         ),
         hintStyle: TextStyle(
-          color: LunoraColors.storybookInkMuted.withValues(alpha: 0.55),
+          color: ElunaiColors.storybookInkMuted.withValues(alpha: 0.55),
         ),
       ),
       elevatedButtonTheme: ElevatedButtonThemeData(
         style: ElevatedButton.styleFrom(
           elevation: 0,
           padding: const EdgeInsets.symmetric(
-            horizontal: LunoraSpacing.lg,
-            vertical: LunoraSpacing.md,
+            horizontal: ElunaiSpacing.lg,
+            vertical: ElunaiSpacing.md,
           ),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(20),
           ),
-          backgroundColor: LunoraColors.forestGreen,
-          foregroundColor: LunoraColors.storybookCream,
+          backgroundColor: ElunaiColors.forestGreen,
+          foregroundColor: ElunaiColors.storybookCream,
         ),
       ),
       filledButtonTheme: FilledButtonThemeData(
         style: FilledButton.styleFrom(
           elevation: 0,
           padding: const EdgeInsets.symmetric(
-            horizontal: LunoraSpacing.lg,
-            vertical: LunoraSpacing.md,
+            horizontal: ElunaiSpacing.lg,
+            vertical: ElunaiSpacing.md,
           ),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(20),
           ),
-          backgroundColor: LunoraColors.forestGreen,
-          foregroundColor: LunoraColors.storybookCream,
+          backgroundColor: ElunaiColors.forestGreen,
+          foregroundColor: ElunaiColors.storybookCream,
         ),
       ),
       outlinedButtonTheme: OutlinedButtonThemeData(
         style: OutlinedButton.styleFrom(
           padding: const EdgeInsets.symmetric(
-            horizontal: LunoraSpacing.lg,
-            vertical: LunoraSpacing.md,
+            horizontal: ElunaiSpacing.lg,
+            vertical: ElunaiSpacing.md,
           ),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(20),
           ),
           side: BorderSide(
-            color: LunoraColors.forestGreen.withValues(alpha: 0.45),
+            color: ElunaiColors.forestGreen.withValues(alpha: 0.45),
           ),
-          foregroundColor: LunoraColors.forestGreen,
+          foregroundColor: ElunaiColors.forestGreen,
         ),
       ),
       navigationBarTheme: NavigationBarThemeData(
-        backgroundColor: LunoraColors.storybookSurface,
+        backgroundColor: ElunaiColors.storybookSurface,
         surfaceTintColor: Colors.transparent,
         elevation: 0,
         height: 72,
-        indicatorColor: LunoraColors.honeyYellow.withValues(alpha: 0.55),
+        indicatorColor: ElunaiColors.honeyYellow.withValues(alpha: 0.55),
         labelTextStyle: WidgetStateProperty.resolveWith((states) {
           final selected = states.contains(WidgetState.selected);
           return TextStyle(
@@ -283,24 +283,24 @@ abstract final class LunoraTheme {
             fontSize: 12,
             letterSpacing: 0.15,
             color: selected
-                ? LunoraColors.forestGreen
-                : LunoraColors.storybookInk.withValues(alpha: 0.72),
+                ? ElunaiColors.forestGreen
+                : ElunaiColors.storybookInk.withValues(alpha: 0.72),
           );
         }),
         iconTheme: WidgetStateProperty.resolveWith((states) {
           final selected = states.contains(WidgetState.selected);
           return IconThemeData(
             color: selected
-                ? LunoraColors.forestGreen
-                : LunoraColors.storybookInk.withValues(alpha: 0.62),
+                ? ElunaiColors.forestGreen
+                : ElunaiColors.storybookInk.withValues(alpha: 0.62),
             size: 24,
           );
         }),
       ),
       snackBarTheme: SnackBarThemeData(
         behavior: SnackBarBehavior.floating,
-        backgroundColor: LunoraColors.forestGreen,
-        contentTextStyle: const TextStyle(color: LunoraColors.storybookCream),
+        backgroundColor: ElunaiColors.forestGreen,
+        contentTextStyle: const TextStyle(color: ElunaiColors.storybookCream),
       ),
       pageTransitionsTheme: dark.pageTransitionsTheme,
     );

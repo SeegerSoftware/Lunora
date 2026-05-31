@@ -3,8 +3,8 @@ import 'package:flutter/material.dart';
 import '../../core/theme/colors.dart';
 import '../../core/theme/spacing.dart';
 
-class LunoraPageHeader extends StatelessWidget {
-  const LunoraPageHeader({
+class ElunaiPageHeader extends StatelessWidget {
+  const ElunaiPageHeader({
     super.key,
     required this.icon,
     required this.title,
@@ -24,18 +24,18 @@ class LunoraPageHeader extends StatelessWidget {
     final theme = Theme.of(context);
     final light = theme.brightness == Brightness.light;
     final titleColor = light
-        ? LunoraColors.storybookInk
-        : LunoraColors.warmBeige;
+        ? ElunaiColors.storybookInk
+        : ElunaiColors.warmBeige;
     final subtitleColor = light
-        ? LunoraColors.storybookInkMuted
-        : LunoraColors.mist.withValues(alpha: 0.82);
+        ? ElunaiColors.storybookInkMuted
+        : ElunaiColors.mist.withValues(alpha: 0.82);
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         if (badge != null) ...[
           _HeaderBadge(label: badge!),
-          const SizedBox(height: LunoraSpacing.sm),
+          const SizedBox(height: ElunaiSpacing.sm),
         ],
         Row(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -44,25 +44,25 @@ class LunoraPageHeader extends StatelessWidget {
               width: compact ? 44 : 52,
               height: compact ? 44 : 52,
               decoration: BoxDecoration(
-                borderRadius: LunoraSpacing.radiusMd,
+                borderRadius: ElunaiSpacing.radiusMd,
                 color: light
-                    ? LunoraColors.honeyYellow.withValues(alpha: 0.46)
-                    : LunoraColors.starGoldSoft.withValues(alpha: 0.12),
+                    ? ElunaiColors.honeyYellow.withValues(alpha: 0.46)
+                    : ElunaiColors.starGoldSoft.withValues(alpha: 0.12),
                 border: Border.all(
                   color: light
-                      ? LunoraColors.forestGreen.withValues(alpha: 0.14)
-                      : LunoraColors.starGoldSoft.withValues(alpha: 0.18),
+                      ? ElunaiColors.forestGreen.withValues(alpha: 0.14)
+                      : ElunaiColors.starGoldSoft.withValues(alpha: 0.18),
                 ),
               ),
               child: Icon(
                 icon,
                 color: light
-                    ? LunoraColors.forestGreen
-                    : LunoraColors.starGoldSoft,
+                    ? ElunaiColors.forestGreen
+                    : ElunaiColors.starGoldSoft,
                 size: compact ? 22 : 26,
               ),
             ),
-            const SizedBox(width: LunoraSpacing.md),
+            const SizedBox(width: ElunaiSpacing.md),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -80,7 +80,7 @@ class LunoraPageHeader extends StatelessWidget {
                               letterSpacing: 0,
                             ),
                   ),
-                  const SizedBox(height: LunoraSpacing.xs),
+                  const SizedBox(height: ElunaiSpacing.xs),
                   Text(
                     subtitle,
                     style: theme.textTheme.bodyMedium?.copyWith(
@@ -111,23 +111,23 @@ class _HeaderBadge extends StatelessWidget {
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(999),
         color: light
-            ? LunoraColors.forestGreen.withValues(alpha: 0.08)
-            : LunoraColors.mist.withValues(alpha: 0.1),
+            ? ElunaiColors.forestGreen.withValues(alpha: 0.08)
+            : ElunaiColors.mist.withValues(alpha: 0.1),
         border: Border.all(
           color: light
-              ? LunoraColors.forestGreen.withValues(alpha: 0.16)
-              : LunoraColors.mist.withValues(alpha: 0.14),
+              ? ElunaiColors.forestGreen.withValues(alpha: 0.16)
+              : ElunaiColors.mist.withValues(alpha: 0.14),
         ),
       ),
       child: Padding(
         padding: const EdgeInsets.symmetric(
-          horizontal: LunoraSpacing.sm,
-          vertical: LunoraSpacing.xxs + 1,
+          horizontal: ElunaiSpacing.sm,
+          vertical: ElunaiSpacing.xxs + 1,
         ),
         child: Text(
           label,
           style: Theme.of(context).textTheme.labelSmall?.copyWith(
-            color: light ? LunoraColors.forestGreen : LunoraColors.starGoldSoft,
+            color: light ? ElunaiColors.forestGreen : ElunaiColors.starGoldSoft,
             fontWeight: FontWeight.w900,
             letterSpacing: 0,
           ),
@@ -137,8 +137,8 @@ class _HeaderBadge extends StatelessWidget {
   }
 }
 
-class LunoraActionTile extends StatelessWidget {
-  const LunoraActionTile({
+class ElunaiActionTile extends StatelessWidget {
+  const ElunaiActionTile({
     super.key,
     required this.icon,
     required this.title,
@@ -159,36 +159,36 @@ class LunoraActionTile extends StatelessWidget {
     final light = theme.brightness == Brightness.light;
     final accent = destructive
         ? theme.colorScheme.error
-        : LunoraColors.forestGreen;
-    final fg = light ? LunoraColors.storybookInk : LunoraColors.warmBeige;
+        : ElunaiColors.forestGreen;
+    final fg = light ? ElunaiColors.storybookInk : ElunaiColors.warmBeige;
     final meta = light
-        ? LunoraColors.storybookInkMuted
-        : LunoraColors.mist.withValues(alpha: 0.76);
+        ? ElunaiColors.storybookInkMuted
+        : ElunaiColors.mist.withValues(alpha: 0.76);
 
     return Material(
       color: light
-          ? LunoraColors.storybookSurface
-          : LunoraColors.nightBlueLift.withValues(alpha: 0.62),
-      borderRadius: LunoraSpacing.radiusLg,
+          ? ElunaiColors.storybookSurface
+          : ElunaiColors.nightBlueLift.withValues(alpha: 0.62),
+      borderRadius: ElunaiSpacing.radiusLg,
       child: InkWell(
-        borderRadius: LunoraSpacing.radiusLg,
+        borderRadius: ElunaiSpacing.radiusLg,
         onTap: onTap,
         child: Container(
-          padding: const EdgeInsets.all(LunoraSpacing.md),
+          padding: const EdgeInsets.all(ElunaiSpacing.md),
           decoration: BoxDecoration(
-            borderRadius: LunoraSpacing.radiusLg,
+            borderRadius: ElunaiSpacing.radiusLg,
             border: Border.all(
               color: destructive
                   ? theme.colorScheme.error.withValues(alpha: 0.24)
                   : (light
-                        ? LunoraColors.forestGreen.withValues(alpha: 0.1)
-                        : LunoraColors.mist.withValues(alpha: 0.12)),
+                        ? ElunaiColors.forestGreen.withValues(alpha: 0.1)
+                        : ElunaiColors.mist.withValues(alpha: 0.12)),
             ),
           ),
           child: Row(
             children: [
               Icon(icon, color: accent, size: 24),
-              const SizedBox(width: LunoraSpacing.md),
+              const SizedBox(width: ElunaiSpacing.md),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -200,7 +200,7 @@ class LunoraActionTile extends StatelessWidget {
                         fontWeight: FontWeight.w900,
                       ),
                     ),
-                    const SizedBox(height: LunoraSpacing.xxs),
+                    const SizedBox(height: ElunaiSpacing.xxs),
                     Text(
                       subtitle,
                       style: theme.textTheme.bodySmall?.copyWith(

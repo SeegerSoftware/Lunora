@@ -3,9 +3,9 @@ import '../../shared/models/user_model.dart';
 /// Accès admin : combinaison du champ Firestore `isAdmin` et d’e-mails passés au build.
 ///
 /// Exemple :
-/// `flutter run --dart-define=LUNORA_ADMIN_EMAILS=toi@example.com,autre@example.com`
+/// `flutter run --dart-define=ELUNAI_ADMIN_EMAILS=toi@example.com,autre@example.com`
 abstract final class AdminConfig {
-  static const String _envKey = 'LUNORA_ADMIN_EMAILS';
+  static const String _envKey = 'ELUNAI_ADMIN_EMAILS';
 
   static bool isAdminUser(UserModel user) {
     if (user.isAdmin) return true;

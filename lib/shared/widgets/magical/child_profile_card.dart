@@ -23,12 +23,12 @@ class ChildProfileCard extends StatelessWidget {
         : trimmed.substring(0, 1).toUpperCase();
 
     return Container(
-      padding: const EdgeInsets.all(LunoraSpacing.md),
+      padding: const EdgeInsets.all(ElunaiSpacing.md),
       decoration: BoxDecoration(
-        borderRadius: LunoraSpacing.radiusLg,
-        gradient: LunoraColors.cardAura,
-        border: Border.all(color: LunoraColors.mist.withValues(alpha: 0.14)),
-        boxShadow: LunoraColors.primaryGlow(opacity: 0.12),
+        borderRadius: ElunaiSpacing.radiusLg,
+        gradient: ElunaiColors.cardAura,
+        border: Border.all(color: ElunaiColors.mist.withValues(alpha: 0.14)),
+        boxShadow: ElunaiColors.primaryGlow(opacity: 0.12),
       ),
       child: Row(
         children: [
@@ -39,14 +39,14 @@ class ChildProfileCard extends StatelessWidget {
               shape: BoxShape.circle,
               gradient: LinearGradient(
                 colors: [
-                  LunoraColors.violetGlow.withValues(alpha: 0.55),
-                  LunoraColors.violetSoft.withValues(alpha: 0.85),
+                  ElunaiColors.violetGlow.withValues(alpha: 0.55),
+                  ElunaiColors.violetSoft.withValues(alpha: 0.85),
                 ],
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
               ),
               border: Border.all(
-                color: LunoraColors.starGold.withValues(alpha: 0.35),
+                color: ElunaiColors.starGold.withValues(alpha: 0.35),
                 width: 1.5,
               ),
             ),
@@ -54,12 +54,12 @@ class ChildProfileCard extends StatelessWidget {
             child: Text(
               initial,
               style: theme.textTheme.headlineSmall?.copyWith(
-                color: LunoraColors.warmBeige,
+                color: ElunaiColors.warmBeige,
                 fontWeight: FontWeight.w900,
               ),
             ),
           ),
-          const SizedBox(width: LunoraSpacing.md),
+          const SizedBox(width: ElunaiSpacing.md),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -67,15 +67,15 @@ class ChildProfileCard extends StatelessWidget {
                 Text(
                   firstName.trim().isEmpty ? '…' : firstName.trim(),
                   style: theme.textTheme.titleMedium?.copyWith(
-                    color: LunoraColors.warmBeige,
+                    color: ElunaiColors.warmBeige,
                     fontWeight: FontWeight.w800,
                   ),
                 ),
-                const SizedBox(height: LunoraSpacing.xxs),
+                const SizedBox(height: ElunaiSpacing.xxs),
                 Text(
                   caption,
                   style: theme.textTheme.bodySmall?.copyWith(
-                    color: LunoraColors.mist.withValues(alpha: 0.75),
+                    color: ElunaiColors.mist.withValues(alpha: 0.75),
                   ),
                 ),
               ],
@@ -83,7 +83,7 @@ class ChildProfileCard extends StatelessWidget {
           ),
           Icon(
             Icons.favorite_rounded,
-            color: LunoraColors.starGold.withValues(alpha: 0.55),
+            color: ElunaiColors.starGold.withValues(alpha: 0.55),
             size: 22,
           ),
         ],

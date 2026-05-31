@@ -3,6 +3,7 @@ import 'package:equatable/equatable.dart';
 
 import 'enums/story_format.dart';
 import 'enums/story_tone.dart';
+import 'profile_story_preferences.dart';
 import 'story_universe.dart';
 
 class ChildProfile extends Equatable {
@@ -22,6 +23,7 @@ class ChildProfile extends Equatable {
     required this.storyFormat,
     required this.seriesDurationDays,
     required this.storyLengthMinutes,
+    this.storyUniverses = const [],
     this.language = 'fr',
     this.readingDurationMinutes,
     this.preferredUniverse = '',
@@ -47,12 +49,16 @@ class ChildProfile extends Equatable {
   final List<String> personalityTraits;
   final List<String> fearsToAddress;
   final List<String> valuesToTeach;
+
   /// Univers narratif principal (clé Firestore historique : `universeType`).
   final StoryUniverse storyUniverse;
   final StoryTone preferredTone;
   final StoryFormat storyFormat;
   final int seriesDurationDays;
   final int storyLengthMinutes;
+
+  /// Choix simplifiés du profil. `storyUniverse` reste la valeur principale legacy.
+  final List<ProfileStoryUniverse> storyUniverses;
   final String language;
   final int? readingDurationMinutes;
   final String preferredUniverse;
@@ -63,6 +69,7 @@ class ChildProfile extends Equatable {
   final String bedtimeEnergyLevel;
   final List<String> familiarElements;
   final String tonightGoal;
+
   /// Texte libre du parent (souhaits, limites, contexte) transmis au LLM.
   final String extraStoryHints;
   final DateTime createdAt;
@@ -84,6 +91,7 @@ class ChildProfile extends Equatable {
     StoryFormat? storyFormat,
     int? seriesDurationDays,
     int? storyLengthMinutes,
+    List<ProfileStoryUniverse>? storyUniverses,
     String? language,
     int? readingDurationMinutes,
     String? preferredUniverse,
@@ -114,8 +122,10 @@ class ChildProfile extends Equatable {
       storyFormat: storyFormat ?? this.storyFormat,
       seriesDurationDays: seriesDurationDays ?? this.seriesDurationDays,
       storyLengthMinutes: storyLengthMinutes ?? this.storyLengthMinutes,
+      storyUniverses: storyUniverses ?? this.storyUniverses,
       language: language ?? this.language,
-      readingDurationMinutes: readingDurationMinutes ?? this.readingDurationMinutes,
+      readingDurationMinutes:
+          readingDurationMinutes ?? this.readingDurationMinutes,
       preferredUniverse: preferredUniverse ?? this.preferredUniverse,
       magicLevel: magicLevel ?? this.magicLevel,
       adventureIntensity: adventureIntensity ?? this.adventureIntensity,
@@ -147,6 +157,7 @@ class ChildProfile extends Equatable {
       'storyFormat': storyFormat.wireValue,
       'seriesDurationDays': seriesDurationDays,
       'storyLengthMinutes': storyLengthMinutes,
+      'storyUniverses': storyUniverses.map((e) => e.wireValue).toList(),
       'readingDurationMinutes': readingDurationMinutes ?? storyLengthMinutes,
       'language': language,
       'preferredUniverse': preferredUniverse,
@@ -154,7 +165,9 @@ class ChildProfile extends Equatable {
       'adventureIntensity': adventureIntensity,
       'favoriteThemes': preferredThemes,
       'softenedFears': softenedFears.isEmpty ? fearsToAddress : softenedFears,
-      'valuesToTransmit': valuesToTransmit.isEmpty ? valuesToTeach : valuesToTransmit,
+      'valuesToTransmit': valuesToTransmit.isEmpty
+          ? valuesToTeach
+          : valuesToTransmit,
       'bedtimeEnergyLevel': bedtimeEnergyLevel,
       'familiarElements': familiarElements,
       'tonightGoal': tonightGoal,
@@ -168,7 +181,9 @@ class ChildProfile extends Equatable {
     List<String> readList(String key, {List<String>? fallback}) {
       final raw = map[key];
       if (raw is List) {
-        return List<String>.from(raw).map((e) => e.trim()).where((e) => e.isNotEmpty).toList();
+        return List<String>.from(
+          raw,
+        ).map((e) => e.trim()).where((e) => e.isNotEmpty).toList();
       }
       return fallback ?? const [];
     }
@@ -180,13 +195,27 @@ class ChildProfile extends Equatable {
     }
 
     final legacyPreferredThemes = readList('preferredThemes');
-    final favoriteThemes = readList('favoriteThemes', fallback: legacyPreferredThemes);
+    final favoriteThemes = readList(
+      'favoriteThemes',
+      fallback: legacyPreferredThemes,
+    );
     final legacyFears = readList('fearsToAddress');
     final softenedFears = readList('softenedFears', fallback: legacyFears);
     final legacyValues = readList('valuesToTeach');
-    final valuesToTransmit = readList('valuesToTransmit', fallback: legacyValues);
+    final valuesToTransmit = readList(
+      'valuesToTransmit',
+      fallback: legacyValues,
+    );
     final rawStoryLength = (map['storyLengthMinutes'] as num?)?.toInt();
     final rawReadingDuration = (map['readingDurationMinutes'] as num?)?.toInt();
+    final legacyStoryUniverse = StoryUniverseX.parse(
+      map['universeType'] as String?,
+    );
+    final storyUniverses = ProfileStoryUniverseMapper.parseStored(
+      readList('storyUniverses'),
+      legacyThemes: favoriteThemes,
+      legacyPrimaryUniverse: legacyStoryUniverse,
+    );
 
     return ChildProfile(
       id: map['id'] as String? ?? '',
@@ -199,19 +228,25 @@ class ChildProfile extends Equatable {
       personalityTraits: readList('personalityTraits'),
       fearsToAddress: softenedFears,
       valuesToTeach: valuesToTransmit,
-      storyUniverse: StoryUniverseX.parse(map['universeType'] as String?),
+      storyUniverse: legacyStoryUniverse,
       preferredTone: StoryToneX.parse(map['preferredTone'] as String?),
       storyFormat: StoryFormatFirestore.parse(map['storyFormat'] as String?),
       seriesDurationDays: (map['seriesDurationDays'] as num?)?.toInt() ?? 0,
       storyLengthMinutes: rawStoryLength ?? rawReadingDuration ?? 10,
+      storyUniverses: storyUniverses,
       readingDurationMinutes: rawReadingDuration,
       language: readString('language', fallback: 'fr'),
       preferredUniverse: readString(
         'preferredUniverse',
-        fallback: StoryUniverseX.parse(map['universeType'] as String?).displayName,
+        fallback: StoryUniverseX.parse(
+          map['universeType'] as String?,
+        ).displayName,
       ),
       magicLevel: readString('magicLevel', fallback: 'legerement magique'),
-      adventureIntensity: readString('adventureIntensity', fallback: 'equilibree'),
+      adventureIntensity: readString(
+        'adventureIntensity',
+        fallback: 'equilibree',
+      ),
       softenedFears: softenedFears,
       valuesToTransmit: valuesToTransmit,
       bedtimeEnergyLevel: readString('bedtimeEnergyLevel', fallback: 'calme'),
@@ -249,6 +284,7 @@ class ChildProfile extends Equatable {
     storyFormat,
     seriesDurationDays,
     storyLengthMinutes,
+    storyUniverses,
     language,
     readingDurationMinutes,
     preferredUniverse,

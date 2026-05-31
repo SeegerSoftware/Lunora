@@ -2,10 +2,10 @@ import 'package:flutter/material.dart';
 
 import 'magical/magical_app_button.dart';
 
-/// CTA du design system Lunora : même comportement que [MagicalAppButton]
+/// CTA du design system Elunai : même comportement que [MagicalAppButton]
 /// (dégradé, haptique, animation légère), nom explicite pour les écrans « produit ».
-class LunoraCustomButton extends StatelessWidget {
-  const LunoraCustomButton({
+class ElunaiCustomButton extends StatelessWidget {
+  const ElunaiCustomButton({
     super.key,
     required this.label,
     required this.onPressed,

@@ -1,6 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/foundation.dart';
 
+import '../../../core/config/admin_config.dart';
 import '../../../core/utils/date_key_utils.dart';
 import '../../story_memory/domain/story_memory_context.dart';
 import '../../story_memory/data/story_memory_repository.dart';
@@ -10,6 +11,7 @@ import '../../../services/firebase/firebase_errors.dart';
 import '../../../services/firebase/firestore_mappers.dart';
 import '../../../services/firebase/firestore_paths.dart';
 import '../../../services/story_generation/models/story_generation_request.dart';
+import '../../../services/story_generation/models/story_generation_result.dart';
 import '../../../services/story_generation/story_generation_exception.dart';
 import '../../../services/story_generation/story_generation_service.dart';
 import '../../../shared/models/child_profile.dart';
@@ -35,6 +37,76 @@ class FirebaseStoryRepository implements StoryRepository {
 
   @override
   Future<void> reset() async {}
+
+  @override
+  Future<void> preserveActiveSeriesProfile({
+    required UserModel user,
+    required ChildProfile child,
+  }) async {
+    final stateDocId = _seriesStateDocId(childId: child.id, userId: user.id);
+    final state = await _loadSeriesState(stateDocId);
+    if (state == null ||
+        state.status != 'active' ||
+        state.profileSnapshot != null) {
+      return;
+    }
+    final updated = state.copyWith(
+      profileSnapshot: child,
+      updatedAt: DateTime.now(),
+    );
+    await _db
+        .collection(FirestorePaths.childSeriesState)
+        .doc(stateDocId)
+        .set(_seriesStateWrite(updated), SetOptions(merge: true));
+  }
+
+  @override
+  Future<void> restartActiveSeries({
+    required UserModel user,
+    required ChildProfile child,
+  }) async {
+    final now = DateTime.now();
+    final todayKey = DateKeyUtils.todayKey();
+    final stateDocId = _seriesStateDocId(childId: child.id, userId: user.id);
+    final stateRef = _db
+        .collection(FirestorePaths.childSeriesState)
+        .doc(stateDocId);
+    final storyRef = _db
+        .collection(FirestorePaths.stories)
+        .doc(
+          _todayStoryDocId(
+            userId: user.id,
+            childId: child.id,
+            dateKey: todayKey,
+          ),
+        );
+    final state = await _loadSeriesState(stateDocId);
+    final story = await storyRef.get();
+    final batch = _db.batch();
+    var hasWrites = false;
+
+    if (story.exists && story.data() != null) {
+      final archiveId =
+          '${story.id}_archived_${now.toUtc().microsecondsSinceEpoch}';
+      batch.set(
+        _db.collection(FirestorePaths.stories).doc(archiveId),
+        story.data()!,
+      );
+      batch.delete(storyRef);
+      hasWrites = true;
+    }
+    if (state != null && state.status == 'active') {
+      batch.set(
+        stateRef,
+        _seriesStateWrite(
+          state.copyWith(status: 'cancelled', updatedAt: now, completedAt: now),
+        ),
+        SetOptions(merge: true),
+      );
+      hasWrites = true;
+    }
+    if (hasWrites) await batch.commit();
+  }
 
   @override
   Future<Story?> findById(String storyId) async {
@@ -97,6 +169,30 @@ class FirebaseStoryRepository implements StoryRepository {
   }
 
   @override
+  Future<Story?> findTodayStory({
+    required UserModel user,
+    required ChildProfile child,
+  }) async {
+    final todayKey = DateKeyUtils.todayKey();
+    final storyId = _todayStoryDocId(
+      userId: user.id,
+      childId: child.id,
+      dateKey: todayKey,
+    );
+    try {
+      final snap = await _db
+          .collection(FirestorePaths.stories)
+          .doc(storyId)
+          .get();
+      final data = snap.data();
+      if (!snap.exists || data == null) return null;
+      return Story.fromMap({...data, 'id': snap.id});
+    } catch (e) {
+      throw Exception(FirebaseErrors.firestoreMessage(e));
+    }
+  }
+
+  @override
   Future<Story> ensureTodayStory({
     required UserModel user,
     required ChildProfile child,
@@ -131,16 +227,18 @@ class FirebaseStoryRepository implements StoryRepository {
       }
 
       final isSerialized = child.storyFormat == StoryFormat.serializedChapters;
-      final totalChapters = isSerialized ? child.seriesDurationDays : 1;
 
       late final int chapterIndex;
+      late final int totalChapters;
       late final String? seriesId;
+      var generationChild = child;
       SeriesState? activeSeriesState;
       SeriesBible? seriesBible;
       ChapterPlanItem? currentChapterPlan;
 
       if (!isSerialized) {
         chapterIndex = 1;
+        totalChapters = 1;
         seriesId = null;
       } else {
         final seriesStateDocId = _seriesStateDocId(
@@ -153,9 +251,10 @@ class FirebaseStoryRepository implements StoryRepository {
             activeSeriesState.currentChapterIndex >=
                 activeSeriesState.totalChapters) {
           seriesId = _newSeriesId(childId: child.id, dateKey: todayKey);
+          totalChapters = child.seriesDurationDays;
           final bibleRequest = StoryGenerationRequest(
             user: user,
-            child: child,
+            child: generationChild,
             dateKey: todayKey,
             chapterIndex: 1,
             totalChapters: totalChapters,
@@ -173,6 +272,8 @@ class FirebaseStoryRepository implements StoryRepository {
             totalChapters: totalChapters,
           );
         } else {
+          generationChild = activeSeriesState.profileSnapshot ?? child;
+          totalChapters = activeSeriesState.totalChapters;
           seriesId = activeSeriesState.seriesId;
           seriesBible = _extractSeriesBible(activeSeriesState);
         }
@@ -185,14 +286,14 @@ class FirebaseStoryRepository implements StoryRepository {
 
       final memoryContext = await _safeBuildMemoryContext(
         user: user,
-        child: child,
+        child: generationChild,
         chapterIndex: chapterIndex,
         totalChapters: totalChapters,
       );
 
       final request = StoryGenerationRequest(
         user: user,
-        child: child,
+        child: generationChild,
         dateKey: todayKey,
         chapterIndex: chapterIndex,
         totalChapters: totalChapters,
@@ -250,7 +351,7 @@ class FirebaseStoryRepository implements StoryRepository {
 
       await _safeUpdateMemoryAfterStorySaved(
         story: story,
-        child: child,
+        child: generationChild,
         user: user,
       );
 
@@ -266,6 +367,7 @@ class FirebaseStoryRepository implements StoryRepository {
     required UserModel user,
     required ChildProfile child,
   }) async {
+    _assertAdmin(user);
     final todayKey = DateKeyUtils.todayKey();
     final storyId = _todayStoryDocId(
       userId: user.id,
@@ -289,6 +391,164 @@ class FirebaseStoryRepository implements StoryRepository {
       }
       await _safeDeleteDoc(snapRef);
       return ensureTodayStory(user: user, child: child);
+    } catch (e) {
+      if (e is StoryGenerationException) rethrow;
+      throw Exception(FirebaseErrors.firestoreMessage(e));
+    }
+  }
+
+  @override
+  Future<Story> adminGenerateUniqueStory({
+    required UserModel user,
+    required ChildProfile child,
+  }) async {
+    _assertAdmin(user);
+    final dateKey = DateKeyUtils.todayKey();
+    final suffix = _adminGenerationSuffix();
+    final standaloneChild = child.copyWith(
+      storyFormat: StoryFormat.dailyStandalone,
+      seriesDurationDays: 0,
+    );
+    try {
+      final memoryContext = await _safeBuildMemoryContext(
+        user: user,
+        child: standaloneChild,
+        chapterIndex: 1,
+        totalChapters: 1,
+      );
+      final generated = await _generationService.generate(
+        StoryGenerationRequest(
+          user: user,
+          child: standaloneChild,
+          dateKey: dateKey,
+          chapterIndex: 1,
+          totalChapters: 1,
+          memoryContext: memoryContext,
+        ),
+      );
+      final story = _storyFromGeneration(
+        id: 'story_${user.id}_${child.id}_${dateKey}_admin_$suffix',
+        child: standaloneChild,
+        user: user,
+        dateKey: dateKey,
+        generated: generated,
+        chapterIndex: 1,
+        totalChapters: 1,
+      );
+      await _db
+          .collection(FirestorePaths.stories)
+          .doc(story.id)
+          .set(FirestoreMappers.storyWrite(story));
+      await _safeUpdateMemoryAfterStorySaved(
+        story: story,
+        child: standaloneChild,
+        user: user,
+      );
+      return story;
+    } catch (e) {
+      if (e is StoryGenerationException) rethrow;
+      throw Exception(FirebaseErrors.firestoreMessage(e));
+    }
+  }
+
+  @override
+  Future<List<Story>> adminGenerateSevenChapterStory({
+    required UserModel user,
+    required ChildProfile child,
+  }) async {
+    _assertAdmin(user);
+    const totalChapters = 7;
+    final dateKey = DateKeyUtils.todayKey();
+    final suffix = _adminGenerationSuffix();
+    final seriesId = 'series_${child.id}_${dateKey}_admin_$suffix';
+    final stateDocId = 'admin_${child.id}_${user.id}_$suffix';
+    final serializedChild = child.copyWith(
+      storyFormat: StoryFormat.serializedChapters,
+      seriesDurationDays: totalChapters,
+    );
+
+    try {
+      final bibleRequest = StoryGenerationRequest(
+        user: user,
+        child: serializedChild,
+        dateKey: dateKey,
+        chapterIndex: 1,
+        totalChapters: totalChapters,
+        seriesId: seriesId,
+      );
+      final bible = await _generationService.generateSeriesBible(bibleRequest);
+      var state = await _createSeriesState(
+        stateDocId: stateDocId,
+        child: serializedChild,
+        user: user,
+        seriesId: seriesId,
+        bible: bible,
+        totalChapters: totalChapters,
+      );
+      final stories = <Story>[];
+
+      for (
+        var chapterIndex = 1;
+        chapterIndex <= totalChapters;
+        chapterIndex++
+      ) {
+        final memoryContext = await _safeBuildMemoryContext(
+          user: user,
+          child: serializedChild,
+          chapterIndex: chapterIndex,
+          totalChapters: totalChapters,
+        );
+        final generated = await _generationService.generate(
+          StoryGenerationRequest(
+            user: user,
+            child: serializedChild,
+            dateKey: dateKey,
+            chapterIndex: chapterIndex,
+            totalChapters: totalChapters,
+            seriesId: seriesId,
+            continuityContext: state.continuitySummary,
+            memoryContext: memoryContext,
+            seriesBible: bible,
+            seriesState: state,
+            currentChapterPlan: _planForChapter(state, chapterIndex),
+          ),
+        );
+        final story = _storyFromGeneration(
+          id: 'story_${user.id}_${child.id}_${dateKey}_admin_${suffix}_chapter_$chapterIndex',
+          child: serializedChild,
+          user: user,
+          dateKey: dateKey,
+          generated: generated,
+          chapterIndex: chapterIndex,
+          totalChapters: totalChapters,
+          seriesId: seriesId,
+        );
+        state = SeriesStateReducer.advance(
+          state: state,
+          chapterIndex: chapterIndex,
+          fallbackSummary: story.summary,
+          continuityUpdate: generated.continuityUpdate,
+          now: DateTime.now(),
+        );
+        final batch = _db.batch();
+        batch.set(
+          _db.collection(FirestorePaths.stories).doc(story.id),
+          FirestoreMappers.storyWrite(story),
+        );
+        batch.set(
+          _db.collection(FirestorePaths.childSeriesState).doc(stateDocId),
+          _seriesStateWrite(state),
+          SetOptions(merge: true),
+        );
+        await batch.commit();
+        stories.add(story);
+        await _safeUpdateMemoryAfterStorySaved(
+          story: story,
+          child: serializedChild,
+          user: user,
+        );
+      }
+      return stories;
     } catch (e) {
       if (e is StoryGenerationException) rethrow;
       throw Exception(FirebaseErrors.firestoreMessage(e));
@@ -331,7 +591,47 @@ class FirebaseStoryRepository implements StoryRepository {
   }
 
   String _newSeriesId({required String childId, required String dateKey}) {
-    return 'series_${childId}_$dateKey';
+    return 'series_${childId}_${dateKey}_${DateTime.now().toUtc().microsecondsSinceEpoch}';
+  }
+
+  String _adminGenerationSuffix() {
+    return DateTime.now().toUtc().microsecondsSinceEpoch.toString();
+  }
+
+  void _assertAdmin(UserModel user) {
+    if (!AdminConfig.isAdminUser(user)) {
+      throw StateError('Action reservee au compte administrateur.');
+    }
+  }
+
+  Story _storyFromGeneration({
+    required String id,
+    required ChildProfile child,
+    required UserModel user,
+    required String dateKey,
+    required StoryGenerationResult generated,
+    required int chapterIndex,
+    required int totalChapters,
+    String? seriesId,
+  }) {
+    return Story(
+      id: id,
+      childId: child.id,
+      userId: user.id,
+      dateKey: dateKey,
+      title: generated.title,
+      content: generated.content,
+      summary: generated.summary,
+      theme: generated.themeLabel,
+      tone: generated.tone,
+      estimatedReadingMinutes: generated.estimatedReadingMinutes,
+      format: generated.format,
+      chapterNumber: chapterIndex,
+      totalChapters: totalChapters,
+      seriesId: generated.seriesId ?? seriesId,
+      generationSource: generated.generationSource,
+      createdAt: DateTime.now(),
+    );
   }
 
   Future<void> _rewindSeriesForRegeneration(Story story) async {
@@ -449,6 +749,7 @@ class FirebaseStoryRepository implements StoryRepository {
           : bible.chapterPlan.first.goal,
       createdAt: now,
       updatedAt: now,
+      profileSnapshot: child,
     );
     await _db.collection(FirestorePaths.childSeriesState).doc(stateDocId).set({
       ...state.toMap(),

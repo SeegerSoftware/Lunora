@@ -1,6 +1,11 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:lunora_v00/features/stories/data/series_state_reducer.dart';
-import 'package:lunora_v00/shared/models/series_state.dart';
+import 'package:elunai_v00/features/stories/data/series_state_reducer.dart';
+import 'package:elunai_v00/shared/models/child_profile.dart';
+import 'package:elunai_v00/shared/models/enums/story_format.dart';
+import 'package:elunai_v00/shared/models/enums/story_tone.dart';
+import 'package:elunai_v00/shared/models/profile_story_preferences.dart';
+import 'package:elunai_v00/shared/models/series_state.dart';
+import 'package:elunai_v00/shared/models/story_universe.dart';
 
 void main() {
   test('advances through seven chapters and completes the weekly series', () {
@@ -58,6 +63,15 @@ void main() {
     expect(restored.seriesId, 'series_child-1_2026-05-01');
   });
 
+  test('series state map keeps the profile snapshot used for generation', () {
+    final restored = SeriesState.fromMap(
+      _state().copyWith(profileSnapshot: _profile()).toMap(),
+    );
+
+    expect(restored.profileSnapshot, _profile());
+    expect(restored.profileSnapshot?.preferredThemes, ['forest']);
+  });
+
   test(
     'legacy state keeps existing continuity when the next chapter advances',
     () {
@@ -79,6 +93,31 @@ void main() {
       expect(advanced.chapterSummaries, ['legacy 1', 'legacy 2', 'summary 3']);
       expect(advanced.antiRepetitionMemory, ['legacy avoid']);
     },
+  );
+}
+
+ChildProfile _profile() {
+  final now = DateTime(2026, 5, 1);
+  return ChildProfile(
+    id: 'child-1',
+    userId: 'user-1',
+    firstName: 'Lina',
+    birthMonth: 6,
+    birthYear: 2019,
+    preferredThemes: const ['forest'],
+    avoidThemes: const [],
+    personalityTraits: const ['curious'],
+    fearsToAddress: const [],
+    valuesToTeach: const [],
+    storyUniverse: StoryUniverse.enchantedNature,
+    preferredTone: StoryTone.reassuring,
+    storyFormat: StoryFormat.serializedChapters,
+    seriesDurationDays: 7,
+    storyLengthMinutes: 10,
+    storyUniverses: const [ProfileStoryUniverse.nature],
+    readingDurationMinutes: 10,
+    createdAt: now,
+    updatedAt: now,
   );
 }
 

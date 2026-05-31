@@ -1,17 +1,17 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:lunora_v00/core/di/providers.dart';
-import 'package:lunora_v00/features/auth/data/auth_repository.dart';
-import 'package:lunora_v00/features/auth/presentation/providers/auth_providers.dart';
-import 'package:lunora_v00/features/child_profile/data/child_profile_repository.dart';
-import 'package:lunora_v00/features/stories/data/story_repository.dart';
-import 'package:lunora_v00/features/subscription/data/subscription_repository.dart';
-import 'package:lunora_v00/shared/models/child_profile.dart';
-import 'package:lunora_v00/shared/models/enums/story_format.dart';
-import 'package:lunora_v00/shared/models/enums/story_tone.dart';
-import 'package:lunora_v00/shared/models/enums/subscription_status.dart';
-import 'package:lunora_v00/shared/models/story.dart';
-import 'package:lunora_v00/shared/models/subscription.dart';
-import 'package:lunora_v00/shared/models/user_model.dart';
+import 'package:elunai_v00/core/di/providers.dart';
+import 'package:elunai_v00/features/auth/data/auth_repository.dart';
+import 'package:elunai_v00/features/auth/presentation/providers/auth_providers.dart';
+import 'package:elunai_v00/features/child_profile/data/child_profile_repository.dart';
+import 'package:elunai_v00/features/stories/data/story_repository.dart';
+import 'package:elunai_v00/features/subscription/data/subscription_repository.dart';
+import 'package:elunai_v00/shared/models/child_profile.dart';
+import 'package:elunai_v00/shared/models/enums/story_format.dart';
+import 'package:elunai_v00/shared/models/enums/story_tone.dart';
+import 'package:elunai_v00/shared/models/enums/subscription_status.dart';
+import 'package:elunai_v00/shared/models/story.dart';
+import 'package:elunai_v00/shared/models/subscription.dart';
+import 'package:elunai_v00/shared/models/user_model.dart';
 
 List<Override> testAppOverrides() {
   final auth = _FakeAuthRepository();
@@ -51,16 +51,16 @@ class _FakeAuthRepository implements AuthRepository {
   }
 
   @override
-  Future<UserModel> signInWithApple() async => _setCurrent('apple@lunora.test');
+  Future<UserModel> signInWithApple() async => _setCurrent('apple@elunai.test');
 
   @override
   Future<UserModel> signInWithFacebook() async {
-    return _setCurrent('facebook@lunora.test');
+    return _setCurrent('facebook@elunai.test');
   }
 
   @override
   Future<UserModel> signInWithGoogle() async =>
-      _setCurrent('google@lunora.test');
+      _setCurrent('google@elunai.test');
 
   @override
   Future<void> sendPasswordResetEmail({required String email}) async {}
@@ -108,6 +108,26 @@ class _FakeStoryRepository implements StoryRepository {
   Story? _story;
 
   @override
+  Future<Story?> findTodayStory({
+    required UserModel user,
+    required ChildProfile child,
+  }) async => _story;
+
+  @override
+  Future<void> preserveActiveSeriesProfile({
+    required UserModel user,
+    required ChildProfile child,
+  }) async {}
+
+  @override
+  Future<void> restartActiveSeries({
+    required UserModel user,
+    required ChildProfile child,
+  }) async {
+    _story = null;
+  }
+
+  @override
   Future<Story> ensureTodayStory({
     required UserModel user,
     required ChildProfile child,
@@ -122,6 +142,24 @@ class _FakeStoryRepository implements StoryRepository {
   }) async {
     _story = _storyFor(user, child);
     return _story!;
+  }
+
+  @override
+  Future<Story> adminGenerateUniqueStory({
+    required UserModel user,
+    required ChildProfile child,
+  }) async {
+    _story = _storyFor(user, child);
+    return _story!;
+  }
+
+  @override
+  Future<List<Story>> adminGenerateSevenChapterStory({
+    required UserModel user,
+    required ChildProfile child,
+  }) async {
+    _story = _storyFor(user, child);
+    return [_story!];
   }
 
   @override

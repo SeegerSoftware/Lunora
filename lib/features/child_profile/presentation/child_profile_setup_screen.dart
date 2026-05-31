@@ -6,22 +6,25 @@ import 'package:go_router/go_router.dart';
 import 'package:uuid/uuid.dart';
 
 import '../../../core/constants/app_sizes.dart';
+import '../../../core/di/providers.dart';
 import '../../../core/theme/colors.dart';
 import '../../../core/validation/child_profile_rules.dart';
 import '../../../routing/safe_navigation.dart';
 import '../../../shared/models/child_profile.dart';
 import '../../../shared/models/enums/story_format.dart';
 import '../../../shared/models/enums/story_tone.dart';
-import '../../../shared/models/story_universe.dart';
+import '../../../shared/models/profile_story_preferences.dart';
 import '../../../shared/widgets/elunai_layout.dart';
-import '../../../shared/widgets/lunora_fade_in.dart';
-import '../../../shared/widgets/lunora_page_header.dart';
-import '../../../shared/widgets/lunora_screen_shell.dart';
-import '../../../shared/widgets/lunora_text_field.dart';
+import '../../../shared/widgets/elunai_fade_in.dart';
+import '../../../shared/widgets/elunai_page_header.dart';
+import '../../../shared/widgets/elunai_screen_shell.dart';
+import '../../../shared/widgets/elunai_text_field.dart';
 import '../../../shared/widgets/magical/magical.dart';
 import '../../auth/presentation/providers/auth_providers.dart';
 import '../../stories/presentation/providers/story_providers.dart';
 import 'providers/child_profile_providers.dart';
+
+enum _ProfileSaveChoice { nextSeries, restartSeries }
 
 class ChildProfileSetupScreen extends ConsumerStatefulWidget {
   const ChildProfileSetupScreen({super.key});
@@ -35,86 +38,50 @@ class _ChildProfileSetupScreenState
     extends ConsumerState<ChildProfileSetupScreen> {
   final _formKey = GlobalKey<FormState>();
   final _firstName = TextEditingController();
-  final _preferredThemes = TextEditingController();
-  final _personalityTraits = TextEditingController();
   final _extraStoryHints = TextEditingController();
+  final _otherCharacter = TextEditingController();
 
   static const int kFixedStoryMinutes = 10;
   static const int kFixedSeriesDays = 7;
-  static final List<StoryUniverse> kUniverseChoices = List<StoryUniverse>.from(
-    StoryUniverse.values,
-  );
   static final List<StoryTone> kToneChoices = <StoryTone>[
     StoryTone.reassuring,
+    StoryTone.playfulSoft,
     StoryTone.gentleAdventure,
     StoryTone.poetic,
+  ];
+  static const List<ProfileStoryUniverse> kUniverseChoices =
+      ProfileStoryUniverse.values;
+  static const List<String> kCharacterChoices = <String>[
+    'L’enfant lui-même',
+    'Un animal compagnon',
+    'Un doudou magique',
+    'Un ami imaginaire',
+    'Un frère / une sœur',
+    'Un petit héros inventé',
   ];
 
   int _birthMonth = 6;
   int _birthYear = 2019;
   StoryTone _tone = ChildProfileRules.defaultTone();
-  StoryUniverse _universe = ChildProfileRules.defaultStoryUniverse();
+  final List<ProfileStoryUniverse> _universes = [
+    ProfileStoryUniverse.gentleMagic,
+  ];
+  String _mainCharacter = kCharacterChoices.first;
   String _language = 'fr';
 
   /// Valeurs affichées = libellés stockés dans [ChildProfile.magicLevel] pour le LLM.
-  String _storyStyle = 'fantastique doux';
+  String _storyStyle = 'Magique doux';
 
   static const List<String> kStoryStyleOptions = <String>[
-    'fantastique doux',
-    'réaliste / quotidien',
-    'mélange doux (magie + réel)',
-    'poétique / onirique',
-  ];
-
-  static const List<String> kThemeSuggestionChips = <String>[
-    'animaux',
-    'nature',
-    'espace',
-    'mer',
-    'forêt',
-    'musique',
-    'amitié',
-    'famille',
-    'école',
-    'sport',
-    'voyage',
-    'dinosaures',
-    'conte de fées',
-    'super-héros',
-    'véhicules',
-    'cuisine',
-    'jardin',
-    'montagne',
-    'hiver',
-    'printemps',
-    'robots gentils',
-    'fées bienveillantes',
-  ];
-
-  static const List<String> kCharacterSuggestionChips = <String>[
-    'enfant curieux',
-    'fille courageuse',
-    'garçon timide',
-    'animal parlant',
-    'doudou magique',
-    'fée bienveillante',
-    'robot gentil',
-    'jumelles complices',
-    'grand frère',
-    'petite sœur',
-    'chat espiègle',
-    'chien fidèle',
-    'oiseau messager',
-    'dragon doux',
-    'lutin rigolo',
-    'licorne calme',
-    'sorcière bienveillante',
+    'Réaliste / quotidien',
+    'Magique doux',
+    'Aventure imaginaire',
   ];
 
   var _loading = false;
   var _currentStep = 0;
 
-  static const int _lastStep = 2;
+  static const int _lastStep = 3;
 
   @override
   void initState() {
@@ -129,17 +96,29 @@ class _ChildProfileSetupScreenState
         _tone = kToneChoices.contains(existing.preferredTone)
             ? existing.preferredTone
             : StoryTone.reassuring;
-        _universe = kUniverseChoices.contains(existing.storyUniverse)
-            ? existing.storyUniverse
-            : ChildProfileRules.defaultStoryUniverse();
+        _universes
+          ..clear()
+          ..addAll(
+            existing.storyUniverses.isEmpty
+                ? ProfileStoryUniverseMapper.parseStored(
+                    const [],
+                    legacyThemes: existing.preferredThemes,
+                    legacyPrimaryUniverse: existing.storyUniverse,
+                  )
+                : existing.storyUniverses.take(
+                    ProfileStoryUniverseMapper.maxSelections,
+                  ),
+          );
         _language = existing.language == 'en' ? 'en' : 'fr';
-        _storyStyle = _coerceOption(
-          existing.magicLevel,
-          kStoryStyleOptions,
-          fallback: 'fantastique doux',
+        _storyStyle = _coerceStoryStyle(existing.magicLevel);
+        final characters = existing.personalityTraits;
+        _mainCharacter = characters.firstWhere(
+          kCharacterChoices.contains,
+          orElse: () => kCharacterChoices.first,
         );
-        _preferredThemes.text = existing.preferredThemes.join(', ');
-        _personalityTraits.text = existing.personalityTraits.join(', ');
+        _otherCharacter.text = characters
+            .where((value) => !kCharacterChoices.contains(value))
+            .join(', ');
         final hints = existing.extraStoryHints.trim();
         _extraStoryHints.text = hints.isNotEmpty
             ? hints
@@ -150,6 +129,9 @@ class _ChildProfileSetupScreenState
 
   String _composeLegacyHints(ChildProfile c) {
     final parts = <String>[];
+    if (c.preferredThemes.isNotEmpty) {
+      parts.add('Préférences précédentes : ${c.preferredThemes.join(', ')}');
+    }
     if (c.avoidThemes.isNotEmpty) {
       parts.add('À éviter : ${c.avoidThemes.join(', ')}');
     }
@@ -172,18 +154,9 @@ class _ChildProfileSetupScreenState
   @override
   void dispose() {
     _firstName.dispose();
-    _preferredThemes.dispose();
-    _personalityTraits.dispose();
     _extraStoryHints.dispose();
+    _otherCharacter.dispose();
     super.dispose();
-  }
-
-  List<String> _splitList(String raw) {
-    return raw
-        .split(',')
-        .map((e) => e.trim())
-        .where((e) => e.isNotEmpty)
-        .toList();
   }
 
   String _coerceOption(
@@ -200,6 +173,15 @@ class _ChildProfileSetupScreenState
       }
     }
     return fallback;
+  }
+
+  String _coerceStoryStyle(String? raw) {
+    final normalized = _normalizeKey(raw ?? '');
+    if (normalized.contains('realiste') || normalized.contains('quotidien')) {
+      return 'Réaliste / quotidien';
+    }
+    if (normalized.contains('aventure')) return 'Aventure imaginaire';
+    return _coerceOption(raw, kStoryStyleOptions, fallback: 'Magique doux');
   }
 
   String _normalizeKey(String value) {
@@ -224,12 +206,16 @@ class _ChildProfileSetupScreenState
         .trim();
   }
 
-  void _appendChipValue(TextEditingController controller, String value) {
-    final current = _splitList(controller.text);
-    final normalized = current.map(_normalizeKey).toSet();
-    if (normalized.contains(_normalizeKey(value))) return;
-    final updated = [...current, value];
-    setState(() => controller.text = updated.join(', '));
+  void _toggleUniverse(ProfileStoryUniverse universe) {
+    setState(() {
+      if (_universes.contains(universe)) {
+        if (_universes.length > 1) _universes.remove(universe);
+        return;
+      }
+      if (_universes.length < ProfileStoryUniverseMapper.maxSelections) {
+        _universes.add(universe);
+      }
+    });
   }
 
   void _showError(String message) {
@@ -237,6 +223,37 @@ class _ChildProfileSetupScreenState
     ScaffoldMessenger.of(
       context,
     ).showSnackBar(SnackBar(content: Text(message)));
+  }
+
+  Future<_ProfileSaveChoice?> _askHowToSaveProfile() {
+    return showDialog<_ProfileSaveChoice>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('Comment appliquer ces réglages ?'),
+        content: const Text(
+          'La série en cours peut conserver ses réglages actuels. '
+          'Recommencer une nouvelle série générera une nouvelle trame et un '
+          'nouveau premier chapitre.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop(),
+            child: const Text('Annuler'),
+          ),
+          TextButton(
+            onPressed: () =>
+                Navigator.of(dialogContext).pop(_ProfileSaveChoice.nextSeries),
+            child: const Text('Enregistrer pour la prochaine série'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.of(
+              dialogContext,
+            ).pop(_ProfileSaveChoice.restartSeries),
+            child: const Text('Recommencer une nouvelle série'),
+          ),
+        ],
+      ),
+    );
   }
 
   void _nextStep() {
@@ -291,12 +308,13 @@ class _ChildProfileSetupScreenState
       return;
     }
 
-    setState(() => _loading = true);
     try {
       final now = DateTime.now();
       final existing = ref.read(childProfileProvider);
       final id = existing?.id ?? const Uuid().v4();
       final ex = existing;
+      final primaryUniverse = _universes.first;
+      final otherCharacter = _otherCharacter.text.trim();
 
       final draft = ChildProfile(
         id: id,
@@ -304,14 +322,17 @@ class _ChildProfileSetupScreenState
         firstName: _firstName.text.trim(),
         birthMonth: _birthMonth,
         birthYear: _birthYear,
-        preferredThemes: _splitList(_preferredThemes.text),
+        preferredThemes: _universes.map((e) => e.displayLabel).toList(),
         avoidThemes: ex?.avoidThemes ?? const [],
-        personalityTraits: _splitList(_personalityTraits.text),
+        personalityTraits: [
+          _mainCharacter,
+          if (otherCharacter.isNotEmpty) otherCharacter,
+        ],
         fearsToAddress: ex?.fearsToAddress ?? const [],
         valuesToTeach: ex?.valuesToTeach ?? const [],
         language: _language,
         readingDurationMinutes: kFixedStoryMinutes,
-        preferredUniverse: '${_universe.emoji} ${_universe.displayName}',
+        preferredUniverse: _universes.map((e) => e.displayLabel).join(', '),
         magicLevel: _storyStyle,
         adventureIntensity: ex?.adventureIntensity ?? 'équilibrée',
         softenedFears: ex?.softenedFears ?? const [],
@@ -320,7 +341,8 @@ class _ChildProfileSetupScreenState
         familiarElements: ex?.familiarElements ?? const [],
         tonightGoal: ex?.tonightGoal ?? 's’endormir calmement',
         extraStoryHints: _extraStoryHints.text.trim(),
-        storyUniverse: _universe,
+        storyUniverse: primaryUniverse.primaryStoryUniverse,
+        storyUniverses: List.unmodifiable(_universes),
         preferredTone: _tone,
         storyFormat: StoryFormat.serializedChapters,
         seriesDurationDays: kFixedSeriesDays,
@@ -336,7 +358,28 @@ class _ChildProfileSetupScreenState
         return;
       }
 
+      final choice = existing == null
+          ? _ProfileSaveChoice.nextSeries
+          : await _askHowToSaveProfile();
+      if (choice == null || !mounted) return;
+
+      setState(() => _loading = true);
+      if (existing != null) {
+        await ref
+            .read(storyRepositoryProvider)
+            .preserveActiveSeriesProfile(user: user, child: existing);
+      }
       await ref.read(childProfileProvider.notifier).upsert(normalized);
+      if (existing == null) {
+        await ref
+            .read(storyRepositoryProvider)
+            .ensureTodayStory(user: user, child: normalized);
+      }
+      if (choice == _ProfileSaveChoice.restartSeries) {
+        await ref
+            .read(storyRepositoryProvider)
+            .restartActiveSeries(user: user, child: normalized);
+      }
       ref.invalidate(todayStoryProvider);
       ref.invalidate(storyHistoryProvider);
       if (!mounted) return;
@@ -349,56 +392,26 @@ class _ChildProfileSetupScreenState
     }
   }
 
-  Widget _universeTile(StoryUniverse u) {
-    final theme = Theme.of(context);
-    final m = u.meta;
-    final selected = u == _universe;
-    return Padding(
-      padding: const EdgeInsets.only(bottom: AppSizes.sm),
-      child: Material(
-        color: selected
-            ? LunoraColors.forestGreen.withValues(alpha: 0.08)
-            : LunoraColors.storybookSurface,
-        elevation: 0,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(16),
-          side: BorderSide(
-            color: selected
-                ? LunoraColors.forestGreen
-                : LunoraColors.storybookInkMuted.withValues(alpha: 0.18),
-            width: selected ? 2 : 1,
-          ),
-        ),
-        child: InkWell(
-          borderRadius: BorderRadius.circular(16),
-          onTap: () => setState(() => _universe = u),
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-            child: Row(
-              children: [
-                Text(m.emoji, style: const TextStyle(fontSize: 22)),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: Text(
-                    m.displayName,
-                    style: theme.textTheme.titleSmall?.copyWith(
-                      color: LunoraColors.storybookInk,
-                      fontWeight: FontWeight.w800,
-                    ),
-                  ),
-                ),
-                if (selected)
-                  Icon(
-                    Icons.check_circle_rounded,
-                    color: LunoraColors.forestGreen,
-                    size: 22,
-                  ),
-              ],
-            ),
-          ),
-        ),
-      ),
+  Widget _universeTile(ProfileStoryUniverse universe) {
+    return _ChoiceCard(
+      label: universe.displayLabel,
+      icon: _universeIcon(universe),
+      selected: _universes.contains(universe),
+      onTap: () => _toggleUniverse(universe),
     );
+  }
+
+  IconData _universeIcon(ProfileStoryUniverse universe) {
+    return switch (universe) {
+      ProfileStoryUniverse.animals => Icons.pets_rounded,
+      ProfileStoryUniverse.gentleMagic => Icons.auto_awesome_rounded,
+      ProfileStoryUniverse.adventure => Icons.explore_rounded,
+      ProfileStoryUniverse.nature => Icons.park_rounded,
+      ProfileStoryUniverse.everydayLife => Icons.home_rounded,
+      ProfileStoryUniverse.emotionsConfidence => Icons.favorite_rounded,
+      ProfileStoryUniverse.dinosaurs => Icons.landscape_rounded,
+      ProfileStoryUniverse.space => Icons.nights_stay_rounded,
+    };
   }
 
   @override
@@ -409,10 +422,10 @@ class _ChildProfileSetupScreenState
     return Scaffold(
       extendBodyBehindAppBar: true,
       appBar: const ElunaiAppBar(title: 'Profil enfant'),
-      body: LunoraScreenShell(
+      body: ElunaiScreenShell(
         showStarfield: true,
         child: SafeArea(
-          child: LunoraFadeIn(
+          child: ElunaiFadeIn(
             child: Form(
               key: _formKey,
               autovalidateMode: AutovalidateMode.onUserInteraction,
@@ -426,16 +439,14 @@ class _ChildProfileSetupScreenState
                     ),
                     const SizedBox(height: AppSizes.lg),
                   ],
-                  const LunoraPageHeader(
+                  const ElunaiPageHeader(
                     compact: true,
                     icon: Icons.child_care_rounded,
                     title: 'Créer le profil narratif',
                     subtitle:
-                        'Quelques choix suffisent pour guider le ton, les thèmes et la durée des histoires.',
-                    badge: '3 étapes · modifiable à tout moment',
+                        'Quelques repères doux suffisent pour personnaliser le rituel du soir.',
+                    badge: '4 étapes · modifiable à tout moment',
                   ),
-                  const SizedBox(height: AppSizes.lg),
-                  const _StoryDefaultsCard(),
                   const SizedBox(height: AppSizes.lg),
                   _ProfileFlowHeader(currentStep: _currentStep),
                   const SizedBox(height: AppSizes.md),
@@ -445,7 +456,7 @@ class _ChildProfileSetupScreenState
                       subtitle: 'Obligatoire : prénom + âge.',
                       child: Column(
                         children: [
-                          LunoraTextField(
+                          ElunaiTextField(
                             controller: _firstName,
                             label: 'Prénom',
                             textInputAction: TextInputAction.next,
@@ -517,92 +528,54 @@ class _ChildProfileSetupScreenState
                             onChanged: (v) =>
                                 setState(() => _language = v ?? _language),
                           ),
+                          const SizedBox(height: AppSizes.md),
+                          ElunaiTextField(
+                            controller: _extraStoryHints,
+                            label: 'Ce que l’histoire doit prendre en compte',
+                            hint:
+                                'Exemples : aime les dinosaures, peur du noir, adore son doudou, préfère les histoires calmes…',
+                            maxLines: 5,
+                            minLines: 3,
+                          ),
+                          const SizedBox(height: AppSizes.xs),
+                          Text(
+                            'Tu peux écrire librement. Elunai utilisera ces détails pour personnaliser les histoires.',
+                            style: Theme.of(context).textTheme.bodySmall
+                                ?.copyWith(
+                                  color: ElunaiColors.storybookInkMuted,
+                                  height: 1.35,
+                                ),
+                          ),
                         ],
                       ),
                     ),
                   if (_currentStep == 1) ...[
                     _SectionCard(
-                      title: 'Guide pour les histoires',
+                      title: 'Préférences d’histoire',
                       subtitle:
-                          'Touche une idée pour l’ajouter, ou écris librement (virgules ou lignes).',
+                          'Choisis jusqu’à 3 univers. Tu pourras modifier plus tard.',
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.stretch,
                         children: [
-                          LunoraTextField(
-                            controller: _preferredThemes,
-                            label: 'Thème principal',
-                            hint: 'ex. animaux de la forêt, océan calme…',
-                          ),
-                          const SizedBox(height: AppSizes.sm),
-                          _ChipSuggestions(
-                            options: kThemeSuggestionChips,
-                            onSelected: (value) =>
-                                _appendChipValue(_preferredThemes, value),
-                          ),
-                          const SizedBox(height: AppSizes.md),
-                          LunoraTextField(
-                            controller: _personalityTraits,
-                            label: 'Personnage principal',
-                            hint: 'ex. un chat curieux, ta fille courageuse…',
-                          ),
-                          const SizedBox(height: AppSizes.sm),
-                          _ChipSuggestions(
-                            options: kCharacterSuggestionChips,
-                            onSelected: (value) =>
-                                _appendChipValue(_personalityTraits, value),
-                          ),
-                          const SizedBox(height: AppSizes.md),
-                          DropdownButtonFormField<String>(
-                            value: _storyStyle,
-                            decoration: const InputDecoration(
-                              labelText: 'Style d’histoire',
-                            ),
-                            items: kStoryStyleOptions
-                                .map(
-                                  (s) => DropdownMenuItem(
-                                    value: s,
-                                    child: Text(s),
-                                  ),
-                                )
-                                .toList(),
-                            onChanged: (v) =>
-                                setState(() => _storyStyle = v ?? _storyStyle),
-                          ),
-                          const SizedBox(height: AppSizes.md),
                           Text(
-                            'Univers du soir',
-                            style: Theme.of(context).textTheme.titleSmall
-                                ?.copyWith(
-                                  color: LunoraColors.storybookInk,
-                                  fontWeight: FontWeight.w800,
-                                ),
-                          ),
-                          const SizedBox(height: AppSizes.xs),
-                          Text(
-                            'Une ambiance par soir — Elunai s’en inspire pour les détails (modifiable plus tard).',
+                            '${_universes.length}/3 univers sélectionnés',
                             style: Theme.of(context).textTheme.bodySmall
                                 ?.copyWith(
-                                  color: LunoraColors.storybookInkMuted,
-                                  height: 1.35,
+                                  color: ElunaiColors.storybookInkMuted,
+                                  fontWeight: FontWeight.w700,
                                 ),
                           ),
                           const SizedBox(height: AppSizes.sm),
-                          ...kUniverseChoices.map(_universeTile),
-                          const SizedBox(height: AppSizes.md),
-                          DropdownButtonFormField<StoryTone>(
-                            value: _tone,
-                            decoration: const InputDecoration(labelText: 'Ton'),
-                            isExpanded: true,
-                            items: kToneChoices
-                                .map(
-                                  (t) => DropdownMenuItem(
-                                    value: t,
-                                    child: Text(t.displayLabel),
-                                  ),
-                                )
+                          GridView.count(
+                            crossAxisCount: 2,
+                            shrinkWrap: true,
+                            physics: const NeverScrollableScrollPhysics(),
+                            crossAxisSpacing: AppSizes.sm,
+                            mainAxisSpacing: AppSizes.sm,
+                            childAspectRatio: 1.72,
+                            children: kUniverseChoices
+                                .map(_universeTile)
                                 .toList(),
-                            onChanged: (v) =>
-                                setState(() => _tone = v ?? _tone),
                           ),
                         ],
                       ),
@@ -610,42 +583,75 @@ class _ChildProfileSetupScreenState
                   ],
                   if (_currentStep == 2) ...[
                     _SectionCard(
-                      title: 'Résumé avant sauvegarde',
+                      title: 'Personnage principal',
                       subtitle:
-                          'Vérifie les repères principaux. Les détails restent modifiables plus tard.',
+                          'Choisis le héros qui accompagnera les histoires.',
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.stretch,
                         children: [
-                          _ProfileSummaryRow(
-                            icon: Icons.person_rounded,
-                            label: 'Enfant',
-                            value: _firstName.text.trim().isEmpty
-                                ? 'Prénom à compléter'
-                                : _firstName.text.trim(),
+                          for (final character in kCharacterChoices) ...[
+                            _ChoiceCard(
+                              label: character,
+                              icon: Icons.face_retouching_natural_rounded,
+                              selected: _mainCharacter == character,
+                              onTap: () =>
+                                  setState(() => _mainCharacter = character),
+                            ),
+                            const SizedBox(height: AppSizes.sm),
+                          ],
+                          ElunaiTextField(
+                            controller: _otherCharacter,
+                            label: 'Autre personnage',
+                            hint:
+                                'Exemple : un renard gentil, une licorne calme, un robot protecteur…',
                           ),
-                          _ProfileSummaryRow(
-                            icon: Icons.palette_rounded,
-                            label: 'Style',
-                            value: _storyStyle,
-                          ),
-                          _ProfileSummaryRow(
-                            icon: Icons.explore_rounded,
-                            label: 'Univers',
-                            value: _universe.displayName,
-                          ),
-                          _ProfileSummaryRow(
-                            icon: Icons.record_voice_over_rounded,
-                            label: 'Ton',
-                            value: _tone.displayLabel,
+                        ],
+                      ),
+                    ),
+                  ],
+                  if (_currentStep == 3) ...[
+                    _SectionCard(
+                      title: 'Ambiance du soir',
+                      subtitle:
+                          'Une ambiance rassurante reste sélectionnée par défaut.',
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          GridView.count(
+                            crossAxisCount: 2,
+                            shrinkWrap: true,
+                            physics: const NeverScrollableScrollPhysics(),
+                            crossAxisSpacing: AppSizes.sm,
+                            mainAxisSpacing: AppSizes.sm,
+                            childAspectRatio: 1.9,
+                            children: [
+                              for (final tone in kToneChoices)
+                                _ChoiceCard(
+                                  label: tone.displayLabel,
+                                  icon: Icons.nights_stay_rounded,
+                                  selected: _tone == tone,
+                                  onTap: () => setState(() => _tone = tone),
+                                ),
+                            ],
                           ),
                           const SizedBox(height: AppSizes.md),
-                          LunoraTextField(
-                            controller: _extraStoryHints,
-                            label: 'Notes libres pour Elunai',
-                            hint:
-                                'Ex. éviter les loups, valoriser le partage, inclure le doudou préféré…',
-                            maxLines: 5,
-                            minLines: 3,
+                          DropdownButtonFormField<String>(
+                            value: _storyStyle,
+                            isExpanded: true,
+                            decoration: const InputDecoration(
+                              labelText: 'Style d’histoire',
+                            ),
+                            items: kStoryStyleOptions
+                                .map(
+                                  (style) => DropdownMenuItem(
+                                    value: style,
+                                    child: Text(style),
+                                  ),
+                                )
+                                .toList(),
+                            onChanged: (value) => setState(
+                              () => _storyStyle = value ?? _storyStyle,
+                            ),
                           ),
                         ],
                       ),
@@ -703,7 +709,7 @@ class _ProfileFlowHeader extends StatelessWidget {
 
   final int currentStep;
 
-  static const _labels = ['Profil', 'Histoire', 'Notes'];
+  static const _labels = ['Profil', 'Univers', 'Héros', 'Ambiance'];
 
   @override
   Widget build(BuildContext context) {
@@ -723,8 +729,8 @@ class _ProfileFlowHeader extends StatelessWidget {
                       decoration: BoxDecoration(
                         borderRadius: BorderRadius.circular(999),
                         color: i <= currentStep
-                            ? LunoraColors.forestGreen
-                            : LunoraColors.storybookInkMuted.withValues(
+                            ? ElunaiColors.forestGreen
+                            : ElunaiColors.storybookInkMuted.withValues(
                                 alpha: 0.18,
                               ),
                       ),
@@ -734,8 +740,8 @@ class _ProfileFlowHeader extends StatelessWidget {
                       _labels[i],
                       style: theme.textTheme.labelSmall?.copyWith(
                         color: i == currentStep
-                            ? LunoraColors.forestGreen
-                            : LunoraColors.storybookInkMuted,
+                            ? ElunaiColors.forestGreen
+                            : ElunaiColors.storybookInkMuted,
                         fontWeight: FontWeight.w800,
                       ),
                     ),
@@ -751,51 +757,11 @@ class _ProfileFlowHeader extends StatelessWidget {
           'Étape ${currentStep + 1}/${_labels.length}',
           textAlign: TextAlign.center,
           style: theme.textTheme.bodySmall?.copyWith(
-            color: LunoraColors.storybookInkMuted,
+            color: ElunaiColors.storybookInkMuted,
             fontWeight: FontWeight.w700,
           ),
         ),
       ],
-    );
-  }
-}
-
-class _StoryDefaultsCard extends StatelessWidget {
-  const _StoryDefaultsCard();
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(AppSizes.md),
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(20),
-        color: LunoraColors.honeyYellow.withValues(alpha: 0.18),
-        border: Border.all(
-          color: LunoraColors.honeyYellowDeep.withValues(alpha: 0.28),
-        ),
-      ),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Icon(
-            Icons.auto_stories_rounded,
-            color: LunoraColors.forestGreen,
-          ),
-          const SizedBox(width: AppSizes.sm),
-          Expanded(
-            child: Text(
-              'Format par défaut : série en 7 chapitres, un chapitre par soir, lecture environ 10 minutes.',
-              style: theme.textTheme.bodySmall?.copyWith(
-                color: LunoraColors.storybookInk,
-                height: 1.35,
-                fontWeight: FontWeight.w700,
-              ),
-            ),
-          ),
-        ],
-      ),
     );
   }
 }
@@ -820,12 +786,12 @@ class _SectionCard extends StatelessWidget {
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(24),
         color: light
-            ? LunoraColors.storybookSurface
-            : LunoraColors.nightBlueLift.withValues(alpha: 0.55),
+            ? ElunaiColors.storybookSurface
+            : ElunaiColors.nightBlueLift.withValues(alpha: 0.55),
         border: Border.all(
           color: light
-              ? LunoraColors.storybookInkMuted.withValues(alpha: 0.12)
-              : LunoraColors.mist.withValues(alpha: 0.14),
+              ? ElunaiColors.storybookInkMuted.withValues(alpha: 0.12)
+              : ElunaiColors.mist.withValues(alpha: 0.14),
         ),
       ),
       child: Column(
@@ -834,7 +800,7 @@ class _SectionCard extends StatelessWidget {
           Text(
             title,
             style: theme.textTheme.titleMedium?.copyWith(
-              color: light ? LunoraColors.storybookInk : LunoraColors.warmBeige,
+              color: light ? ElunaiColors.storybookInk : ElunaiColors.warmBeige,
               fontWeight: FontWeight.w700,
             ),
           ),
@@ -843,8 +809,8 @@ class _SectionCard extends StatelessWidget {
             subtitle,
             style: theme.textTheme.bodySmall?.copyWith(
               color: light
-                  ? LunoraColors.storybookInkMuted
-                  : LunoraColors.mist.withValues(alpha: 0.78),
+                  ? ElunaiColors.storybookInkMuted
+                  : ElunaiColors.mist.withValues(alpha: 0.78),
               height: 1.35,
             ),
           ),
@@ -856,88 +822,63 @@ class _SectionCard extends StatelessWidget {
   }
 }
 
-class _ProfileSummaryRow extends StatelessWidget {
-  const _ProfileSummaryRow({
+class _ChoiceCard extends StatelessWidget {
+  const _ChoiceCard({
     required this.icon,
     required this.label,
-    required this.value,
+    required this.selected,
+    required this.onTap,
   });
 
   final IconData icon;
   final String label;
-  final String value;
+  final bool selected;
+  final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    return Padding(
-      padding: const EdgeInsets.only(bottom: AppSizes.sm),
-      child: Row(
-        children: [
-          Icon(icon, size: 18, color: LunoraColors.forestGreen),
-          const SizedBox(width: AppSizes.sm),
-          Expanded(
-            child: Text(
-              label,
-              style: theme.textTheme.labelMedium?.copyWith(
-                color: LunoraColors.storybookInkMuted,
-                fontWeight: FontWeight.w800,
-              ),
-            ),
-          ),
-          Flexible(
-            flex: 2,
-            child: Text(
-              value,
-              textAlign: TextAlign.right,
-              maxLines: 2,
-              overflow: TextOverflow.ellipsis,
-              style: theme.textTheme.bodySmall?.copyWith(
-                color: LunoraColors.storybookInk,
-                fontWeight: FontWeight.w900,
-              ),
-            ),
-          ),
-        ],
+    return Material(
+      color: selected
+          ? ElunaiColors.forestGreen.withValues(alpha: 0.09)
+          : ElunaiColors.storybookSurface,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(16),
+        side: BorderSide(
+          color: selected
+              ? ElunaiColors.forestGreen
+              : ElunaiColors.storybookInkMuted.withValues(alpha: 0.18),
+          width: selected ? 2 : 1,
+        ),
       ),
-    );
-  }
-}
-
-class _ChipSuggestions extends StatelessWidget {
-  const _ChipSuggestions({required this.options, required this.onSelected});
-
-  final List<String> options;
-  final ValueChanged<String> onSelected;
-
-  @override
-  Widget build(BuildContext context) {
-    final light = Theme.of(context).brightness == Brightness.light;
-    return Wrap(
-      spacing: AppSizes.sm,
-      runSpacing: AppSizes.xs,
-      children: [
-        for (final option in options)
-          ActionChip(
-            label: Text(option),
-            onPressed: () => onSelected(option),
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(999),
-              side: BorderSide(
-                color: light
-                    ? LunoraColors.forestGreen.withValues(alpha: 0.22)
-                    : LunoraColors.mist.withValues(alpha: 0.2),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(16),
+        onTap: onTap,
+        child: Padding(
+          padding: const EdgeInsets.all(AppSizes.sm),
+          child: Row(
+            children: [
+              Icon(icon, size: 21, color: ElunaiColors.forestGreen),
+              const SizedBox(width: AppSizes.sm),
+              Expanded(
+                child: Text(
+                  label,
+                  style: theme.textTheme.labelMedium?.copyWith(
+                    color: ElunaiColors.storybookInk,
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
               ),
-            ),
-            backgroundColor: light
-                ? LunoraColors.storybookCreamDeep
-                : LunoraColors.nightBlue.withValues(alpha: 0.45),
-            labelStyle: Theme.of(context).textTheme.labelSmall?.copyWith(
-              color: light ? LunoraColors.storybookInk : LunoraColors.warmBeige,
-              fontWeight: FontWeight.w600,
-            ),
+              if (selected)
+                const Icon(
+                  Icons.check_circle_rounded,
+                  size: 19,
+                  color: ElunaiColors.forestGreen,
+                ),
+            ],
           ),
-      ],
+        ),
+      ),
     );
   }
 }

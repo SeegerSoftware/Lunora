@@ -1,5 +1,6 @@
 import os
 import sys
+from datetime import datetime, timezone
 from pathlib import Path
 
 import pytest
@@ -13,10 +14,12 @@ os.environ["OPENAI_MOCK"] = "true"
 os.environ["STRIPE_MOCK"] = "true"
 os.environ["FIRESTORE_EMULATOR_HOST"] = "localhost:8080"
 os.environ["ALLOW_TEST_APP_CHECK"] = "true"
+os.environ["ALLOW_TEST_SCHEDULER_TOKEN"] = "true"
 os.environ["GENERATION_RATE_LIMIT_PER_HOUR"] = "0"
 
 from app.main import app  # noqa: E402
 from app.rate_limit import check_generation_rate_limit  # noqa: E402
+from app.daily_stories import _publish_for_child  # noqa: E402
 from app.story_generation import (  # noqa: E402
     _corrective_story_prompt,
     _mock_story,
@@ -24,6 +27,7 @@ from app.story_generation import (  # noqa: E402
     _story_prompt,
     _story_quality_issues,
 )
+from scripts.provision_admin import provision_admin  # noqa: E402
 
 
 client = TestClient(app)
@@ -130,6 +134,102 @@ def test_stories_generate_requires_firebase_token():
     response = client.post("/stories/generate", json={})
 
     assert response.status_code == 401
+
+
+def test_daily_story_publish_requires_scheduler_token():
+    response = client.post("/internal/daily-stories/publish")
+
+    assert response.status_code == 401
+
+
+def test_daily_story_publish_accepts_scheduler_token(monkeypatch):
+    monkeypatch.setattr(
+        "app.main.publish_daily_stories",
+        lambda: {"dateKey": "2026-05-31", "created": 1},
+    )
+
+    response = client.post(
+        "/internal/daily-stories/publish",
+        headers={"Authorization": "Bearer test:scheduler"},
+    )
+
+    assert response.status_code == 200
+    assert response.json()["created"] == 1
+
+
+def test_daily_story_publication_is_idempotent(monkeypatch):
+    documents = {}
+    notifications = []
+
+    class FakeSnap:
+        def __init__(self, path):
+            self.path = path
+
+        @property
+        def exists(self):
+            return self.path in documents
+
+        def to_dict(self):
+            return documents.get(self.path)
+
+    class FakeRef:
+        def __init__(self, path):
+            self.path = path
+
+        def get(self):
+            return FakeSnap(self.path)
+
+    class FakeCollection:
+        def __init__(self, name):
+            self.name = name
+
+        def document(self, doc_id):
+            return FakeRef(f"{self.name}/{doc_id}")
+
+    class FakeBatch:
+        def __init__(self):
+            self.writes = []
+
+        def set(self, ref, values, merge=False):
+            self.writes.append((ref.path, values, merge))
+
+        def commit(self):
+            for path, values, merge in self.writes:
+                documents[path] = {**documents.get(path, {}), **values} if merge else values
+
+    class FakeDb:
+        def collection(self, name):
+            return FakeCollection(name)
+
+        def batch(self):
+            return FakeBatch()
+
+    monkeypatch.setattr(
+        "app.daily_stories.generate_story",
+        lambda _payload: {
+            "title": "Histoire du soir",
+            "content": "Contenu",
+            "summary": "Resume",
+            "theme": "Nature",
+            "tone": "reassuring",
+            "estimatedReadingMinutes": 10,
+        },
+    )
+    monkeypatch.setattr(
+        "app.daily_stories._notify_story_ready",
+        lambda *_args, **kwargs: notifications.append(kwargs["story_id"]) or 1,
+    )
+    child = {
+        "id": "child-1",
+        "userId": "user-1",
+        "firstName": "Lina",
+        "storyFormat": "dailyStandalone",
+    }
+    now = datetime(2026, 5, 31, 10, 0, tzinfo=timezone.utc)
+
+    assert _publish_for_child(FakeDb(), child, date_key="2026-05-31", now=now) == "created"
+    assert _publish_for_child(FakeDb(), child, date_key="2026-05-31", now=now) == "skipped"
+    assert notifications == ["story_user-1_child-1_2026-05-31"]
 
 
 def test_stories_generate_with_test_token_returns_story():
@@ -323,3 +423,58 @@ def test_delete_account_deletes_user_scoped_data(monkeypatch):
 
     assert response.status_code == 200
     assert "auth/user-1" in deletes
+
+
+def test_provision_admin_preserves_claims_and_activates_access(monkeypatch):
+    writes = []
+    claims = []
+
+    class FakeMetadata:
+        creation_timestamp = 1_700_000_000_000
+
+    class FakeUser:
+        uid = "admin-user"
+        custom_claims = {"support": True}
+        user_metadata = FakeMetadata()
+
+    class FakeAuth:
+        class UserNotFoundError(Exception):
+            pass
+
+        def get_user_by_email(self, email):
+            assert email == "admin@example.com"
+            return FakeUser()
+
+        def set_custom_user_claims(self, uid, value):
+            claims.append((uid, value))
+
+    class FakeDoc:
+        def __init__(self, path):
+            self.path = path
+
+        def set(self, data, merge=False):
+            writes.append((self.path, data, merge))
+
+    class FakeCollection:
+        def __init__(self, name):
+            self.name = name
+
+        def document(self, doc_id):
+            return FakeDoc(f"{self.name}/{doc_id}")
+
+    class FakeDb:
+        def collection(self, name):
+            return FakeCollection(name)
+
+    monkeypatch.setattr("scripts.provision_admin._firebase_auth", lambda: FakeAuth())
+    monkeypatch.setattr("scripts.provision_admin.firestore_client", lambda: FakeDb())
+
+    uid, created = provision_admin(" ADMIN@example.com ", create_if_missing=False)
+
+    assert uid == "admin-user"
+    assert created is False
+    assert claims == [("admin-user", {"support": True, "admin": True})]
+    assert writes[0][0] == "users/admin-user"
+    assert writes[0][1]["isAdmin"] is True
+    assert writes[1][0] == "subscriptions/admin-user"
+    assert writes[1][1]["status"] == "active"

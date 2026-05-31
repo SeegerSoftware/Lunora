@@ -1,5 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:lunora_v00/shared/models/series_state.dart';
+import 'package:elunai_v00/shared/models/series_state.dart';
 
 void main() {
   test('SeriesBible accepts structured narrative fields from the backend', () {

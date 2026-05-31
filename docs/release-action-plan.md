@@ -1,6 +1,6 @@
-# Plan d'actions release Lunora
+# Plan d'actions release Elunai
 
-Objectif : rendre Lunora publiable App Store / Google Play avec un niveau professionnel.
+Objectif : rendre Elunai publiable App Store / Google Play avec un niveau professionnel.
 
 ## Actions à faire par le propriétaire du projet
 
@@ -20,7 +20,7 @@ Ces actions nécessitent tes comptes, tes secrets, ou des décisions business/l�
 - Générer une nouvelle clé OpenAI.
 - Révoquer toute ancienne clé OpenAI exposée ou utilisée côté client.
 - Créer une clé Stripe production.
-- Créer le Price ID Stripe production pour l'abonnement Lunora.
+- Créer le Price ID Stripe production pour l'abonnement Elunai.
 - Créer un service account Firebase Admin.
 - Stocker le fichier service account uniquement côté serveur.
 - Ne jamais mettre ces secrets dans `dart_defines.json`, GitHub, Cursor, Flutter ou l'app mobile.
@@ -42,7 +42,7 @@ CORS_ALLOWED_ORIGINS=https://ton-domaine
 
 ### 3. Stripe
 
-- Créer le produit Stripe `Lunora`.
+- Créer le produit Stripe `Elunai`.
 - Créer le prix mensuel correspondant.
 - Copier le `price_id` dans `STRIPE_PRICE_ID_ELUNAI`.
 - Déclarer le webhook Stripe vers :
@@ -85,7 +85,7 @@ https://ton-backend/stripe/webhook
 
 ### 6. Store listing
 
-- Choisir le nom final : Lunora ou Elunai.
+- Utiliser le nom final `Elunai` sur tous les supports publics.
 - Harmoniser le branding partout.
 - Préparer icône app.
 - Préparer screenshots Android.

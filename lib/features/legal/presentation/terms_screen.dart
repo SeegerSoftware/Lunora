@@ -4,8 +4,8 @@ import '../../../core/theme/spacing.dart';
 import '../../../core/theme/text_styles.dart';
 import '../../../routing/safe_navigation.dart';
 import '../../../shared/widgets/elunai_layout.dart';
-import '../../../shared/widgets/lunora_fade_in.dart';
-import '../../../shared/widgets/lunora_screen_shell.dart';
+import '../../../shared/widgets/elunai_fade_in.dart';
+import '../../../shared/widgets/elunai_screen_shell.dart';
 
 class TermsScreen extends StatelessWidget {
   const TermsScreen({super.key});
@@ -26,13 +26,13 @@ class TermsScreen extends StatelessWidget {
           onPressed: () => context.safePopOrGo('/welcome'),
         ),
       ),
-      body: LunoraScreenShell(
+      body: ElunaiScreenShell(
         showStarfield: true,
         child: SafeArea(
           child: ListView(
-            padding: LunoraSpacing.screen,
+            padding: ElunaiSpacing.screen,
             children: [
-              LunoraFadeIn(
+              ElunaiFadeIn(
                 child: ConstrainedBox(
                   constraints: const BoxConstraints(maxWidth: 760),
                   child: Column(
@@ -40,23 +40,23 @@ class TermsScreen extends StatelessWidget {
                     children: [
                       Text(
                         'Conditions générales d’utilisation',
-                        style: LunoraTextStyles.sectionTitle(theme.textTheme),
+                        style: ElunaiTextStyles.sectionTitle(theme.textTheme),
                       ),
-                      const SizedBox(height: LunoraSpacing.xs),
+                      const SizedBox(height: ElunaiSpacing.xs),
                       Text(
                         'Version du $versionLabel',
                         style: _mutedStyle(theme),
                       ),
-                      const SizedBox(height: LunoraSpacing.lg),
+                      const SizedBox(height: ElunaiSpacing.lg),
                       _LegalNotice(
                         text:
-                            'Ces CGU encadrent l’accès et l’utilisation de l’application Elunai, aussi appelée Lunora dans certains supports de projet. Elles ne remplacent pas une politique de confidentialité, des mentions légales complètes ni les conditions de la boutique d’applications utilisée.',
+                            'Ces CGU encadrent l’accès et l’utilisation de l’application Elunai, aussi appelée Elunai dans certains supports de projet. Elles ne remplacent pas une politique de confidentialité, des mentions légales complètes ni les conditions de la boutique d’applications utilisée.',
                       ),
-                      const SizedBox(height: LunoraSpacing.lg),
+                      const SizedBox(height: ElunaiSpacing.lg),
                       ..._sections.map(
                         (section) => _TermsSection(section: section),
                       ),
-                      const SizedBox(height: LunoraSpacing.xl),
+                      const SizedBox(height: ElunaiSpacing.xl),
                       Center(
                         child: TextButton.icon(
                           onPressed: () => context.safePopOrGo('/welcome'),
@@ -85,15 +85,15 @@ class _TermsSection extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     return Padding(
-      padding: const EdgeInsets.only(bottom: LunoraSpacing.lg),
+      padding: const EdgeInsets.only(bottom: ElunaiSpacing.lg),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(section.title, style: _titleStyle(theme)),
-          const SizedBox(height: LunoraSpacing.xs),
+          const SizedBox(height: ElunaiSpacing.xs),
           ...section.paragraphs.map(
             (paragraph) => Padding(
-              padding: const EdgeInsets.only(bottom: LunoraSpacing.sm),
+              padding: const EdgeInsets.only(bottom: ElunaiSpacing.sm),
               child: Text(paragraph, style: _bodyStyle(theme)),
             ),
           ),
@@ -113,14 +113,14 @@ class _LegalNotice extends StatelessWidget {
     final theme = Theme.of(context);
     return DecoratedBox(
       decoration: BoxDecoration(
-        color: LunoraColors.nightBlueLift.withValues(alpha: 0.10),
-        borderRadius: LunoraSpacing.radiusMd,
+        color: ElunaiColors.nightBlueLift.withValues(alpha: 0.10),
+        borderRadius: ElunaiSpacing.radiusMd,
         border: Border.all(
-          color: LunoraColors.forestGreen.withValues(alpha: 0.22),
+          color: ElunaiColors.forestGreen.withValues(alpha: 0.22),
         ),
       ),
       child: Padding(
-        padding: const EdgeInsets.all(LunoraSpacing.md),
+        padding: const EdgeInsets.all(ElunaiSpacing.md),
         child: Text(text, style: _bodyStyle(theme)),
       ),
     );
@@ -129,7 +129,7 @@ class _LegalNotice extends StatelessWidget {
 
 TextStyle? _titleStyle(ThemeData theme) {
   return theme.textTheme.titleSmall?.copyWith(
-    color: LunoraColors.storybookInk,
+    color: ElunaiColors.storybookInk,
     fontWeight: FontWeight.w900,
     height: 1.25,
   );
@@ -137,14 +137,14 @@ TextStyle? _titleStyle(ThemeData theme) {
 
 TextStyle? _bodyStyle(ThemeData theme) {
   return theme.textTheme.bodyMedium?.copyWith(
-    color: LunoraColors.storybookInk.withValues(alpha: 0.82),
+    color: ElunaiColors.storybookInk.withValues(alpha: 0.82),
     height: 1.5,
   );
 }
 
 TextStyle? _mutedStyle(ThemeData theme) {
   return theme.textTheme.bodySmall?.copyWith(
-    color: LunoraColors.storybookInkMuted,
+    color: ElunaiColors.storybookInkMuted,
     height: 1.4,
   );
 }

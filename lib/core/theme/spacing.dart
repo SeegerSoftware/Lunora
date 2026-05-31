@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
 /// Espacements et rayons cohérents (UI magique / parental).
-abstract final class LunoraSpacing {
+abstract final class ElunaiSpacing {
   static const double xxs = 4;
   static const double xs = 6;
   static const double sm = 10;
