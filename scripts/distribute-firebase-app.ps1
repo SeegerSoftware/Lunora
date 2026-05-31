@@ -30,6 +30,7 @@ $operation = Invoke-RestMethod `
     -Headers $headers `
     -ContentType "application/vnd.android.package-archive" `
     -InFile $resolvedApk
+Write-Host "Upload Firebase App Distribution soumis : $($operation.name)"
 
 try {
     for ($attempt = 0; $attempt -lt 30 -and -not $operation.done; $attempt++) {
@@ -42,11 +43,16 @@ try {
 } catch {
     Write-Host "Lecture de l'operation interdite. Verification de la release la plus recente..."
     Start-Sleep -Seconds 3
-    $latest = Invoke-RestMethod `
-        -Method Get `
-        -Uri "https://firebaseappdistribution.googleapis.com/v1/$appResource/releases?pageSize=1" `
-        -Headers @{ Authorization = "Bearer $token" }
-    $release = $latest.releases[0]
+    try {
+        $latest = Invoke-RestMethod `
+            -Method Get `
+            -Uri "https://firebaseappdistribution.googleapis.com/v1/$appResource/releases?pageSize=1" `
+            -Headers @{ Authorization = "Bearer $token" }
+        $release = $latest.releases[0]
+    } catch {
+        Write-Host "Upload soumis. Confirmation impossible avec les droits IAM actuels."
+        return
+    }
 }
 
 if (-not $release -and -not $operation.done) {
