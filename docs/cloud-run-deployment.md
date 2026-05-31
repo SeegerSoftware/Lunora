@@ -37,20 +37,23 @@ gcloud projects add-iam-policy-binding lunora-adb24 `
   --role="roles/run.builder"
 ```
 
-Le meme compte de service est aussi utilise par la revision Cloud Run par defaut. Il doit pouvoir lire les secrets injectes dans l'environnement :
+Creer un compte dedie pour l'execution Cloud Run :
 
 ```powershell
+gcloud iam service-accounts create elunai-api `
+  --display-name="Elunai Cloud Run runtime"
+
 gcloud projects add-iam-policy-binding lunora-adb24 `
-  --member="serviceAccount:94004835189-compute@developer.gserviceaccount.com" `
+  --member="serviceAccount:elunai-api@lunora-adb24.iam.gserviceaccount.com" `
   --role="roles/secretmanager.secretAccessor"
-```
 
-Si le backend ecrit dans Firestore via Firebase Admin, ajouter aussi :
-
-```powershell
 gcloud projects add-iam-policy-binding lunora-adb24 `
-  --member="serviceAccount:94004835189-compute@developer.gserviceaccount.com" `
+  --member="serviceAccount:elunai-api@lunora-adb24.iam.gserviceaccount.com" `
   --role="roles/datastore.user"
+
+gcloud projects add-iam-policy-binding lunora-adb24 `
+  --member="serviceAccount:elunai-api@lunora-adb24.iam.gserviceaccount.com" `
+  --role="roles/firebaseauth.admin"
 ```
 
 ## Secrets
@@ -105,6 +108,7 @@ gcloud run deploy elunai-api `
   --cpu 1 `
   --min-instances 0 `
   --max-instances 10 `
+  --service-account elunai-api@lunora-adb24.iam.gserviceaccount.com `
   --set-env-vars FIREBASE_PROJECT_ID=lunora-adb24,APP_CHECK_ENFORCED=false,GENERATION_RATE_LIMIT_PER_HOUR=12,OPENAI_MODEL=gpt-4o-mini,OPENAI_MAX_TOKENS=4500,OPENAI_TIMEOUT_SECONDS=45,OPENAI_MAX_ATTEMPTS=2,OPENAI_VALIDATION_ATTEMPTS=2,MAX_REQUEST_BODY_BYTES=131072,CORS_ALLOWED_ORIGINS=https://lunora.app;https://www.lunora.app,STRIPE_DEFAULT_PLAN_ID=plan_elunai,STRIPE_SUCCESS_URL=https://lunora.app/#/subscription/success,STRIPE_CANCEL_URL=https://lunora.app/#/subscription/cancel `
   --set-secrets OPENAI_API_KEY=OPENAI_API_KEY:latest,STRIPE_SECRET_KEY=STRIPE_SECRET_KEY:latest,STRIPE_PRICE_ID_ELUNAI=STRIPE_PRICE_ID_ELUNAI:latest,STRIPE_WEBHOOK_SECRET=STRIPE_WEBHOOK_SECRET:latest
 ```
