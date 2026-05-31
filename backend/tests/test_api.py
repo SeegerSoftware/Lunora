@@ -17,7 +17,7 @@ os.environ["GENERATION_RATE_LIMIT_PER_HOUR"] = "0"
 
 from app.main import app  # noqa: E402
 from app.rate_limit import check_generation_rate_limit  # noqa: E402
-from app.story_generation import _mock_story, _story_prompt  # noqa: E402
+from app.story_generation import _mock_story, _normalize_story, _story_prompt  # noqa: E402
 
 
 client = TestClient(app)
@@ -32,7 +32,7 @@ def test_local_fallback_is_long_enough_for_mobile_validation():
     )
 
     assert story["generationSource"] == "backend-fallback"
-    assert len(story["content"].split()) >= 900
+    assert 800 <= len(story["content"].split()) <= 1200
 
 
 def test_story_prompt_includes_minimum_length():
@@ -43,8 +43,18 @@ def test_story_prompt_includes_minimum_length():
         }
     )
 
-    assert "environ 900 mots" in prompt
-    assert "minimum de 675 mots" in prompt
+    assert "entre 800 et 1200 mots" in prompt
+    assert "environ 1000 mots" in prompt
+    assert "10 à 12 paragraphes" in prompt
+
+
+@pytest.mark.parametrize("word_count", [799, 1201])
+def test_story_normalization_rejects_duration_outside_8_to_12_minutes(word_count):
+    with pytest.raises(ValueError):
+        _normalize_story(
+            {"content": "mot " * word_count},
+            {"child": {"storyLengthMinutes": 10}},
+        )
 
 
 def test_rate_limit_is_shared_through_firestore(monkeypatch):

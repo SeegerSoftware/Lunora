@@ -34,10 +34,7 @@ def _story_prompt(payload: dict[str, Any]) -> str:
     if not isinstance(child, dict):
         raise HTTPException(status_code=422, detail="child payload is required")
     age = payload.get("ageYears") or "inconnu"
-    target_words = _fallback_target_words(
-        int(age) if isinstance(age, int) else 6,
-        int(child.get("storyLengthMinutes") or 10),
-    )
+    min_words, target_words, max_words = _story_word_bounds()
     themes = ", ".join(_read_list(child, "preferredThemes")) or "rituel du soir"
     traits = ", ".join(_read_list(child, "personalityTraits")) or "personnage doux"
     avoid = ", ".join(_read_list(child, "avoidThemes")) or "aucun thème précisé"
@@ -66,7 +63,13 @@ Bible de série éventuelle : {json.dumps(bible, ensure_ascii=False) if bible el
 Plan du chapitre courant : {json.dumps(current_plan, ensure_ascii=False) if current_plan else "aucun"}
 Contexte continuité : {payload.get("continuityContext") or ""}
 Mémoire narrative : {memory}
-Longueur cible : environ {target_words} mots, avec un minimum de {round(target_words * 0.75)} mots.
+CONTRAINTE DE LONGUEUR OBLIGATOIRE :
+- Le champ "content" seul doit contenir entre {min_words} et {max_words} mots.
+- Vise environ {target_words} mots pour une lecture de 8 à 12 minutes.
+- Écris 10 à 12 paragraphes développés, avec une vraie progression narrative.
+- Avant de répondre, vérifie silencieusement la longueur de "content".
+- Si le texte est trop court, enrichis les scènes, les descriptions et les dialogues.
+- Ne résume jamais l'histoire et ne renvoie jamais une ébauche.
 
 Réponds avec ce JSON :
 {{
@@ -138,9 +141,7 @@ def _mock_story(payload: dict[str, Any]) -> dict[str, Any]:
     name = _child_label(child)
     chapter = int(payload.get("chapterIndex") or 1)
     total = int(payload.get("totalChapters") or 1)
-    requested_minutes = int(child.get("storyLengthMinutes") or 10)
-    age_years = int(payload.get("ageYears") or 6)
-    target_words = _fallback_target_words(age_years, requested_minutes)
+    _, target_words, _ = _story_word_bounds()
     paragraphs = [
         f"Ce soir, {name} remarque une petite lumière posée près de son oreiller. "
         "Elle brille juste assez pour dessiner un chemin tranquille sur le tapis. "
@@ -212,10 +213,9 @@ def _mock_story(payload: dict[str, Any]) -> dict[str, Any]:
     }
 
 
-def _fallback_target_words(age_years: int, requested_minutes: int) -> int:
-    base = 320 if age_years <= 2 else 600 if age_years <= 5 else 900 if age_years <= 8 else 1150
-    factor = 0.7 if requested_minutes <= 5 else 1.3 if requested_minutes >= 15 else 1.0
-    return round(base * factor)
+def _story_word_bounds() -> tuple[int, int, int]:
+    # Around 100 words/minute keeps the bedtime story within 8 to 12 minutes.
+    return (800, 1000, 1200)
 
 
 def _mock_bible(payload: dict[str, Any]) -> dict[str, Any]:
@@ -298,15 +298,12 @@ def _narrative_list(value: Any) -> list[str]:
 def _normalize_story(result: dict[str, Any], payload: dict[str, Any]) -> dict[str, Any]:
     child = payload.get("child") or {}
     content = _narrative_text(result.get("content"))
-    minimum_words = round(
-        _fallback_target_words(
-            int(payload.get("ageYears") or 6),
-            int(child.get("storyLengthMinutes") or 10),
-        )
-        * 0.75
-    )
-    if len(content.split()) < minimum_words:
-        raise ValueError(f"OpenAI story is too short ({len(content.split())} words)")
+    minimum_words, _, maximum_words = _story_word_bounds()
+    word_count = len(content.split())
+    if word_count < minimum_words:
+        raise ValueError(f"OpenAI story is too short ({word_count} words)")
+    if word_count > maximum_words:
+        raise ValueError(f"OpenAI story is too long ({word_count} words)")
     continuity = result.get("continuityUpdate")
     continuity = continuity if isinstance(continuity, dict) else {}
     for key in (
