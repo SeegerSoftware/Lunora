@@ -27,7 +27,7 @@ final firebaseAuthSyncProvider = Provider<void>((ref) {
         if (ref.read(authSessionProvider) != null) {
           ref.read(authSessionProvider.notifier).syncSignedOutFromFirebase();
         }
-        ref.read(childProfileProvider.notifier).clear();
+        ref.read(childProfilesProvider.notifier).clear();
         ref.read(subscriptionProvider.notifier).clear();
         return;
       }
@@ -53,7 +53,7 @@ class AuthSessionNotifier extends Notifier<UserModel?> {
   /// Firebase a déjà terminé la déconnexion (ex. autre onglet) : vider l’état local sans rappeler [AuthRepository.signOut].
   void syncSignedOutFromFirebase() {
     state = null;
-    ref.read(childProfileProvider.notifier).clear();
+    ref.read(childProfilesProvider.notifier).clear();
     ref.read(subscriptionProvider.notifier).clear();
   }
 
@@ -123,7 +123,7 @@ class AuthSessionNotifier extends Notifier<UserModel?> {
 
   Future<void> _afterAuthChanged(String userId) async {
     await ref
-        .read(childProfileProvider.notifier)
+        .read(childProfilesProvider.notifier)
         .reloadFromRepositoryFor(userId);
     await ref
         .read(subscriptionProvider.notifier)

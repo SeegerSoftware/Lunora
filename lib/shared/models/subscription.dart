@@ -2,6 +2,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:equatable/equatable.dart';
 
 import 'enums/renewal_type.dart';
+import 'enums/subscription_plan.dart';
 import 'enums/subscription_status.dart';
 
 class Subscription extends Equatable {
@@ -20,6 +21,8 @@ class Subscription extends Equatable {
   final DateTime startedAt;
   final DateTime? endsAt;
   final RenewalType renewalType;
+
+  SubscriptionPlan get plan => SubscriptionPlanX.fromPlanId(planId);
 
   Subscription copyWith({
     String? userId,

@@ -90,7 +90,7 @@ void main() {
     await container
         .read(authSessionProvider.notifier)
         .hydrateFromRestoredUser(_user());
-    container.read(childProfileProvider.notifier).hydrate(_profile());
+    container.read(childProfilesProvider.notifier).hydrate(_profile());
 
     await tester.pumpWidget(
       UncontrolledProviderScope(

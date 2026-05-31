@@ -18,17 +18,36 @@ class FirebaseChildProfileRepository implements ChildProfileRepository {
 
   @override
   Future<ChildProfile?> fetchForUser(String userId) async {
+    final profiles = await fetchAllForUser(userId);
+    return profiles.isEmpty ? null : profiles.first;
+  }
+
+  @override
+  Future<List<ChildProfile>> fetchAllForUser(String userId) async {
     try {
       final query = await _db
           .collection(FirestorePaths.childrenProfiles)
           .where('userId', isEqualTo: userId)
-          .limit(1)
           .get();
-      if (query.docs.isEmpty) return null;
-      final doc = query.docs.first;
-      final data = Map<String, dynamic>.from(doc.data());
-      data['id'] = doc.id;
-      return ChildProfile.fromMap(data);
+      final profiles = query.docs.map((doc) {
+        final data = Map<String, dynamic>.from(doc.data());
+        data['id'] = doc.id;
+        return ChildProfile.fromMap(data);
+      }).toList();
+      profiles.sort((a, b) => a.createdAt.compareTo(b.createdAt));
+      return profiles;
+    } catch (e) {
+      throw Exception(FirebaseErrors.firestoreMessage(e));
+    }
+  }
+
+  @override
+  Future<void> delete(ChildProfile profile) async {
+    try {
+      await _db
+          .collection(FirestorePaths.childrenProfiles)
+          .doc(profile.id)
+          .delete();
     } catch (e) {
       throw Exception(FirebaseErrors.firestoreMessage(e));
     }

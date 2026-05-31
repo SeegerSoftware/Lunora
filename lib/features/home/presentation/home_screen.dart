@@ -21,6 +21,7 @@ import '../../../shared/widgets/magical/elunai_progress_bar.dart';
 import '../../../shared/widgets/story_ui_labels.dart';
 import '../../auth/presentation/providers/auth_providers.dart';
 import '../../child_profile/presentation/providers/child_profile_providers.dart';
+import '../../child_profile/presentation/widgets/child_selector.dart';
 import '../../stories/presentation/providers/story_providers.dart';
 
 class HomeScreen extends ConsumerStatefulWidget {
@@ -69,7 +70,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           onSelected: (value) async {
             if (!context.mounted) return;
             if (value == 'profile') {
-              context.push('/setup-child');
+              context.push('/children');
               return;
             }
             if (value == 'sub') {
@@ -82,7 +83,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             }
           },
           itemBuilder: (context) => [
-            const PopupMenuItem(value: 'profile', child: Text('Profil enfant')),
+            const PopupMenuItem(value: 'profile', child: Text('Mes enfants')),
             const PopupMenuItem(value: 'sub', child: Text('Abonnement')),
             const PopupMenuItem(value: 'out', child: Text('Se déconnecter')),
           ],
@@ -150,7 +151,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
               Icons.settings_outlined,
               color: theme.colorScheme.onSurface,
             ),
-            onPressed: () => context.push('/setup-child'),
+            onPressed: () => context.push('/children'),
           ),
         ],
       ),
@@ -196,6 +197,11 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                   compact: true,
                 ),
               ),
+              const SizedBox(height: ElunaiSpacing.sm),
+              const Align(
+                alignment: Alignment.centerLeft,
+                child: ChildSelector(),
+              ),
               const SizedBox(height: ElunaiSpacing.lg),
               ElunaiFadeIn(
                 delay: const Duration(milliseconds: 60),
@@ -237,7 +243,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                 delay: const Duration(milliseconds: 90),
                 child: _QuickActions(
                   onLibrary: () => context.push('/history'),
-                  onProfile: () => context.push('/setup-child'),
+                  onProfile: () => context.push('/children'),
                   onSubscription: () => context.push('/subscription'),
                 ),
               ),

@@ -7,6 +7,7 @@ import '../features/auth/presentation/sign_in_screen.dart';
 import '../features/auth/presentation/sign_up_screen.dart';
 import '../features/auth/presentation/welcome_screen.dart';
 import '../features/child_profile/presentation/child_profile_setup_screen.dart';
+import '../features/child_profile/presentation/children_management_screen.dart';
 import '../features/child_profile/presentation/providers/child_profile_providers.dart';
 import '../features/home/presentation/home_screen.dart';
 import '../features/legal/presentation/terms_screen.dart';
@@ -50,9 +51,21 @@ final goRouterProvider = Provider<GoRouter>((ref) {
       ),
       GoRoute(
         path: '/setup-child',
+        pageBuilder: (context, state) {
+          return elunaiFadePage(
+            key: state.pageKey,
+            child: ChildProfileSetupScreen(
+              childId: state.uri.queryParameters['childId'],
+              createNew: state.uri.queryParameters['new'] == '1',
+            ),
+          );
+        },
+      ),
+      GoRoute(
+        path: '/children',
         pageBuilder: (context, state) => elunaiFadePage(
           key: state.pageKey,
-          child: const ChildProfileSetupScreen(),
+          child: const ChildrenManagementScreen(),
         ),
       ),
       GoRoute(
@@ -109,7 +122,7 @@ final goRouterProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/stripe-checkout',
         pageBuilder: (context, state) {
-          final planId = state.uri.queryParameters['planId'] ?? 'plan_elunai';
+          final planId = state.uri.queryParameters['planId'] ?? 'plan_solo';
           return elunaiFadePage(
             key: state.pageKey,
             child: StripeCheckoutScreen(initialPlanId: planId),

@@ -10,7 +10,7 @@ import '../../../core/theme/colors.dart';
 import '../../../core/theme/spacing.dart';
 import '../../../core/theme/text_styles.dart';
 import '../../../routing/safe_navigation.dart';
-import '../../../shared/models/enums/story_plan.dart';
+import '../../../shared/models/enums/subscription_plan.dart';
 import '../../../shared/widgets/elunai_layout.dart';
 import '../../../shared/widgets/elunai_fade_in.dart';
 import '../../../shared/widgets/elunai_primary_button.dart';
@@ -30,13 +30,13 @@ class StripeCheckoutScreen extends ConsumerStatefulWidget {
 }
 
 class _StripeCheckoutScreenState extends ConsumerState<StripeCheckoutScreen> {
-  late StoryPlan _plan;
+  late SubscriptionPlan _plan;
   var _payBusy = false;
 
   @override
   void initState() {
     super.initState();
-    _plan = StoryPlanX.fromPlanId(widget.initialPlanId);
+    _plan = SubscriptionPlanX.fromPlanId(widget.initialPlanId);
   }
 
   Future<void> _onPayWithStripe() async {
@@ -152,7 +152,7 @@ class _StripeCheckoutScreenState extends ConsumerState<StripeCheckoutScreen> {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              _plan.displayLabel,
+                              _plan.displayName,
                               style: theme.textTheme.titleSmall?.copyWith(
                                 color: ElunaiColors.warmBeige,
                                 fontWeight: FontWeight.w800,
@@ -160,7 +160,7 @@ class _StripeCheckoutScreenState extends ConsumerState<StripeCheckoutScreen> {
                             ),
                             const SizedBox(height: ElunaiSpacing.xs),
                             Text(
-                              'Durée cible ~${_plan.targetStoryMinutes} min / histoire',
+                              '${_plan.dailyStoriesPerChild} histoire par jour par enfant · lecture texte',
                               style: theme.textTheme.bodySmall?.copyWith(
                                 color: ElunaiColors.mist.withValues(
                                   alpha: 0.75,
@@ -169,7 +169,7 @@ class _StripeCheckoutScreenState extends ConsumerState<StripeCheckoutScreen> {
                             ),
                             const SizedBox(height: ElunaiSpacing.xs),
                             Text(
-                              _plan.monthlyPriceLabel,
+                              _plan.priceLabel,
                               style: theme.textTheme.bodyMedium?.copyWith(
                                 color: ElunaiColors.starGoldSoft,
                                 fontWeight: FontWeight.w800,

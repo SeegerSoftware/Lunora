@@ -5,6 +5,7 @@ from typing import Any
 from fastapi import HTTPException, Request
 
 from .auth import firestore_client
+from .plans import normalize_plan_id, plan_config
 
 
 ACTIVE_STATUSES = {"active", "trialing"}
@@ -35,8 +36,8 @@ def _status_from_stripe(raw: str | None) -> str:
 def _plan_id_from_subscription(subscription: dict[str, Any]) -> str:
     metadata_plan = str(subscription.get("metadata", {}).get("planId") or "").strip()
     if metadata_plan:
-        return metadata_plan
-    return os.getenv("STRIPE_DEFAULT_PLAN_ID", "plan_elunai")
+        return normalize_plan_id(metadata_plan)
+    return normalize_plan_id(os.getenv("STRIPE_DEFAULT_PLAN_ID", "plan_solo"))
 
 
 def _uid_from_subscription(subscription: dict[str, Any]) -> str:
@@ -50,6 +51,7 @@ def _write_subscription(subscription: dict[str, Any]) -> None:
     uid = _uid_from_subscription(subscription)
     status = _status_from_stripe(subscription.get("status"))
     plan_id = _plan_id_from_subscription(subscription)
+    config = plan_config(plan_id if status in {"active", "grace"} else "plan_solo")
     started_at = _unix_to_datetime(subscription.get("start_date")) or datetime.now(timezone.utc)
     ends_at = _unix_to_datetime(subscription.get("current_period_end"))
 
@@ -67,6 +69,8 @@ def _write_subscription(subscription: dict[str, Any]) -> None:
     }
     user_doc = {
         "selectedPlan": plan_id if status in {"active", "grace"} else None,
+        "subscriptionPlan": config["subscriptionPlan"],
+        "maxChildren": config["maxChildren"],
         "subscriptionStatus": status,
         "updatedAt": datetime.now(timezone.utc),
     }
@@ -96,6 +100,8 @@ def _delete_or_cancel_subscription(subscription: dict[str, Any]) -> None:
         {
             "selectedPlan": None,
             "subscriptionStatus": "canceled",
+            "subscriptionPlan": "solo",
+            "maxChildren": 1,
             "updatedAt": datetime.now(timezone.utc),
         },
         merge=True,

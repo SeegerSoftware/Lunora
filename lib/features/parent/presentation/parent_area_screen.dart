@@ -123,16 +123,6 @@ class ParentAreaScreen extends ConsumerWidget {
                       onPressed: () => context.push('/history'),
                     ),
                     const SizedBox(height: ElunaiSpacing.sm),
-                    MagicalAppButton(
-                      label: 'Voix de lecture audio',
-                      icon: Icons.record_voice_over_rounded,
-                      variant: MagicalButtonVariant.secondary,
-                      onPressed: () => showDialog<void>(
-                        context: context,
-                        builder: (_) => const AudioVoiceSettingsDialog(),
-                      ),
-                    ),
-                    const SizedBox(height: ElunaiSpacing.sm),
                     if (user != null && AdminConfig.isAdminUser(user)) ...[
                       MagicalAppButton(
                         label: 'Générer une histoire (test)',
@@ -351,7 +341,7 @@ Future<void> _openQuickStoryGenerator({
 
   try {
     final normalized = ChildProfileRules.normalize(profile);
-    await ref.read(childProfileProvider.notifier).upsert(normalized);
+    await ref.read(childProfilesProvider.notifier).upsert(normalized);
     await ref
         .read(storyRepositoryProvider)
         .adminRegenerateTodayStory(user: user, child: normalized);

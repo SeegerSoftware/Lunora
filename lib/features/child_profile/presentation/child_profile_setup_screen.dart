@@ -13,6 +13,7 @@ import '../../../routing/safe_navigation.dart';
 import '../../../shared/models/child_profile.dart';
 import '../../../shared/models/enums/story_format.dart';
 import '../../../shared/models/enums/story_tone.dart';
+import '../../../shared/models/enums/subscription_plan.dart';
 import '../../../shared/models/profile_story_preferences.dart';
 import '../../../shared/widgets/elunai_layout.dart';
 import '../../../shared/widgets/elunai_fade_in.dart';
@@ -22,12 +23,21 @@ import '../../../shared/widgets/elunai_text_field.dart';
 import '../../../shared/widgets/magical/magical.dart';
 import '../../auth/presentation/providers/auth_providers.dart';
 import '../../stories/presentation/providers/story_providers.dart';
+import '../../subscription/presentation/providers/subscription_providers.dart';
+import '../../subscription/services/subscription_service.dart';
 import 'providers/child_profile_providers.dart';
 
 enum _ProfileSaveChoice { nextSeries, restartSeries }
 
 class ChildProfileSetupScreen extends ConsumerStatefulWidget {
-  const ChildProfileSetupScreen({super.key});
+  const ChildProfileSetupScreen({
+    super.key,
+    this.childId,
+    this.createNew = false,
+  });
+
+  final String? childId;
+  final bool createNew;
 
   @override
   ConsumerState<ChildProfileSetupScreen> createState() =>
@@ -87,7 +97,7 @@ class _ChildProfileSetupScreenState
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      final existing = ref.read(childProfileProvider);
+      final existing = _profileBeingEdited();
       if (existing == null) return;
       setState(() {
         _firstName.text = existing.firstName;
@@ -125,6 +135,17 @@ class _ChildProfileSetupScreenState
             : _composeLegacyHints(existing);
       });
     });
+  }
+
+  ChildProfile? _profileBeingEdited() {
+    if (widget.createNew) return null;
+    final profiles = ref.read(childProfilesProvider).profiles;
+    final childId = widget.childId;
+    if (childId == null) return ref.read(childProfileProvider);
+    for (final profile in profiles) {
+      if (profile.id == childId) return profile;
+    }
+    return null;
   }
 
   String _composeLegacyHints(ChildProfile c) {
@@ -310,7 +331,16 @@ class _ChildProfileSetupScreenState
 
     try {
       final now = DateTime.now();
-      final existing = ref.read(childProfileProvider);
+      final existing = _profileBeingEdited();
+      final children = ref.read(childProfilesProvider).profiles;
+      final plan = SubscriptionService.effectivePlan(
+        user: user,
+        subscription: ref.read(subscriptionProvider),
+      );
+      if (existing == null && !plan.canAddChild(children.length)) {
+        _showError(SubscriptionService.childrenLimitMessage(plan));
+        return;
+      }
       final id = existing?.id ?? const Uuid().v4();
       final ex = existing;
       final primaryUniverse = _universes.first;
@@ -369,7 +399,7 @@ class _ChildProfileSetupScreenState
             .read(storyRepositoryProvider)
             .preserveActiveSeriesProfile(user: user, child: existing);
       }
-      await ref.read(childProfileProvider.notifier).upsert(normalized);
+      await ref.read(childProfilesProvider.notifier).upsert(normalized);
       if (existing == null) {
         await ref
             .read(storyRepositoryProvider)
@@ -416,7 +446,7 @@ class _ChildProfileSetupScreenState
 
   @override
   Widget build(BuildContext context) {
-    final existingProfile = ref.watch(childProfileProvider);
+    final existingProfile = widget.createNew ? null : _profileBeingEdited();
     final years = List<int>.generate(18, (i) => DateTime.now().year - i);
 
     return Scaffold(

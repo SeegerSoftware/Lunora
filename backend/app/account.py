@@ -13,6 +13,9 @@ USER_SCOPED_COLLECTIONS = {
     "story_memory_snapshots": "userId",
     "notification_devices": "userId",
     "generation_rate_limits": "uid",
+    "story_daily_quotas": "uid",
+    "product_analytics_events": "userId",
+    "story_generation_metrics": "userId",
 }
 
 

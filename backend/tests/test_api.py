@@ -19,6 +19,8 @@ os.environ["GENERATION_RATE_LIMIT_PER_HOUR"] = "0"
 
 from app.main import app  # noqa: E402
 from app.rate_limit import check_generation_rate_limit  # noqa: E402
+from app.plans import normalize_plan_id, plan_config  # noqa: E402
+from app.child_entitlements import assert_child_is_within_plan  # noqa: E402
 from app.daily_stories import _publish_for_child  # noqa: E402
 from app.story_generation import (  # noqa: E402
     _corrective_story_prompt,
@@ -31,6 +33,56 @@ from scripts.provision_admin import provision_admin  # noqa: E402
 
 
 client = TestClient(app)
+
+
+def test_subscription_plans_are_limited_to_solo_and_family():
+    assert plan_config("plan_solo")["maxChildren"] == 1
+    assert plan_config("plan_family")["maxChildren"] == 4
+    assert normalize_plan_id("plan_elunai") == "plan_solo"
+
+
+def test_solo_rejects_a_second_child_profile():
+    class FakeSnap:
+        def __init__(self, doc_id, data):
+            self.id = doc_id
+            self._data = data
+
+        @property
+        def exists(self):
+            return self._data is not None
+
+        def to_dict(self):
+            return self._data
+
+    class FakeQuery:
+        def stream(self):
+            return [
+                FakeSnap("child-1", {"userId": "user-1"}),
+                FakeSnap("child-2", {"userId": "user-1"}),
+            ]
+
+    class FakeCollection:
+        def __init__(self, name):
+            self.name = name
+
+        def document(self, _doc_id):
+            class FakeDoc:
+                def get(self):
+                    return FakeSnap("user-1", {"maxChildren": 1})
+
+            return FakeDoc()
+
+        def where(self, *_args):
+            return FakeQuery()
+
+    class FakeDb:
+        def collection(self, name):
+            return FakeCollection(name)
+
+    assert_child_is_within_plan(FakeDb(), "user-1", "child-1")
+    with pytest.raises(HTTPException) as exc:
+        assert_child_is_within_plan(FakeDb(), "user-1", "child-2")
+    assert exc.value.status_code == 403
 
 
 def test_local_fallback_is_long_enough_for_mobile_validation():
@@ -54,9 +106,30 @@ def test_story_prompt_includes_minimum_length():
         }
     )
 
-    assert "entre 800 et 1200 mots" in prompt
-    assert "environ 1000 mots" in prompt
+    assert "entre 1000 et 1200 mots" in prompt
+    assert "environ 1100 mots" in prompt
     assert "10 à 12 paragraphes" in prompt
+
+
+@pytest.mark.parametrize(
+    ("age", "expected"),
+    [(1, (300, 400, 500)), (4, (600, 700, 800)), (6, (800, 900, 1000)),
+     (8, (1000, 1100, 1200)), (10, (1200, 1500, 1800))],
+)
+def test_story_age_profiles_follow_product_ranges(age, expected):
+    from app.story_generation import _story_word_bounds
+
+    assert _story_word_bounds(age) == expected
+
+
+def test_mock_story_exposes_quality_and_deferred_media_contract():
+    story = _mock_story({"ageYears": 6, "child": {"firstName": "Lina"}})
+
+    assert 0 <= story["qualityScore"] <= 100
+    assert "structure" in story["qualityDetails"]
+    assert story["coverImageStatus"] == "pending"
+    assert story["coverPrompt"]
+    assert story["audioStatus"] == "unavailable"
 
 
 @pytest.mark.parametrize("word_count", [799, 1201])

@@ -8,6 +8,10 @@ from typing import Any
 
 from fastapi import HTTPException
 
+from .story_age_profile import story_age_profile
+from .story_illustrations import build_cover_prompt
+from .story_quality import evaluate_story_quality
+
 logger = logging.getLogger(__name__)
 
 
@@ -39,7 +43,9 @@ def _story_prompt(payload: dict[str, Any]) -> str:
     if not isinstance(child, dict):
         raise HTTPException(status_code=422, detail="child payload is required")
     age = payload.get("ageYears") or "inconnu"
-    min_words, target_words, max_words = _story_word_bounds()
+    profile = story_age_profile(payload.get("ageYears"))
+    min_words, target_words, max_words = _story_word_bounds(payload.get("ageYears"))
+    paragraph_guidance = "4 à 6" if profile.max_age <= 2 else "7 à 10" if profile.max_age <= 4 else "10 à 12"
     themes = ", ".join(_read_list(child, "preferredThemes")) or "rituel du soir"
     traits = ", ".join(_read_list(child, "personalityTraits")) or "personnage doux"
     familiar = ", ".join(_read_list(child, "familiarElements")) or "éléments familiers du coucher"
@@ -56,6 +62,7 @@ Génère une histoire du soir personnalisée.
 
 Enfant : {_child_label(child)}
 Âge : {age}
+{profile.prompt_block()}
 Langue : {child.get("language", "fr")}
 Thèmes souhaités : {themes}
 Personnage / traits : {traits}
@@ -77,7 +84,7 @@ Mémoire narrative : {memory}
 CONTRAINTE DE LONGUEUR OBLIGATOIRE :
 - Le champ "content" seul doit contenir entre {min_words} et {max_words} mots.
 - Vise environ {target_words} mots pour une lecture de 8 à 12 minutes.
-- Écris 10 à 12 paragraphes développés, avec une vraie progression narrative.
+- Écris {paragraph_guidance} paragraphes adaptés à l'âge, avec une vraie progression narrative.
 - Avant de répondre, vérifie silencieusement la longueur de "content".
 - Si le texte est trop court, enrichis les scènes, les descriptions et les dialogues.
 - Ne résume jamais l'histoire et ne renvoie jamais une ébauche.
@@ -128,6 +135,12 @@ Réponds avec ce JSON :
     "emotionalStep": "...",
     "thingsToRemember": [],
     "thingsToAvoidRepeating": [],
+    "relations": [{{"name": "...", "relationType": "...", "sinceChapter": {chapter_index}}}],
+    "mysteries": [{{"question": "...", "openedAtChapter": {chapter_index}, "mustResolveBeforeChapter": {total_chapters}, "status": "open"}}],
+    "narrativeObjects": [{{"name": "...", "importance": "supporting", "firstSeenChapter": {chapter_index}, "lastSeenChapter": {chapter_index}}}],
+    "emotions": {{"confidence": 0, "courage": 0, "serenity": 0, "curiosity": 0}},
+    "majorEvents": [{{"chapter": {chapter_index}, "event": "...", "impact": "..."}}],
+    "doNotRepeat": [],
     "nextChapterGoal": "..."
   }}
 }}
@@ -178,7 +191,8 @@ def _mock_story(payload: dict[str, Any]) -> dict[str, Any]:
     name = _child_label(child)
     chapter = int(payload.get("chapterIndex") or 1)
     total = int(payload.get("totalChapters") or 1)
-    _, target_words, _ = _story_word_bounds()
+    profile = story_age_profile(payload.get("ageYears"))
+    _, target_words, _ = _story_word_bounds(payload.get("ageYears"))
     paragraphs = [
         f"Ce soir, après avoir rangé ses affaires, {name} remarque près de son "
         "oreiller une petite lueur couleur de miel. Elle ne clignote pas comme une "
@@ -257,7 +271,7 @@ def _mock_story(payload: dict[str, Any]) -> dict[str, Any]:
         if len(" ".join(selected).split()) >= target_words:
             break
     content = "\n\n".join(selected)
-    return {
+    result = {
         "title": f"La lumière douce de {name}",
         "content": content,
         "summary": "Une histoire calme pour terminer la journée.",
@@ -280,11 +294,41 @@ def _mock_story(payload: dict[str, Any]) -> dict[str, Any]:
             "nextChapterGoal": "continuer calmement",
         },
     }
+    quality = evaluate_story_quality(
+        content,
+        child_name=name,
+        universe=str(child.get("universeType") or child.get("preferredUniverse") or ""),
+        profile=profile,
+        continuity_context=str(payload.get("continuityContext") or ""),
+    )
+    result.update(quality.to_dict())
+    result.update(
+        {
+            "coverImageUrl": None,
+            "coverImageStatus": "pending",
+            "coverPrompt": build_cover_prompt(result, child),
+            "audioStatus": "unavailable",
+            "audioUrl": None,
+            "audioVoice": None,
+            "audioDuration": None,
+            "modelUsed": "local-fallback",
+            "promptTokens": 0,
+            "completionTokens": 0,
+            "totalTokens": 0,
+            "estimatedCost": 0.0,
+            "generationTimeMs": 0,
+            "rewriteAttempts": 0,
+            "fallbackUsed": True,
+        }
+    )
+    return result
 
 
-def _story_word_bounds() -> tuple[int, int, int]:
-    # Around 100 words/minute keeps the bedtime story within 8 to 12 minutes.
-    return (800, 1000, 1200)
+def _story_word_bounds(age_years: int | None = None) -> tuple[int, int, int]:
+    if age_years is None:
+        return (800, 1000, 1200)
+    profile = story_age_profile(age_years)
+    return (profile.min_words, profile.target_words, profile.max_words)
 
 
 class StoryQualityError(ValueError):
@@ -342,16 +386,34 @@ def _contains_any(content: str, words: tuple[str, ...]) -> bool:
     return any(_canonical_text(word) in canonical for word in words)
 
 
-def _story_quality_issues(content: str, child_name: str) -> list[str]:
+def _story_quality_issues(
+    content: str,
+    child_name: str,
+    *,
+    age_years: int | None = None,
+    universe: str = "",
+    continuity_context: str = "",
+) -> list[str]:
     issues: list[str] = []
-    minimum_words, _, maximum_words = _story_word_bounds()
+    profile = story_age_profile(8 if age_years is None else age_years)
+    quality = evaluate_story_quality(
+        content,
+        child_name=child_name,
+        universe=universe,
+        profile=profile,
+        continuity_context=continuity_context,
+    )
+    minimum_words, _, maximum_words = _story_word_bounds(age_years)
     word_count = len(content.split())
     if word_count < minimum_words:
         issues.append(f"histoire trop courte : {word_count} mots, minimum {minimum_words}")
     if word_count > maximum_words:
         issues.append(f"histoire trop longue : {word_count} mots, maximum {maximum_words}")
-    if len(_paragraphs(content)) < 7:
-        issues.append("progression narrative insuffisante : moins de 7 paragraphes")
+    minimum_paragraphs = 4 if profile.max_age <= 2 else 6 if profile.max_age <= 4 else 7
+    if len(_paragraphs(content)) < minimum_paragraphs:
+        issues.append(
+            f"progression narrative insuffisante : moins de {minimum_paragraphs} paragraphes"
+        )
     if _repeated_paragraphs(content):
         issues.append("un ou plusieurs paragraphes sont répétés")
     if _repeated_sentences(content):
@@ -369,6 +431,8 @@ def _story_quality_issues(content: str, child_name: str) -> list[str]:
         issues.append("la fin ne revient pas clairement au calme ou au coucher")
     if "Ã" in content or "�" in content:
         issues.append("le texte contient des caractères français mal encodés")
+    if quality.score < 85:
+        issues.extend(warning for warning in quality.warnings if warning not in issues)
     return issues
 
 
@@ -466,7 +530,23 @@ def _narrative_list(value: Any) -> list[str]:
 def _normalize_story(result: dict[str, Any], payload: dict[str, Any]) -> dict[str, Any]:
     child = payload.get("child") or {}
     content = _narrative_text(result.get("content"))
-    issues = _story_quality_issues(content, _child_label(child))
+    profile = story_age_profile(payload.get("ageYears"))
+    universe = str(child.get("universeType") or child.get("preferredUniverse") or "")
+    continuity_context = str(payload.get("continuityContext") or "")
+    quality = evaluate_story_quality(
+        content,
+        child_name=_child_label(child),
+        universe=universe,
+        profile=profile,
+        continuity_context=continuity_context,
+    )
+    issues = _story_quality_issues(
+        content,
+        _child_label(child),
+        age_years=payload.get("ageYears"),
+        universe=universe,
+        continuity_context=continuity_context,
+    )
     if issues:
         raise StoryQualityError(issues)
     continuity = result.get("continuityUpdate")
@@ -479,6 +559,7 @@ def _normalize_story(result: dict[str, Any], payload: dict[str, Any]) -> dict[st
         "openLoops",
         "thingsToRemember",
         "thingsToAvoidRepeating",
+        "doNotRepeat",
     ):
         continuity[key] = _narrative_list(continuity.get(key))
     for key in ("chapterSummary", "emotionalStep", "nextChapterGoal"):
@@ -493,6 +574,14 @@ def _normalize_story(result: dict[str, Any], payload: dict[str, Any]) -> dict[st
             "estimatedReadingMinutes": int(result.get("estimatedReadingMinutes") or child.get("storyLengthMinutes") or 10),
             "continuityUpdate": continuity,
             "generationSource": "backend-openai",
+            "coverImageUrl": None,
+            "coverImageStatus": "pending",
+            "coverPrompt": build_cover_prompt(result, child),
+            "audioStatus": "unavailable",
+            "audioUrl": None,
+            "audioVoice": None,
+            "audioDuration": None,
+            **quality.to_dict(),
         }
     )
     return result
@@ -523,7 +612,23 @@ def _openai_json(prompt: str, *, temperature: float) -> dict[str, Any]:
                 temperature=temperature,
                 **_completion_token_limit(),
             )
-            return _extract_json(response.choices[0].message.content or "")
+            result = _extract_json(response.choices[0].message.content or "")
+            usage = response.usage
+            prompt_tokens = int(getattr(usage, "prompt_tokens", 0) or 0)
+            completion_tokens = int(getattr(usage, "completion_tokens", 0) or 0)
+            result["_providerMetrics"] = {
+                "modelUsed": str(
+                    getattr(response, "model", "")
+                    or os.getenv("OPENAI_MODEL", "gpt-4o-mini")
+                ),
+                "promptTokens": prompt_tokens,
+                "completionTokens": completion_tokens,
+                "totalTokens": int(
+                    getattr(usage, "total_tokens", 0)
+                    or prompt_tokens + completion_tokens
+                ),
+            }
+            return result
         except Exception as exc:  # pragma: no cover - exercised against provider in production
             last_error = exc
             logger.warning("OpenAI attempt %s/%s failed: %s", attempt, attempts, type(exc).__name__)
@@ -535,13 +640,20 @@ def _openai_json(prompt: str, *, temperature: float) -> dict[str, Any]:
 def generate_story(payload: dict[str, Any]) -> dict[str, Any]:
     if os.getenv("OPENAI_MOCK", "").lower() == "true":
         return _mock_story(payload)
+    started = time.perf_counter()
     prompt = _story_prompt(payload)
     for attempt in range(1, 3):
         try:
-            return _normalize_story(
+            result = _normalize_story(
                 _openai_json(prompt, temperature=0.55),
                 payload,
             )
+            provider_metrics = result.pop("_providerMetrics", {})
+            result.update(provider_metrics)
+            result["generationTimeMs"] = int((time.perf_counter() - started) * 1000)
+            result["rewriteAttempts"] = attempt - 1
+            result["fallbackUsed"] = False
+            return result
         except StoryQualityError as exc:
             logger.warning("OpenAI story quality attempt %s/2 rejected: %s", attempt, exc)
             if attempt == 1:
@@ -549,7 +661,10 @@ def generate_story(payload: dict[str, Any]) -> dict[str, Any]:
         except Exception:
             logger.exception("OpenAI story generation attempt %s/2 failed", attempt)
     logger.warning("Returning local story fallback")
-    return _mock_story(payload)
+    result = _mock_story(payload)
+    result["generationTimeMs"] = int((time.perf_counter() - started) * 1000)
+    result["rewriteAttempts"] = 2
+    return result
 
 
 def generate_series_bible(payload: dict[str, Any]) -> dict[str, Any]:

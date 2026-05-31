@@ -44,7 +44,10 @@ abstract class StoryRepository {
     required ChildProfile child,
   });
 
-  Future<List<Story>> historyForUser(String userId);
+  Future<List<Story>> historyForChild({
+    required String userId,
+    required String childId,
+  });
 
   Future<Story?> findById(String storyId);
 

@@ -149,11 +149,15 @@ class FirebaseStoryRepository implements StoryRepository {
   }
 
   @override
-  Future<List<Story>> historyForUser(String userId) async {
+  Future<List<Story>> historyForChild({
+    required String userId,
+    required String childId,
+  }) async {
     try {
       final query = await _db
           .collection(FirestorePaths.stories)
           .where('userId', isEqualTo: userId)
+          .where('childId', isEqualTo: childId)
           .limit(100)
           .get();
       final list = query.docs.map((d) {
@@ -325,6 +329,10 @@ class FirebaseStoryRepository implements StoryRepository {
         seriesId: generated.seriesId ?? seriesId,
         generationSource: generated.generationSource,
         createdAt: DateTime.now(),
+        qualityScore: generated.qualityScore,
+        qualityDetails: generated.qualityDetails,
+        qualityWarnings: generated.qualityWarnings,
+        coverPrompt: generated.coverPrompt,
       );
 
       if (isSerialized && activeSeriesState != null) {
@@ -631,6 +639,10 @@ class FirebaseStoryRepository implements StoryRepository {
       seriesId: generated.seriesId ?? seriesId,
       generationSource: generated.generationSource,
       createdAt: DateTime.now(),
+      qualityScore: generated.qualityScore,
+      qualityDetails: generated.qualityDetails,
+      qualityWarnings: generated.qualityWarnings,
+      coverPrompt: generated.coverPrompt,
     );
   }
 

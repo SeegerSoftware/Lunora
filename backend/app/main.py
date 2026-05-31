@@ -1,18 +1,27 @@
 import os
+from datetime import datetime
+from zoneinfo import ZoneInfo
 
 from fastapi import Depends, FastAPI, HTTPException, Request
 from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
 
 from .account import delete_account_data
-from .auth import verify_app_check, verify_firebase_user
+from .child_entitlements import assert_child_is_within_plan
+from .auth import firestore_client, verify_app_check, verify_firebase_user
 from .models import StoryGenerationPayload, StripeCheckoutPayload
 from .rate_limit import check_generation_rate_limit
 from .daily_stories import publish_daily_stories
+from .generation_metrics import (
+    StoryGenerationMetrics,
+    estimate_cost,
+    persist_generation_metrics,
+)
 from .scheduler_auth import verify_scheduler_request
 from .story_generation import generate_series_bible, generate_story
 from .stripe_checkout import create_checkout_session
 from .subscriptions import handle_stripe_webhook
+from .story_quotas import reserve_daily_story
 
 app = FastAPI(
     title="Elunai API",
@@ -74,6 +83,8 @@ def stories_generate(
     _: None = Depends(verify_app_check),
 ):
     data = payload.model_dump(mode="json", exclude_none=True)
+    uid = str(firebase_user.get("uid") or "")
+    child_id = str(data.get("childId") or data.get("child", {}).get("id") or "").strip()
     child_user_id = data.get("child", {}).get("userId")
     if child_user_id and child_user_id != firebase_user.get("uid"):
         raise HTTPException(status_code=403, detail="Child profile does not belong to token user")
@@ -82,13 +93,52 @@ def stories_generate(
         # The mobile client sends its current user model; the Firebase token is authoritative.
         data = {**data, "user": {**data.get("user", {}), "id": firebase_user.get("uid")}}
 
-    check_generation_rate_limit(str(firebase_user.get("uid")))
+    is_mock = os.getenv("OPENAI_MOCK", "").lower() == "true"
+    if not is_mock:
+        if not child_id:
+            raise HTTPException(status_code=422, detail="childId is required")
+        db = firestore_client()
+        snap = db.collection("children_profiles").document(child_id).get()
+        child = snap.to_dict() if snap.exists else None
+        if not child or child.get("userId") != uid:
+            raise HTTPException(status_code=403, detail="Child profile does not belong to token user")
+        assert_child_is_within_plan(db, uid, child_id)
+        data = {**data, "childId": child_id, "child": {**child, "id": child_id}}
+
+    check_generation_rate_limit(uid)
 
     kind = str(data.get("kind") or "story")
     if kind == "series_bible":
         return {"result": generate_series_bible(data)}
     if kind == "story":
-        return {"result": generate_story(data)}
+        if not is_mock and not firebase_user.get("admin"):
+            date_key = datetime.now(ZoneInfo("Europe/Zurich")).strftime("%Y-%m-%d")
+            reserve_daily_story(uid, child_id, date_key)
+        result = generate_story(data)
+        prompt_tokens = int(result.get("promptTokens") or 0)
+        completion_tokens = int(result.get("completionTokens") or 0)
+        model_used = str(result.get("modelUsed") or "unknown")
+        estimated_cost = estimate_cost(model_used, prompt_tokens, completion_tokens)
+        result["estimatedCost"] = estimated_cost
+        if not is_mock:
+            persist_generation_metrics(
+                firestore_client(),
+                StoryGenerationMetrics(
+                user_id=uid,
+                child_id=child_id,
+                story_id=f"story_{uid}_{child_id}_{data.get('dateKey') or 'on-demand'}",
+                model_used=model_used,
+                prompt_tokens=prompt_tokens,
+                completion_tokens=completion_tokens,
+                total_tokens=int(result.get("totalTokens") or prompt_tokens + completion_tokens),
+                estimated_cost=estimated_cost,
+                generation_time_ms=int(result.get("generationTimeMs") or 0),
+                quality_score=int(result.get("qualityScore") or 0),
+                rewrite_attempts=int(result.get("rewriteAttempts") or 0),
+                fallback_used=bool(result.get("fallbackUsed")),
+                ),
+            )
+        return {"result": result}
     raise HTTPException(status_code=400, detail="Unsupported generation kind")
 
 

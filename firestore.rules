@@ -97,5 +97,26 @@ service cloud.firestore {
       allow update: if ownerMatchesOnWrite();
       allow delete: if ownerMatchesUserId();
     }
+
+    // Reserve cote backend uniquement: un quota quotidien par enfant.
+    match /story_daily_quotas/{quotaId} {
+      allow read, create, update, delete: if false;
+    }
+
+    // Evenements produit minimaux, sans donnees sensibles enfant.
+    match /product_analytics_events/{eventId} {
+      allow create: if ownerMatchesUserIdOnCreate() &&
+          request.resource.data.eventName is string;
+      allow read, update, delete: if false;
+    }
+
+    // Dashboard IA prive, ecrit exclusivement par le backend Admin SDK.
+    match /story_generation_metrics/{metricId} {
+      allow read, create, update, delete: if false;
+    }
+
+    match /story_generation_daily/{dateKey} {
+      allow read, create, update, delete: if false;
+    }
   }
 }

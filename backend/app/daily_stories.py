@@ -6,7 +6,9 @@ from uuid import uuid4
 from zoneinfo import ZoneInfo
 
 from .auth import firestore_client
+from .child_entitlements import max_children_for_user
 from .story_generation import generate_series_bible, generate_story
+from .generation_metrics import StoryGenerationMetrics, estimate_cost, persist_generation_metrics
 
 logger = logging.getLogger(__name__)
 LOCAL_TIMEZONE = ZoneInfo("Europe/Zurich")
@@ -118,6 +120,12 @@ def _advance_state(state: dict[str, Any], generated: dict[str, Any], chapter: in
         "emotionalProgression": _as_list(state.get("emotionalProgression")) + _as_list([update.get("emotionalStep") or ""]),
         "antiRepetitionMemory": _as_list(state.get("antiRepetitionMemory")) + _as_list(update.get("thingsToAvoidRepeating")),
         "nextChapterGoal": "Serie terminee" if completed else str(update.get("nextChapterGoal") or ""),
+        "relations": ((state.get("relations") or []) + (update.get("relations") or []))[-24:],
+        "mysteries": ((state.get("mysteries") or []) + (update.get("mysteries") or []))[-24:],
+        "narrativeObjects": ((state.get("narrativeObjects") or []) + (update.get("narrativeObjects") or []))[-32:],
+        "emotions": update.get("emotions") or state.get("emotions") or {},
+        "majorEvents": ((state.get("majorEvents") or []) + (update.get("majorEvents") or []))[-40:],
+        "doNotRepeat": (_as_list(state.get("doNotRepeat")) + _as_list(update.get("doNotRepeat")))[-40:],
         "updatedAt": now,
         "completedAt": now if completed else None,
     }
@@ -200,6 +208,28 @@ def _publish_for_child(db, child: dict[str, Any], *, date_key: str, now: datetim
         "currentChapterPlan": plan,
     }
     generated = generate_story(payload)
+    model_used = str(generated.get("modelUsed") or "unknown")
+    prompt_tokens = int(generated.get("promptTokens") or 0)
+    completion_tokens = int(generated.get("completionTokens") or 0)
+    estimated_cost = estimate_cost(model_used, prompt_tokens, completion_tokens)
+    generated["estimatedCost"] = estimated_cost
+    persist_generation_metrics(
+        db,
+        StoryGenerationMetrics(
+            user_id=user_id,
+            child_id=child_id,
+            story_id=story_id,
+            model_used=model_used,
+            prompt_tokens=prompt_tokens,
+            completion_tokens=completion_tokens,
+            total_tokens=int(generated.get("totalTokens") or prompt_tokens + completion_tokens),
+            estimated_cost=estimated_cost,
+            generation_time_ms=int(generated.get("generationTimeMs") or 0),
+            quality_score=int(generated.get("qualityScore") or 0),
+            rewrite_attempts=int(generated.get("rewriteAttempts") or 0),
+            fallback_used=bool(generated.get("fallbackUsed")),
+        ),
+    )
     batch = db.batch()
     batch.set(
         story_ref,
@@ -219,6 +249,16 @@ def _publish_for_child(db, child: dict[str, Any], *, date_key: str, now: datetim
             "totalChapters": total,
             "seriesId": series_id,
             "generationSource": generated.get("generationSource", "backend"),
+            "qualityScore": generated.get("qualityScore", 0),
+            "qualityDetails": generated.get("qualityDetails", {}),
+            "qualityWarnings": generated.get("qualityWarnings", []),
+            "coverImageUrl": generated.get("coverImageUrl"),
+            "coverImageStatus": generated.get("coverImageStatus", "pending"),
+            "coverPrompt": generated.get("coverPrompt"),
+            "audioStatus": generated.get("audioStatus", "unavailable"),
+            "audioUrl": generated.get("audioUrl"),
+            "audioVoice": generated.get("audioVoice"),
+            "audioDuration": generated.get("audioDuration"),
             "createdAt": now,
         },
     )
@@ -236,11 +276,21 @@ def publish_daily_stories(*, current_time: datetime | None = None) -> dict[str, 
     limit = max(1, int(os.getenv("DAILY_STORY_MAX_PROFILES", "500")))
     db = firestore_client()
     results = {"created": 0, "skipped": 0, "invalid": 0, "failed": 0}
+    user_profile_counts: dict[str, int] = {}
+    user_limits: dict[str, int] = {}
     for index, snap in enumerate(db.collection("children_profiles").stream()):
         if index >= limit:
             break
         try:
-            result = _publish_for_child(db, snap.to_dict(), date_key=date_key, now=now)
+            child = snap.to_dict()
+            uid = str(child.get("userId") or "")
+            if uid not in user_limits:
+                user_limits[uid] = max_children_for_user(db, uid)
+            user_profile_counts[uid] = user_profile_counts.get(uid, 0) + 1
+            if user_profile_counts[uid] > user_limits[uid]:
+                results["skipped"] += 1
+                continue
+            result = _publish_for_child(db, child, date_key=date_key, now=now)
             results[result] += 1
         except Exception:
             results["failed"] += 1

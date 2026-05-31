@@ -28,7 +28,8 @@ Docs interactives FastAPI : <http://localhost:8000/docs>
 - `OPENAI_API_KEY` : clé OpenAI utilisée uniquement côté backend.
 - `OPENAI_MODEL` : modèle de génération, par défaut `gpt-4o-mini`.
 - `STRIPE_SECRET_KEY` : clé secrète Stripe côté serveur.
-- `STRIPE_PRICE_ID_ELUNAI` : Price ID Stripe utilisé pour l'abonnement.
+- `STRIPE_PRICE_ID_SOLO` : Price ID Stripe pour Elunai Solo.
+- `STRIPE_PRICE_ID_FAMILY` : Price ID Stripe pour Elunai Famille.
 - `STRIPE_WEBHOOK_SECRET` : secret de signature du webhook Stripe.
 - `STRIPE_SUCCESS_URL` / `STRIPE_CANCEL_URL` : URLs de retour Checkout.
 - `APP_CHECK_ENFORCED=true` : exige un token Firebase App Check valide sur les endpoints protégés.
@@ -56,7 +57,7 @@ Le webhook attend `firebaseUid` et `planId` dans les métadonnées de la souscri
 3. Défini `GOOGLE_APPLICATION_CREDENTIALS=/chemin/vers/service-account.json`.
 4. Défini `FIREBASE_PROJECT_ID=lunora-adb24` ou l'id réel du projet.
 5. Défini `OPENAI_API_KEY` uniquement dans l'environnement backend.
-6. Défini `STRIPE_SECRET_KEY`, `STRIPE_PRICE_ID_ELUNAI` et `STRIPE_WEBHOOK_SECRET` côté backend.
+6. Défini `STRIPE_SECRET_KEY`, `STRIPE_PRICE_ID_SOLO`, `STRIPE_PRICE_ID_FAMILY` et `STRIPE_WEBHOOK_SECRET` côté backend.
 7. Dans Stripe Dashboard, crée un webhook vers `https://ton-api/stripe/webhook` avec les événements :
    - `checkout.session.completed`
    - `customer.subscription.created`

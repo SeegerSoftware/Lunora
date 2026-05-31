@@ -1,4 +1,5 @@
 import '../../../shared/models/series_state.dart';
+import '../../../shared/models/narrative_memory.dart';
 
 abstract final class SeriesStateReducer {
   static SeriesState advance({
@@ -65,6 +66,7 @@ abstract final class SeriesStateReducer {
         emotionalProgression.add(update.emotionalStep.trim());
       }
       antiRepetitionMemory.addAll(update.thingsToAvoidRepeating);
+      antiRepetitionMemory.addAll(update.doNotRepeat);
     }
     final isCompleted = currentChapterIndex >= state.totalChapters;
     final recentSummaries = summaries.length <= 6
@@ -101,6 +103,19 @@ abstract final class SeriesStateReducer {
       antiRepetitionMemory: !hasCompleteContinuityHistory
           ? state.antiRepetitionMemory
           : antiRepetitionMemory.toList(),
+      relations: updates.expand((item) => item.relations).take(24).toList(),
+      mysteries: updates.expand((item) => item.mysteries).take(24).toList(),
+      narrativeObjects: updates
+          .expand((item) => item.narrativeObjects)
+          .take(32)
+          .toList(),
+      emotions: updates.isEmpty
+          ? state.emotions
+          : updates.last.emotions == const EmotionalProgress()
+          ? state.emotions
+          : updates.last.emotions,
+      majorEvents: updates.expand((item) => item.majorEvents).take(40).toList(),
+      doNotRepeat: antiRepetitionMemory.take(40).toList(),
       chapterContinuityUpdates: updates,
       nextChapterGoal: isCompleted ? 'Série terminée' : nextGoal,
       updatedAt: now,
@@ -128,6 +143,14 @@ abstract final class SeriesStateReducer {
       thingsToAvoidRepeating:
           continuityUpdate?.thingsToAvoidRepeating ?? const [],
       nextChapterGoal: continuityUpdate?.nextChapterGoal ?? '',
+      relations: continuityUpdate?.relations ?? const [],
+      mysteries: continuityUpdate?.mysteries ?? const [],
+      narrativeObjects: continuityUpdate?.narrativeObjects ?? const [],
+      emotions: continuityUpdate?.emotions ?? statePlaceholderEmotions,
+      majorEvents: continuityUpdate?.majorEvents ?? const [],
+      doNotRepeat: continuityUpdate?.doNotRepeat ?? const [],
     );
   }
+
+  static const statePlaceholderEmotions = EmotionalProgress();
 }

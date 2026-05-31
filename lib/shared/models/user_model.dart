@@ -1,7 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:equatable/equatable.dart';
 
-import 'enums/story_plan.dart';
+import 'enums/subscription_plan.dart';
 import 'enums/subscription_status.dart';
 
 class UserModel extends Equatable {
@@ -25,14 +25,8 @@ class UserModel extends Equatable {
   /// Réservé au build / console Firestore ; ne pas exposer aux parents dans l’UI normale.
   final bool isAdmin;
 
-  StoryPlan? get selectedStoryPlan {
-    final id = selectedPlan;
-    if (id == null) return null;
-    for (final candidate in StoryPlan.values) {
-      if (candidate.planId == id) return candidate;
-    }
-    return null;
-  }
+  SubscriptionPlan get subscriptionPlan =>
+      SubscriptionPlanX.fromPlanId(selectedPlan);
 
   UserModel copyWith({
     String? id,

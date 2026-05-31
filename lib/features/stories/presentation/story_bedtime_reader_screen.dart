@@ -6,7 +6,6 @@ import '../../../core/theme/spacing.dart';
 import '../../../core/theme/text_styles.dart';
 import '../../../routing/safe_navigation.dart';
 import '../../../shared/widgets/magical/elunai_progress_bar.dart';
-import '../../../shared/widgets/magical/audio_player_widget.dart';
 import 'providers/story_providers.dart';
 
 /// Lecture minimale pour le coucher : texte seul, contraste doux, luminosité visuelle basse.
@@ -102,11 +101,6 @@ class _StoryBedtimeReaderScreenState
                               color: _inkMuted,
                               letterSpacing: 0.2,
                             ),
-                          ),
-                          const SizedBox(height: ElunaiSpacing.lg),
-                          AudioPlayerWidget(
-                            title: story.title,
-                            content: story.content,
                           ),
                           const SizedBox(height: ElunaiSpacing.lg),
                           ...paras.expand(

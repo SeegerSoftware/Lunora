@@ -1,4 +1,4 @@
-import '../../shared/models/enums/story_plan.dart';
+import '../../shared/models/enums/subscription_plan.dart';
 
 /// Clé publique Stripe (`pk_…`) — [String.fromEnvironment] / CI / `--dart-define`.
 abstract final class StripeConfig {
@@ -13,6 +13,7 @@ abstract final class StripeConfig {
     'STRIPE_CHECKOUT_URL',
     defaultValue: '',
   );
+
   /// Compat : anciennes configs par durée.
   static const String _checkoutUrlLegacy10 = String.fromEnvironment(
     'STRIPE_CHECKOUT_URL_PLAN_10',
@@ -23,7 +24,7 @@ abstract final class StripeConfig {
   static bool get isPublishableKeyConfigured =>
       publishableKey.isNotEmpty && publishableKey.startsWith('pk_');
 
-  static String? checkoutUrlForPlan(StoryPlan plan) {
+  static String? checkoutUrlForPlan(SubscriptionPlan plan) {
     final primary = _checkoutUrl.trim();
     final legacy = _checkoutUrlLegacy10.trim();
     final url = primary.isNotEmpty ? primary : legacy;

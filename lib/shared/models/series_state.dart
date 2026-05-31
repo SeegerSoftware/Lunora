@@ -2,6 +2,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:equatable/equatable.dart';
 
 import 'child_profile.dart';
+import 'narrative_memory.dart';
 
 String _readNarrativeText(dynamic value, {String fallback = ''}) {
   if (value == null) return fallback;
@@ -203,6 +204,12 @@ class ChapterContinuityUpdate extends Equatable {
     required this.thingsToRemember,
     required this.thingsToAvoidRepeating,
     required this.nextChapterGoal,
+    this.relations = const [],
+    this.mysteries = const [],
+    this.narrativeObjects = const [],
+    this.emotions = const EmotionalProgress(),
+    this.majorEvents = const [],
+    this.doNotRepeat = const [],
   });
 
   final String chapterSummary;
@@ -215,6 +222,12 @@ class ChapterContinuityUpdate extends Equatable {
   final List<String> thingsToRemember;
   final List<String> thingsToAvoidRepeating;
   final String nextChapterGoal;
+  final List<NarrativeRelation> relations;
+  final List<OpenMystery> mysteries;
+  final List<NarrativeObject> narrativeObjects;
+  final EmotionalProgress emotions;
+  final List<MajorNarrativeEvent> majorEvents;
+  final List<String> doNotRepeat;
 
   factory ChapterContinuityUpdate.fromMap(Map<String, dynamic> map) {
     List<String> readList(String key) => _readNarrativeList(map[key]);
@@ -230,6 +243,36 @@ class ChapterContinuityUpdate extends Equatable {
       thingsToRemember: readList('thingsToRemember'),
       thingsToAvoidRepeating: readList('thingsToAvoidRepeating'),
       nextChapterGoal: _readNarrativeText(map['nextChapterGoal']),
+      relations: (map['relations'] as List? ?? const [])
+          .whereType<Map>()
+          .map(
+            (item) =>
+                NarrativeRelation.fromMap(Map<String, dynamic>.from(item)),
+          )
+          .toList(),
+      mysteries: (map['mysteries'] as List? ?? const [])
+          .whereType<Map>()
+          .map((item) => OpenMystery.fromMap(Map<String, dynamic>.from(item)))
+          .toList(),
+      narrativeObjects: (map['narrativeObjects'] as List? ?? const [])
+          .whereType<Map>()
+          .map(
+            (item) => NarrativeObject.fromMap(Map<String, dynamic>.from(item)),
+          )
+          .toList(),
+      emotions: map['emotions'] is Map
+          ? EmotionalProgress.fromMap(
+              Map<String, dynamic>.from(map['emotions'] as Map),
+            )
+          : const EmotionalProgress(),
+      majorEvents: (map['majorEvents'] as List? ?? const [])
+          .whereType<Map>()
+          .map(
+            (item) =>
+                MajorNarrativeEvent.fromMap(Map<String, dynamic>.from(item)),
+          )
+          .toList(),
+      doNotRepeat: readList('doNotRepeat'),
     );
   }
 
@@ -245,6 +288,12 @@ class ChapterContinuityUpdate extends Equatable {
       'thingsToRemember': thingsToRemember,
       'thingsToAvoidRepeating': thingsToAvoidRepeating,
       'nextChapterGoal': nextChapterGoal,
+      'relations': relations.map((item) => item.toMap()).toList(),
+      'mysteries': mysteries.map((item) => item.toMap()).toList(),
+      'narrativeObjects': narrativeObjects.map((item) => item.toMap()).toList(),
+      'emotions': emotions.toMap(),
+      'majorEvents': majorEvents.map((item) => item.toMap()).toList(),
+      'doNotRepeat': doNotRepeat,
     };
   }
 
@@ -260,6 +309,12 @@ class ChapterContinuityUpdate extends Equatable {
     thingsToRemember,
     thingsToAvoidRepeating,
     nextChapterGoal,
+    relations,
+    mysteries,
+    narrativeObjects,
+    emotions,
+    majorEvents,
+    doNotRepeat,
   ];
 }
 
@@ -296,6 +351,12 @@ class SeriesState extends Equatable {
     required this.nextChapterGoal,
     required this.createdAt,
     required this.updatedAt,
+    this.relations = const [],
+    this.mysteries = const [],
+    this.narrativeObjects = const [],
+    this.emotions = const EmotionalProgress(),
+    this.majorEvents = const [],
+    this.doNotRepeat = const [],
     this.profileSnapshot,
     this.completedAt,
   });
@@ -331,6 +392,12 @@ class SeriesState extends Equatable {
   final String nextChapterGoal;
   final DateTime createdAt;
   final DateTime updatedAt;
+  final List<NarrativeRelation> relations;
+  final List<OpenMystery> mysteries;
+  final List<NarrativeObject> narrativeObjects;
+  final EmotionalProgress emotions;
+  final List<MajorNarrativeEvent> majorEvents;
+  final List<String> doNotRepeat;
   final ChildProfile? profileSnapshot;
   final DateTime? completedAt;
 
@@ -366,6 +433,12 @@ class SeriesState extends Equatable {
     String? nextChapterGoal,
     DateTime? createdAt,
     DateTime? updatedAt,
+    List<NarrativeRelation>? relations,
+    List<OpenMystery>? mysteries,
+    List<NarrativeObject>? narrativeObjects,
+    EmotionalProgress? emotions,
+    List<MajorNarrativeEvent>? majorEvents,
+    List<String>? doNotRepeat,
     ChildProfile? profileSnapshot,
     DateTime? completedAt,
     bool clearCompletedAt = false,
@@ -403,6 +476,12 @@ class SeriesState extends Equatable {
       nextChapterGoal: nextChapterGoal ?? this.nextChapterGoal,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
+      relations: relations ?? this.relations,
+      mysteries: mysteries ?? this.mysteries,
+      narrativeObjects: narrativeObjects ?? this.narrativeObjects,
+      emotions: emotions ?? this.emotions,
+      majorEvents: majorEvents ?? this.majorEvents,
+      doNotRepeat: doNotRepeat ?? this.doNotRepeat,
       profileSnapshot: profileSnapshot ?? this.profileSnapshot,
       completedAt: clearCompletedAt ? null : completedAt ?? this.completedAt,
     );
@@ -418,6 +497,12 @@ class SeriesState extends Equatable {
     }
 
     List<String> readList(String key) => _readNarrativeList(map[key]);
+    List<T> readModels<T>(String key, T Function(Map<String, dynamic>) parser) {
+      return (map[key] as List? ?? const [])
+          .whereType<Map>()
+          .map((item) => parser(Map<String, dynamic>.from(item)))
+          .toList();
+    }
 
     final now = DateTime.now();
     final rawChapterPlan = (map['chapterPlan'] as List? ?? const [])
@@ -475,6 +560,16 @@ class SeriesState extends Equatable {
       nextChapterGoal: _readNarrativeText(map['nextChapterGoal']),
       createdAt: readDate(map['createdAt'], now),
       updatedAt: readDate(map['updatedAt'], now),
+      relations: readModels('relations', NarrativeRelation.fromMap),
+      mysteries: readModels('mysteries', OpenMystery.fromMap),
+      narrativeObjects: readModels('narrativeObjects', NarrativeObject.fromMap),
+      emotions: map['emotions'] is Map
+          ? EmotionalProgress.fromMap(
+              Map<String, dynamic>.from(map['emotions'] as Map),
+            )
+          : const EmotionalProgress(),
+      majorEvents: readModels('majorEvents', MajorNarrativeEvent.fromMap),
+      doNotRepeat: readList('doNotRepeat'),
       profileSnapshot: map['profileSnapshot'] is Map
           ? ChildProfile.fromMap(
               Map<String, dynamic>.from(map['profileSnapshot'] as Map),
@@ -521,6 +616,12 @@ class SeriesState extends Equatable {
       'nextChapterGoal': nextChapterGoal,
       'createdAt': createdAt.toIso8601String(),
       'updatedAt': updatedAt.toIso8601String(),
+      'relations': relations.map((item) => item.toMap()).toList(),
+      'mysteries': mysteries.map((item) => item.toMap()).toList(),
+      'narrativeObjects': narrativeObjects.map((item) => item.toMap()).toList(),
+      'emotions': emotions.toMap(),
+      'majorEvents': majorEvents.map((item) => item.toMap()).toList(),
+      'doNotRepeat': doNotRepeat,
       'profileSnapshot': profileSnapshot?.toMap(),
       'completedAt': completedAt?.toIso8601String(),
     };
@@ -559,6 +660,12 @@ class SeriesState extends Equatable {
     nextChapterGoal,
     createdAt,
     updatedAt,
+    relations,
+    mysteries,
+    narrativeObjects,
+    emotions,
+    majorEvents,
+    doNotRepeat,
     profileSnapshot,
     completedAt,
   ];

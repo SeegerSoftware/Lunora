@@ -20,6 +20,10 @@ class ParsedStoryJson {
     this.chapterNumber,
     this.totalChapters,
     this.continuityUpdate,
+    this.qualityScore,
+    this.qualityDetails = const {},
+    this.qualityWarnings = const [],
+    this.coverPrompt,
   });
 
   final String? title;
@@ -31,6 +35,10 @@ class ParsedStoryJson {
   final int? chapterNumber;
   final int? totalChapters;
   final ChapterContinuityUpdate? continuityUpdate;
+  final int? qualityScore;
+  final Map<String, int> qualityDetails;
+  final List<String> qualityWarnings;
+  final String? coverPrompt;
 }
 
 abstract final class StoryGenerationJsonParser {
@@ -66,7 +74,9 @@ abstract final class StoryGenerationJsonParser {
     } on FormatException {
       rethrow;
     } catch (_) {
-      throw FormatException('JSON invalide après extraction : ${slice.length} car.');
+      throw FormatException(
+        'JSON invalide après extraction : ${slice.length} car.',
+      );
     }
   }
 
@@ -134,13 +144,24 @@ abstract final class StoryGenerationJsonParser {
               Map<String, dynamic>.from(m['continuityUpdate'] as Map),
             )
           : null,
+      qualityScore: readInt(m['qualityScore']),
+      qualityDetails: m['qualityDetails'] is Map
+          ? Map<String, dynamic>.from(
+              m['qualityDetails'] as Map,
+            ).map((key, value) => MapEntry(key, readInt(value) ?? 0))
+          : const {},
+      qualityWarnings: (m['qualityWarnings'] as List? ?? const [])
+          .map((item) => item.toString())
+          .toList(),
+      coverPrompt: _readTrimmedString(m['coverPrompt']),
     );
   }
 }
 
 abstract final class StoryGenerationResultNormalizer {
   static const int _minContentLength = 220;
-  static const StoryAdaptationEngine _adaptationEngine = StoryAdaptationEngine();
+  static const StoryAdaptationEngine _adaptationEngine =
+      StoryAdaptationEngine();
 
   /// Valeurs de chapitre / série : la source de vérité est la requête produit (pas le modèle).
   static StoryGenerationResult normalize({
@@ -148,8 +169,9 @@ abstract final class StoryGenerationResultNormalizer {
     required StoryGenerationRequest request,
   }) {
     final child = request.child;
-    final displayName =
-        child.firstName.trim().isEmpty ? 'toi' : child.firstName.trim();
+    final displayName = child.firstName.trim().isEmpty
+        ? 'toi'
+        : child.firstName.trim();
 
     final title = (parsed.title != null && parsed.title!.isNotEmpty)
         ? parsed.title!
@@ -190,8 +212,8 @@ abstract final class StoryGenerationResultNormalizer {
     final themeLabel = (parsed.theme != null && parsed.theme!.isNotEmpty)
         ? parsed.theme!
         : (child.preferredThemes.isNotEmpty
-            ? child.preferredThemes.first.trim()
-            : 'Rituel du soir');
+              ? child.preferredThemes.first.trim()
+              : 'Rituel du soir');
 
     final tone = _parseTone(parsed.toneRaw, fallback: child.preferredTone);
 
@@ -215,6 +237,10 @@ abstract final class StoryGenerationResultNormalizer {
       seriesId: seriesId,
       continuityUpdate: parsed.continuityUpdate,
       generationSource: 'remote-ai',
+      qualityScore: parsed.qualityScore ?? 0,
+      qualityDetails: parsed.qualityDetails,
+      qualityWarnings: parsed.qualityWarnings,
+      coverPrompt: parsed.coverPrompt,
     );
   }
 

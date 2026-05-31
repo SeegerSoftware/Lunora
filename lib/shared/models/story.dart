@@ -22,6 +22,16 @@ class Story extends Equatable {
     this.seriesId,
     this.generationSource = 'unknown',
     required this.createdAt,
+    this.qualityScore = 0,
+    this.qualityDetails = const {},
+    this.qualityWarnings = const [],
+    this.coverImageUrl,
+    this.coverImageStatus = 'pending',
+    this.coverPrompt,
+    this.audioStatus = 'unavailable',
+    this.audioUrl,
+    this.audioVoice,
+    this.audioDuration,
     this.userFeedback,
     this.userFeedbackAt,
   });
@@ -42,6 +52,17 @@ class Story extends Equatable {
   final String? seriesId;
   final String generationSource;
   final DateTime createdAt;
+  final int qualityScore;
+  final Map<String, int> qualityDetails;
+  final List<String> qualityWarnings;
+  final String? coverImageUrl;
+  final String coverImageStatus;
+  final String? coverPrompt;
+  final String audioStatus;
+  final String? audioUrl;
+  final String? audioVoice;
+  final int? audioDuration;
+
   /// 1 = j’aime, -1 = je n’aime pas, null = pas encore d’avis.
   final int? userFeedback;
   final DateTime? userFeedbackAt;
@@ -65,6 +86,16 @@ class Story extends Equatable {
     String? seriesId,
     String? generationSource,
     DateTime? createdAt,
+    int? qualityScore,
+    Map<String, int>? qualityDetails,
+    List<String>? qualityWarnings,
+    String? coverImageUrl,
+    String? coverImageStatus,
+    String? coverPrompt,
+    String? audioStatus,
+    String? audioUrl,
+    String? audioVoice,
+    int? audioDuration,
     int? userFeedback,
     DateTime? userFeedbackAt,
   }) {
@@ -86,6 +117,16 @@ class Story extends Equatable {
       seriesId: seriesId ?? this.seriesId,
       generationSource: generationSource ?? this.generationSource,
       createdAt: createdAt ?? this.createdAt,
+      qualityScore: qualityScore ?? this.qualityScore,
+      qualityDetails: qualityDetails ?? this.qualityDetails,
+      qualityWarnings: qualityWarnings ?? this.qualityWarnings,
+      coverImageUrl: coverImageUrl ?? this.coverImageUrl,
+      coverImageStatus: coverImageStatus ?? this.coverImageStatus,
+      coverPrompt: coverPrompt ?? this.coverPrompt,
+      audioStatus: audioStatus ?? this.audioStatus,
+      audioUrl: audioUrl ?? this.audioUrl,
+      audioVoice: audioVoice ?? this.audioVoice,
+      audioDuration: audioDuration ?? this.audioDuration,
       userFeedback: userFeedback ?? this.userFeedback,
       userFeedbackAt: userFeedbackAt ?? this.userFeedbackAt,
     );
@@ -109,8 +150,19 @@ class Story extends Equatable {
       'seriesId': seriesId,
       'generationSource': generationSource,
       'createdAt': createdAt.toIso8601String(),
+      'qualityScore': qualityScore,
+      'qualityDetails': qualityDetails,
+      'qualityWarnings': qualityWarnings,
+      'coverImageUrl': coverImageUrl,
+      'coverImageStatus': coverImageStatus,
+      'coverPrompt': coverPrompt,
+      'audioStatus': audioStatus,
+      'audioUrl': audioUrl,
+      'audioVoice': audioVoice,
+      'audioDuration': audioDuration,
       if (userFeedback != null) 'userFeedback': userFeedback,
-      if (userFeedbackAt != null) 'userFeedbackAt': userFeedbackAt!.toIso8601String(),
+      if (userFeedbackAt != null)
+        'userFeedbackAt': userFeedbackAt!.toIso8601String(),
     };
   }
 
@@ -132,6 +184,16 @@ class Story extends Equatable {
       seriesId: map['seriesId'] as String?,
       generationSource: (map['generationSource'] as String?) ?? 'unknown',
       createdAt: _readDate(map['createdAt']),
+      qualityScore: (map['qualityScore'] as num?)?.toInt() ?? 0,
+      qualityDetails: _readIntMap(map['qualityDetails']),
+      qualityWarnings: _readStringList(map['qualityWarnings']),
+      coverImageUrl: map['coverImageUrl'] as String?,
+      coverImageStatus: (map['coverImageStatus'] as String?) ?? 'pending',
+      coverPrompt: map['coverPrompt'] as String?,
+      audioStatus: (map['audioStatus'] as String?) ?? 'unavailable',
+      audioUrl: map['audioUrl'] as String?,
+      audioVoice: map['audioVoice'] as String?,
+      audioDuration: (map['audioDuration'] as num?)?.toInt(),
       userFeedback: (map['userFeedback'] as num?)?.toInt(),
       userFeedbackAt: _readDateNullable(map['userFeedbackAt']),
     );
@@ -144,6 +206,18 @@ class Story extends Equatable {
     if (value is String) return DateTime.tryParse(value);
     if (value is int) return DateTime.fromMillisecondsSinceEpoch(value);
     return null;
+  }
+
+  static Map<String, int> _readIntMap(dynamic value) {
+    if (value is! Map) return const {};
+    return value.map(
+      (key, item) => MapEntry(key.toString(), (item as num?)?.toInt() ?? 0),
+    );
+  }
+
+  static List<String> _readStringList(dynamic value) {
+    if (value is! Iterable) return const [];
+    return value.map((item) => item.toString()).toList();
   }
 
   static DateTime _readDate(dynamic value) {
@@ -172,6 +246,16 @@ class Story extends Equatable {
     seriesId,
     generationSource,
     createdAt,
+    qualityScore,
+    qualityDetails,
+    qualityWarnings,
+    coverImageUrl,
+    coverImageStatus,
+    coverPrompt,
+    audioStatus,
+    audioUrl,
+    audioVoice,
+    audioDuration,
     userFeedback,
     userFeedbackAt,
   ];

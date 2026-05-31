@@ -94,8 +94,17 @@ class _FakeChildProfileRepository implements ChildProfileRepository {
   Future<ChildProfile?> fetchForUser(String userId) async => _profile;
 
   @override
+  Future<List<ChildProfile>> fetchAllForUser(String userId) async =>
+      _profile == null ? const [] : [_profile!];
+
+  @override
   Future<void> upsert(ChildProfile profile) async {
     _profile = profile;
+  }
+
+  @override
+  Future<void> delete(ChildProfile profile) async {
+    if (_profile?.id == profile.id) _profile = null;
   }
 
   @override
@@ -163,8 +172,11 @@ class _FakeStoryRepository implements StoryRepository {
   }
 
   @override
-  Future<List<Story>> historyForUser(String userId) async {
-    return _story == null ? const [] : [_story!];
+  Future<List<Story>> historyForChild({
+    required String userId,
+    required String childId,
+  }) async {
+    return _story == null || _story!.childId != childId ? const [] : [_story!];
   }
 
   @override

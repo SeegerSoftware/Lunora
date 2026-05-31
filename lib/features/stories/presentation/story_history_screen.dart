@@ -6,6 +6,7 @@ import '../../../core/theme/colors.dart';
 import '../../../core/theme/spacing.dart';
 import '../../../routing/safe_navigation.dart';
 import '../../../shared/models/enums/story_format.dart';
+import '../../../shared/models/achievement.dart';
 import '../../../shared/models/story.dart';
 import '../../../shared/widgets/elunai_layout.dart';
 import '../../../shared/widgets/elunai_fade_in.dart';
@@ -14,12 +15,26 @@ import '../../../shared/widgets/elunai_screen_shell.dart';
 import '../../../shared/widgets/magical/elunai_progress_bar.dart';
 import '../../auth/presentation/providers/auth_providers.dart';
 import 'providers/story_providers.dart';
+import 'widgets/library_cards.dart';
 
-class StoryHistoryScreen extends ConsumerWidget {
+enum _LibraryFilter { active, completed, all }
+
+enum _LibrarySort { recent, oldest, title }
+
+class StoryHistoryScreen extends ConsumerStatefulWidget {
   const StoryHistoryScreen({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<StoryHistoryScreen> createState() => _StoryHistoryScreenState();
+}
+
+class _StoryHistoryScreenState extends ConsumerState<StoryHistoryScreen> {
+  var _filter = _LibraryFilter.active;
+  var _sort = _LibrarySort.recent;
+  var _query = '';
+
+  @override
+  Widget build(BuildContext context) {
     final user = ref.watch(authSessionProvider);
     final historyAsync = ref.watch(storyHistoryProvider);
 
@@ -45,7 +60,13 @@ class StoryHistoryScreen extends ConsumerWidget {
           child: historyAsync.when(
             skipLoadingOnReload: true,
             data: (stories) {
-              final blocks = _timelineBlocks(stories);
+              final blocks = _visibleBlocks(
+                _timelineBlocks(stories),
+                filter: _filter,
+                sort: _sort,
+                query: _query,
+              );
+              final achievements = AchievementCalculator.earned(stories);
               return ListView(
                 padding: ElunaiSpacing.screen.copyWith(
                   bottom: ElunaiSpacing.xxl,
@@ -61,6 +82,18 @@ class StoryHistoryScreen extends ConsumerWidget {
                     ),
                   ),
                   const SizedBox(height: ElunaiSpacing.xl),
+                  _LibraryControls(
+                    filter: _filter,
+                    sort: _sort,
+                    onFilterChanged: (value) => setState(() => _filter = value),
+                    onSortChanged: (value) => setState(() => _sort = value),
+                    onQueryChanged: (value) => setState(() => _query = value),
+                  ),
+                  const SizedBox(height: ElunaiSpacing.md),
+                  if (achievements.isNotEmpty) ...[
+                    _MilestoneCard(achievement: achievements.last),
+                    const SizedBox(height: ElunaiSpacing.md),
+                  ],
                   if (blocks.isEmpty)
                     const _EmptyLibrary()
                   else
@@ -107,6 +140,53 @@ class StoryHistoryScreen extends ConsumerWidget {
             ),
           ),
         ),
+      ),
+    );
+  }
+}
+
+class _MilestoneCard extends StatelessWidget {
+  const _MilestoneCard({required this.achievement});
+
+  final Achievement achievement;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Container(
+      padding: const EdgeInsets.all(ElunaiSpacing.md),
+      decoration: BoxDecoration(
+        color: ElunaiColors.honeyYellow.withValues(alpha: 0.18),
+        borderRadius: ElunaiSpacing.radiusLg,
+      ),
+      child: Row(
+        children: [
+          const Icon(
+            Icons.bookmark_added_rounded,
+            color: ElunaiColors.forestGreen,
+          ),
+          const SizedBox(width: ElunaiSpacing.sm),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  achievement.label,
+                  style: theme.textTheme.titleSmall?.copyWith(
+                    color: ElunaiColors.storybookInk,
+                    fontWeight: FontWeight.w900,
+                  ),
+                ),
+                Text(
+                  achievement.description,
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    color: ElunaiColors.storybookInkMuted,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -163,6 +243,11 @@ class _TimelineBlock {
 
   final List<Story> stories;
   final bool isSeries;
+
+  Story get latest => stories.first;
+
+  bool get isCompleted =>
+      isSeries && latest.chapterNumber >= latest.totalChapters;
 }
 
 List<_TimelineBlock> _timelineBlocks(List<Story> stories) {
@@ -189,6 +274,121 @@ List<_TimelineBlock> _timelineBlocks(List<Story> stories) {
   return merged;
 }
 
+List<_TimelineBlock> _visibleBlocks(
+  List<_TimelineBlock> blocks, {
+  required _LibraryFilter filter,
+  required _LibrarySort sort,
+  required String query,
+}) {
+  final normalizedQuery = query.trim().toLowerCase();
+  final visible = blocks.where((block) {
+    final matchesFilter = switch (filter) {
+      _LibraryFilter.active => !block.isCompleted,
+      _LibraryFilter.completed => block.isCompleted,
+      _LibraryFilter.all => true,
+    };
+    final matchesQuery =
+        normalizedQuery.isEmpty ||
+        block.stories.any(
+          (story) =>
+              story.title.toLowerCase().contains(normalizedQuery) ||
+              story.summary.toLowerCase().contains(normalizedQuery),
+        );
+    return matchesFilter && matchesQuery;
+  }).toList();
+  visible.sort(switch (sort) {
+    _LibrarySort.recent => (a, b) => b.latest.dateKey.compareTo(
+      a.latest.dateKey,
+    ),
+    _LibrarySort.oldest => (a, b) => a.latest.dateKey.compareTo(
+      b.latest.dateKey,
+    ),
+    _LibrarySort.title => (a, b) => a.latest.title.compareTo(b.latest.title),
+  });
+  return visible;
+}
+
+class _LibraryControls extends StatelessWidget {
+  const _LibraryControls({
+    required this.filter,
+    required this.sort,
+    required this.onFilterChanged,
+    required this.onSortChanged,
+    required this.onQueryChanged,
+  });
+
+  final _LibraryFilter filter;
+  final _LibrarySort sort;
+  final ValueChanged<_LibraryFilter> onFilterChanged;
+  final ValueChanged<_LibrarySort> onSortChanged;
+  final ValueChanged<String> onQueryChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: [
+        TextField(
+          onChanged: onQueryChanged,
+          decoration: InputDecoration(
+            hintText: 'Rechercher un livre ou une histoire',
+            prefixIcon: const Icon(Icons.search_rounded),
+            filled: true,
+            fillColor: ElunaiColors.storybookSurface,
+            border: OutlineInputBorder(
+              borderRadius: ElunaiSpacing.radiusLg,
+              borderSide: BorderSide.none,
+            ),
+          ),
+        ),
+        const SizedBox(height: ElunaiSpacing.sm),
+        Row(
+          children: [
+            Expanded(
+              child: SegmentedButton<_LibraryFilter>(
+                showSelectedIcon: false,
+                segments: const [
+                  ButtonSegment(
+                    value: _LibraryFilter.active,
+                    label: Text('En cours'),
+                  ),
+                  ButtonSegment(
+                    value: _LibraryFilter.completed,
+                    label: Text('Terminées'),
+                  ),
+                  ButtonSegment(
+                    value: _LibraryFilter.all,
+                    label: Text('Toutes'),
+                  ),
+                ],
+                selected: {filter},
+                onSelectionChanged: (values) => onFilterChanged(values.first),
+              ),
+            ),
+            const SizedBox(width: ElunaiSpacing.xs),
+            PopupMenuButton<_LibrarySort>(
+              tooltip: 'Trier',
+              initialValue: sort,
+              onSelected: onSortChanged,
+              icon: const Icon(Icons.sort_rounded),
+              itemBuilder: (context) => const [
+                PopupMenuItem(
+                  value: _LibrarySort.recent,
+                  child: Text('Plus récentes'),
+                ),
+                PopupMenuItem(
+                  value: _LibrarySort.oldest,
+                  child: Text('Plus anciennes'),
+                ),
+                PopupMenuItem(value: _LibrarySort.title, child: Text('Titre')),
+              ],
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+}
+
 class _HistoryStoryTile extends StatelessWidget {
   const _HistoryStoryTile({required this.story, required this.onTap});
 
@@ -206,6 +406,7 @@ class _HistoryStoryTile extends StatelessWidget {
       onTap: onTap,
       progress: null,
       theme: theme,
+      coverImageUrl: story.coverImageUrl,
     );
   }
 }
@@ -230,6 +431,7 @@ class _SeriesTimelineTile extends StatelessWidget {
       onTap: onResume,
       progress: ratio,
       theme: Theme.of(context),
+      coverImageUrl: latest.coverImageUrl,
     );
   }
 }
@@ -243,6 +445,7 @@ class _LibraryTile extends StatelessWidget {
     required this.onTap,
     required this.theme,
     this.progress,
+    this.coverImageUrl,
   });
 
   final IconData icon;
@@ -252,88 +455,94 @@ class _LibraryTile extends StatelessWidget {
   final VoidCallback onTap;
   final ThemeData theme;
   final double? progress;
+  final String? coverImageUrl;
 
   @override
   Widget build(BuildContext context) {
-    return Material(
-      color: ElunaiColors.storybookSurface,
-      borderRadius: ElunaiSpacing.radiusLg,
-      child: InkWell(
+    return BookCard(
+      child: Material(
+        color: ElunaiColors.storybookSurface,
         borderRadius: ElunaiSpacing.radiusLg,
-        onTap: onTap,
-        child: Container(
-          padding: const EdgeInsets.all(ElunaiSpacing.md),
-          decoration: BoxDecoration(
-            borderRadius: ElunaiSpacing.radiusLg,
-            border: Border.all(
-              color: ElunaiColors.forestGreen.withValues(alpha: 0.1),
-            ),
-          ),
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Container(
-                width: 52,
-                height: 52,
-                decoration: BoxDecoration(
-                  color: ElunaiColors.honeyYellow.withValues(alpha: 0.36),
-                  borderRadius: ElunaiSpacing.radiusMd,
-                ),
-                child: Icon(icon, color: ElunaiColors.forestGreen),
+        child: InkWell(
+          borderRadius: ElunaiSpacing.radiusLg,
+          onTap: onTap,
+          child: Container(
+            padding: const EdgeInsets.all(ElunaiSpacing.md),
+            decoration: BoxDecoration(
+              borderRadius: ElunaiSpacing.radiusLg,
+              border: Border.all(
+                color: ElunaiColors.forestGreen.withValues(alpha: 0.1),
               ),
-              const SizedBox(width: ElunaiSpacing.md),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      title,
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                      style: theme.textTheme.titleSmall?.copyWith(
-                        color: ElunaiColors.storybookInk,
-                        fontWeight: FontWeight.w900,
-                        height: 1.22,
+            ),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Container(
+                  width: 52,
+                  height: 72,
+                  decoration: BoxDecoration(
+                    color: ElunaiColors.honeyYellow.withValues(alpha: 0.36),
+                    borderRadius: ElunaiSpacing.radiusMd,
+                  ),
+                  clipBehavior: Clip.antiAlias,
+                  child: coverImageUrl == null
+                      ? Icon(icon, color: ElunaiColors.forestGreen)
+                      : Image.network(
+                          coverImageUrl!,
+                          fit: BoxFit.cover,
+                          errorBuilder: (_, _, _) =>
+                              Icon(icon, color: ElunaiColors.forestGreen),
+                        ),
+                ),
+                const SizedBox(width: ElunaiSpacing.md),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        title,
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                        style: theme.textTheme.titleSmall?.copyWith(
+                          color: ElunaiColors.storybookInk,
+                          fontWeight: FontWeight.w900,
+                          height: 1.22,
+                        ),
                       ),
-                    ),
-                    const SizedBox(height: ElunaiSpacing.xxs),
-                    Text(
-                      subtitle,
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                      style: theme.textTheme.bodySmall?.copyWith(
-                        color: ElunaiColors.storybookInkMuted,
-                        height: 1.34,
+                      const SizedBox(height: ElunaiSpacing.xxs),
+                      Text(
+                        subtitle,
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                        style: theme.textTheme.bodySmall?.copyWith(
+                          color: ElunaiColors.storybookInkMuted,
+                          height: 1.34,
+                        ),
                       ),
-                    ),
-                    if (progress != null) ...[
+                      if (progress != null) ...[
+                        const SizedBox(height: ElunaiSpacing.sm),
+                        SeriesProgressIndicator(
+                          currentChapter: (progress! * 1000).round(),
+                          totalChapters: 1000,
+                        ),
+                      ],
                       const SizedBox(height: ElunaiSpacing.sm),
-                      ClipRRect(
-                        borderRadius: BorderRadius.circular(999),
-                        child: LinearProgressIndicator(
-                          value: progress,
-                          minHeight: 7,
-                          backgroundColor: ElunaiColors.storybookCreamDeep,
+                      Text(
+                        meta,
+                        style: theme.textTheme.labelSmall?.copyWith(
                           color: ElunaiColors.forestGreen,
+                          fontWeight: FontWeight.w900,
                         ),
                       ),
                     ],
-                    const SizedBox(height: ElunaiSpacing.sm),
-                    Text(
-                      meta,
-                      style: theme.textTheme.labelSmall?.copyWith(
-                        color: ElunaiColors.forestGreen,
-                        fontWeight: FontWeight.w900,
-                      ),
-                    ),
-                  ],
+                  ),
                 ),
-              ),
-              const Icon(
-                Icons.chevron_right_rounded,
-                color: ElunaiColors.storybookInkMuted,
-              ),
-            ],
+                const Icon(
+                  Icons.chevron_right_rounded,
+                  color: ElunaiColors.storybookInkMuted,
+                ),
+              ],
+            ),
           ),
         ),
       ),

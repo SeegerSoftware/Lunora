@@ -108,6 +108,7 @@ class BackendStoryGenerationService implements StoryGenerationService {
     final memory = request.memoryContext;
     return {
       'kind': kind,
+      'childId': child.id,
       'user': request.user.toMap(),
       'child': {
         ...child.toMap(),

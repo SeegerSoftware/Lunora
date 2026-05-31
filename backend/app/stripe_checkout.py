@@ -2,17 +2,19 @@ import os
 from typing import Any
 
 from fastapi import HTTPException
+from .plans import PLANS, normalize_plan_id
 
 
 def create_checkout_session(payload: dict[str, Any], firebase_user: dict[str, Any]) -> dict[str, str]:
     secret_key = os.getenv("STRIPE_SECRET_KEY", "").strip()
-    price_id = os.getenv("STRIPE_PRICE_ID_ELUNAI", "").strip()
     success_url = os.getenv("STRIPE_SUCCESS_URL", "https://lunora.app/#/subscription/success")
     cancel_url = os.getenv("STRIPE_CANCEL_URL", "https://lunora.app/#/subscription/cancel")
-    plan_id = str(payload.get("planId") or "plan_elunai")
-    allowed_plan_id = os.getenv("STRIPE_DEFAULT_PLAN_ID", "plan_elunai").strip()
-    if plan_id != allowed_plan_id:
+    requested_plan_id = str(payload.get("planId") or "plan_solo")
+    if requested_plan_id not in {*PLANS, "plan_elunai", "plan_5", "plan_10", "plan_15"}:
         raise HTTPException(status_code=400, detail="Unsupported Stripe plan")
+    plan_id = normalize_plan_id(requested_plan_id)
+    price_env = "STRIPE_PRICE_ID_SOLO" if plan_id == "plan_solo" else "STRIPE_PRICE_ID_FAMILY"
+    price_id = os.getenv(price_env, "").strip()
 
     if os.getenv("STRIPE_MOCK", "").lower() == "true":
         return {"url": "https://checkout.stripe.com/mock-session"}

@@ -6,7 +6,7 @@ import '../../../core/theme/colors.dart';
 import '../../../core/theme/spacing.dart';
 import '../../../routing/safe_navigation.dart';
 import '../../../shared/models/enums/subscription_status.dart';
-import '../../../shared/models/enums/story_plan.dart';
+import '../../../shared/models/enums/subscription_plan.dart';
 import '../../../shared/widgets/elunai_layout.dart';
 import '../../../shared/widgets/elunai_fade_in.dart';
 import '../../../shared/widgets/elunai_glass_card.dart';
@@ -19,7 +19,8 @@ import 'providers/subscription_providers.dart';
 class SubscriptionScreen extends ConsumerWidget {
   const SubscriptionScreen({super.key});
 
-  static final StoryPlan _plan = StoryPlan.elunai;
+  static const _plans = SubscriptionPlan.values;
+  static const _defaultPlan = SubscriptionPlan.solo;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -70,13 +71,17 @@ class SubscriptionScreen extends ConsumerWidget {
                       endsAt: subscription?.endsAt,
                     ),
                     const SizedBox(height: ElunaiSpacing.lg),
-                    _PlanCard(
-                      plan: _plan,
-                      isActive: isActive,
-                      onTap: () => context.push(
-                        '/stripe-checkout?planId=${Uri.encodeComponent(_plan.planId)}',
+                    for (final plan in _plans) ...[
+                      _PlanCard(
+                        plan: plan,
+                        isActive:
+                            isActive && subscription?.planId == plan.planId,
+                        onTap: () => context.push(
+                          '/stripe-checkout?planId=${Uri.encodeComponent(plan.planId)}',
+                        ),
                       ),
-                    ),
+                      const SizedBox(height: ElunaiSpacing.sm),
+                    ],
                     const SizedBox(height: ElunaiSpacing.lg),
                     ElunaiPrimaryButton(
                       label: isActive
@@ -86,7 +91,7 @@ class SubscriptionScreen extends ConsumerWidget {
                           ? Icons.manage_accounts_rounded
                           : Icons.lock_rounded,
                       onPressed: () => context.push(
-                        '/stripe-checkout?planId=${Uri.encodeComponent(_plan.planId)}',
+                        '/stripe-checkout?planId=${Uri.encodeComponent(_defaultPlan.planId)}',
                       ),
                     ),
                     const SizedBox(height: ElunaiSpacing.sm),
@@ -184,7 +189,7 @@ class _PlanCard extends StatelessWidget {
     required this.onTap,
   });
 
-  final StoryPlan plan;
+  final SubscriptionPlan plan;
   final bool isActive;
   final VoidCallback onTap;
 
@@ -214,7 +219,7 @@ class _PlanCard extends StatelessWidget {
                 children: [
                   Expanded(
                     child: Text(
-                      plan.displayLabel,
+                      plan.displayName,
                       style: theme.textTheme.titleLarge?.copyWith(
                         color: ElunaiColors.storybookInk,
                         fontWeight: FontWeight.w900,
@@ -222,7 +227,7 @@ class _PlanCard extends StatelessWidget {
                     ),
                   ),
                   Text(
-                    plan.monthlyPriceLabel,
+                    plan.priceLabel,
                     style: theme.textTheme.titleMedium?.copyWith(
                       color: ElunaiColors.forestGreen,
                       fontWeight: FontWeight.w900,
@@ -232,7 +237,7 @@ class _PlanCard extends StatelessWidget {
               ),
               const SizedBox(height: ElunaiSpacing.xs),
               Text(
-                'Histoires d’environ ${plan.targetStoryMinutes} minutes, adaptées au profil enfant.',
+                '${plan.dailyStoriesPerChild} histoire par jour par enfant, en lecture texte.',
                 style: theme.textTheme.bodyMedium?.copyWith(
                   color: ElunaiColors.storybookInkMuted,
                   height: 1.38,

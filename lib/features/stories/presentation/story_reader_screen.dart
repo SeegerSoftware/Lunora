@@ -21,7 +21,6 @@ import '../../../shared/widgets/elunai_night_scaffold.dart';
 import '../../../shared/widgets/elunai_primary_button.dart';
 import '../../../shared/widgets/elunai_section_title.dart';
 import '../../../shared/widgets/magical/elunai_progress_bar.dart';
-import '../../../shared/widgets/magical/audio_player_widget.dart';
 import '../../../shared/widgets/story_ui_labels.dart';
 import 'providers/story_providers.dart';
 
@@ -366,11 +365,6 @@ class _StoryReaderScreenState extends ConsumerState<StoryReaderScreen> {
                                     ),
                                   ),
                                 ],
-                              ),
-                              const SizedBox(height: ElunaiSpacing.md),
-                              AudioPlayerWidget(
-                                title: story.title,
-                                content: story.content,
                               ),
                               const SizedBox(height: ElunaiSpacing.md),
                               _storyFeedbackBand(

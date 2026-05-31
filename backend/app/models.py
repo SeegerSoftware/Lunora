@@ -30,6 +30,7 @@ class StoryGenerationPayload(BaseModel):
     model_config = ConfigDict(extra="allow")
 
     kind: Literal["story", "series_bible"] = "story"
+    childId: str | None = Field(default=None, min_length=1, max_length=128)
     user: UserPayload
     child: ChildPayload
     dateKey: str | None = None
@@ -49,5 +50,5 @@ class StoryGenerationPayload(BaseModel):
 class StripeCheckoutPayload(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
-    planId: str = Field(default="plan_elunai", max_length=80)
+    planId: str = Field(default="plan_solo", max_length=80)
     email: str | None = Field(default=None, max_length=320)

@@ -18,6 +18,10 @@ class StoryGenerationResult extends Equatable {
     this.seriesId,
     this.continuityUpdate,
     this.generationSource = 'unknown',
+    this.qualityScore = 0,
+    this.qualityDetails = const {},
+    this.qualityWarnings = const [],
+    this.coverPrompt,
   });
 
   final String title;
@@ -32,6 +36,10 @@ class StoryGenerationResult extends Equatable {
   final String? seriesId;
   final ChapterContinuityUpdate? continuityUpdate;
   final String generationSource;
+  final int qualityScore;
+  final Map<String, int> qualityDetails;
+  final List<String> qualityWarnings;
+  final String? coverPrompt;
 
   StoryGenerationResult copyWith({
     String? title,
@@ -46,6 +54,10 @@ class StoryGenerationResult extends Equatable {
     String? seriesId,
     ChapterContinuityUpdate? continuityUpdate,
     String? generationSource,
+    int? qualityScore,
+    Map<String, int>? qualityDetails,
+    List<String>? qualityWarnings,
+    String? coverPrompt,
   }) {
     return StoryGenerationResult(
       title: title ?? this.title,
@@ -61,6 +73,10 @@ class StoryGenerationResult extends Equatable {
       seriesId: seriesId ?? this.seriesId,
       continuityUpdate: continuityUpdate ?? this.continuityUpdate,
       generationSource: generationSource ?? this.generationSource,
+      qualityScore: qualityScore ?? this.qualityScore,
+      qualityDetails: qualityDetails ?? this.qualityDetails,
+      qualityWarnings: qualityWarnings ?? this.qualityWarnings,
+      coverPrompt: coverPrompt ?? this.coverPrompt,
     );
   }
 
@@ -78,5 +94,9 @@ class StoryGenerationResult extends Equatable {
     seriesId,
     continuityUpdate,
     generationSource,
+    qualityScore,
+    qualityDetails,
+    qualityWarnings,
+    coverPrompt,
   ];
 }

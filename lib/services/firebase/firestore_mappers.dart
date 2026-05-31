@@ -2,6 +2,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 
 import '../../shared/models/child_profile.dart';
 import '../../shared/models/enums/subscription_status.dart';
+import '../../shared/models/enums/subscription_plan.dart';
 import '../../shared/models/story.dart';
 import '../../shared/models/subscription.dart';
 import '../../shared/models/user_model.dart';
@@ -15,6 +16,8 @@ abstract final class FirestoreMappers {
       'createdAt': Timestamp.fromDate(u.createdAt),
       'selectedPlan': u.selectedPlan,
       'subscriptionStatus': u.subscriptionStatus.wireValue,
+      'subscriptionPlan': u.subscriptionPlan.wireValue,
+      'maxChildren': u.subscriptionPlan.maxChildren,
     };
   }
 

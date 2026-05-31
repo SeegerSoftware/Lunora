@@ -196,7 +196,7 @@ const List<_TermsContent> _sections = [
   _TermsContent(
     title: '6. Abonnement et paiement',
     paragraphs: [
-      'Certaines fonctionnalités peuvent nécessiter un abonnement payant. L’offre actuellement présentée dans l’application est l’offre Elunai, facturée CHF 5.99 par mois, sauf indication différente affichée au moment de la souscription.',
+      'Certaines fonctionnalités peuvent nécessiter un abonnement payant. Les offres actuellement présentées dans l’application sont Elunai Solo, facturée CHF 4.99 par mois, et Elunai Famille, facturée CHF 8.99 par mois, sauf indication différente affichée au moment de la souscription.',
       'Les paiements sont traités par Stripe ou par la boutique d’applications concernée selon le canal utilisé. Les conditions de paiement, de renouvellement, de résiliation et de remboursement applicables sont celles affichées lors de l’achat et celles du prestataire de paiement ou de la boutique.',
       'L’accès aux fonctionnalités payantes peut être suspendu ou limité si le paiement échoue, si l’abonnement expire ou si une fraude est suspectée.',
     ],

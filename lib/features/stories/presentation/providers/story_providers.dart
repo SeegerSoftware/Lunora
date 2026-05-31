@@ -16,8 +16,11 @@ final todayStoryProvider = FutureProvider<Story?>((ref) async {
 
 final storyHistoryProvider = FutureProvider<List<Story>>((ref) async {
   final user = ref.watch(authSessionProvider);
-  if (user == null) return const [];
-  return ref.read(storyRepositoryProvider).historyForUser(user.id);
+  final child = ref.watch(childProfileProvider);
+  if (user == null || child == null) return const [];
+  return ref
+      .read(storyRepositoryProvider)
+      .historyForChild(userId: user.id, childId: child.id);
 });
 
 final storyByIdProvider = FutureProvider.family<Story?, String>((

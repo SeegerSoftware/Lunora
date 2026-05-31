@@ -65,7 +65,8 @@ Version PowerShell :
 ```powershell
 "sk-..." | gcloud secrets create OPENAI_API_KEY --data-file=-
 "sk_live_..." | gcloud secrets create STRIPE_SECRET_KEY --data-file=-
-"price_..." | gcloud secrets create STRIPE_PRICE_ID_ELUNAI --data-file=-
+"price_solo_..." | gcloud secrets create STRIPE_PRICE_ID_SOLO --data-file=-
+"price_family_..." | gcloud secrets create STRIPE_PRICE_ID_FAMILY --data-file=-
 "whsec_..." | gcloud secrets create STRIPE_WEBHOOK_SECRET --data-file=-
 ```
 
@@ -74,7 +75,8 @@ Version Invite de commandes Windows (`cmd.exe`) :
 ```bat
 echo sk-...| gcloud secrets create OPENAI_API_KEY --data-file=-
 echo sk_live_...| gcloud secrets create STRIPE_SECRET_KEY --data-file=-
-echo price_...| gcloud secrets create STRIPE_PRICE_ID_ELUNAI --data-file=-
+echo price_solo_...| gcloud secrets create STRIPE_PRICE_ID_SOLO --data-file=-
+echo price_family_...| gcloud secrets create STRIPE_PRICE_ID_FAMILY --data-file=-
 echo whsec_...| gcloud secrets create STRIPE_WEBHOOK_SECRET --data-file=-
 ```
 
@@ -109,8 +111,8 @@ gcloud run deploy elunai-api `
   --min-instances 0 `
   --max-instances 10 `
   --service-account elunai-api@lunora-adb24.iam.gserviceaccount.com `
-  --set-env-vars FIREBASE_PROJECT_ID=lunora-adb24,APP_CHECK_ENFORCED=false,GENERATION_RATE_LIMIT_PER_HOUR=12,OPENAI_MODEL=gpt-4o-mini,OPENAI_MAX_TOKENS=4500,OPENAI_TIMEOUT_SECONDS=45,OPENAI_MAX_ATTEMPTS=2,MAX_REQUEST_BODY_BYTES=131072,CORS_ALLOWED_ORIGINS=https://lunora.app;https://www.lunora.app,STRIPE_DEFAULT_PLAN_ID=plan_elunai,STRIPE_SUCCESS_URL=https://lunora.app/#/subscription/success,STRIPE_CANCEL_URL=https://lunora.app/#/subscription/cancel `
-  --set-secrets OPENAI_API_KEY=OPENAI_API_KEY:latest,STRIPE_SECRET_KEY=STRIPE_SECRET_KEY:latest,STRIPE_PRICE_ID_ELUNAI=STRIPE_PRICE_ID_ELUNAI:latest,STRIPE_WEBHOOK_SECRET=STRIPE_WEBHOOK_SECRET:latest
+  --set-env-vars FIREBASE_PROJECT_ID=lunora-adb24,APP_CHECK_ENFORCED=false,GENERATION_RATE_LIMIT_PER_HOUR=12,OPENAI_MODEL=gpt-4o-mini,OPENAI_MAX_TOKENS=4500,OPENAI_TIMEOUT_SECONDS=45,OPENAI_MAX_ATTEMPTS=2,MAX_REQUEST_BODY_BYTES=131072,CORS_ALLOWED_ORIGINS=https://lunora.app;https://www.lunora.app,STRIPE_DEFAULT_PLAN_ID=plan_solo,STRIPE_SUCCESS_URL=https://lunora.app/#/subscription/success,STRIPE_CANCEL_URL=https://lunora.app/#/subscription/cancel `
+  --set-secrets OPENAI_API_KEY=OPENAI_API_KEY:latest,STRIPE_SECRET_KEY=STRIPE_SECRET_KEY:latest,STRIPE_PRICE_ID_SOLO=STRIPE_PRICE_ID_SOLO:latest,STRIPE_PRICE_ID_FAMILY=STRIPE_PRICE_ID_FAMILY:latest,STRIPE_WEBHOOK_SECRET=STRIPE_WEBHOOK_SECRET:latest
 ```
 
 Garder `APP_CHECK_ENFORCED=false` pour le premier test. Passer a `true` apres validation avec l'app mobile.
