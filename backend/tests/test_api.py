@@ -17,7 +17,13 @@ os.environ["GENERATION_RATE_LIMIT_PER_HOUR"] = "0"
 
 from app.main import app  # noqa: E402
 from app.rate_limit import check_generation_rate_limit  # noqa: E402
-from app.story_generation import _mock_story, _normalize_story, _story_prompt  # noqa: E402
+from app.story_generation import (  # noqa: E402
+    _corrective_story_prompt,
+    _mock_story,
+    _normalize_story,
+    _story_prompt,
+    _story_quality_issues,
+)
 
 
 client = TestClient(app)
@@ -33,6 +39,7 @@ def test_local_fallback_is_long_enough_for_mobile_validation():
 
     assert story["generationSource"] == "backend-fallback"
     assert 800 <= len(story["content"].split()) <= 1200
+    assert _story_quality_issues(story["content"], "Lina") == []
 
 
 def test_story_prompt_includes_minimum_length():
@@ -55,6 +62,27 @@ def test_story_normalization_rejects_duration_outside_8_to_12_minutes(word_count
             {"content": "mot " * word_count},
             {"child": {"storyLengthMinutes": 10}},
         )
+
+
+def test_story_quality_rejects_duplicate_paragraph_and_raw_variable():
+    story = _mock_story({"child": {"firstName": "Lina"}})
+    content = story["content"].replace("Lina", "{{child_name}}")
+    first_paragraph = content.split("\n\n")[0]
+    content = f"{content}\n\n{first_paragraph}"
+
+    issues = _story_quality_issues(content, "Lina")
+
+    assert "un ou plusieurs paragraphes sont répétés" in issues
+    assert "une variable brute non remplacée apparaît dans le texte" in issues
+    assert "le prénom réel 'Lina' n'apparaît pas dans l'histoire" in issues
+
+
+def test_corrective_prompt_lists_quality_failures():
+    prompt = _corrective_story_prompt("PROMPT INITIAL", ["paragraphes répétés"])
+
+    assert "PROMPT INITIAL" in prompt
+    assert "paragraphes répétés" in prompt
+    assert "Réécris entièrement l'histoire" in prompt
 
 
 def test_rate_limit_is_shared_through_firestore(monkeypatch):

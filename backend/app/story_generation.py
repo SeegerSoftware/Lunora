@@ -1,7 +1,9 @@
 import json
 import logging
 import os
+import re
 import time
+import unicodedata
 from typing import Any
 
 from fastapi import HTTPException
@@ -23,9 +25,12 @@ def _child_label(child: dict[str, Any]) -> str:
 
 def _system_prompt() -> str:
     return (
-        "Tu es un auteur jeunesse francophone spécialisé dans les histoires du soir. "
-        "Tu écris uniquement du contenu doux, non effrayant, adapté aux enfants, "
-        "et tu réponds toujours en JSON strict."
+        "Tu es un véritable auteur jeunesse francophone spécialisé dans les histoires "
+        "du soir personnalisées. Tu écris une histoire complète, naturelle, imagée et "
+        "rassurante, jamais une ébauche ni un texte générique. Tu respectes le prénom "
+        "réel de l'enfant, les accents français et la continuité narrative. Tu évites "
+        "toute peur intense, violence, menace, conflit fort ou suspense anxiogène. "
+        "Tu réponds toujours en JSON strict conforme au format demandé."
     )
 
 
@@ -37,6 +42,8 @@ def _story_prompt(payload: dict[str, Any]) -> str:
     min_words, target_words, max_words = _story_word_bounds()
     themes = ", ".join(_read_list(child, "preferredThemes")) or "rituel du soir"
     traits = ", ".join(_read_list(child, "personalityTraits")) or "personnage doux"
+    familiar = ", ".join(_read_list(child, "familiarElements")) or "éléments familiers du coucher"
+    values = ", ".join(_read_list(child, "valuesToTransmit")) or "confiance et apaisement"
     avoid = ", ".join(_read_list(child, "avoidThemes")) or "aucun thème précisé"
     chapter_index = int(payload.get("chapterIndex") or 1)
     total_chapters = int(payload.get("totalChapters") or 1)
@@ -55,6 +62,10 @@ Personnage / traits : {traits}
 Style : {child.get("magicLevel", "fantastique doux")}
 Ton : {child.get("preferredTone", "reassuring")}
 Univers : {child.get("universeType", child.get("preferredUniverse", ""))}
+Éléments familiers à intégrer naturellement : {familiar}
+Valeurs à transmettre : {values}
+Objectif du soir : {child.get("tonightGoal", "s'endormir calmement")}
+Intensité d'aventure : {child.get("adventureIntensity", "équilibrée")}
 À éviter : {avoid}
 Notes parent : {child.get("extraStoryHints", "")}
 
@@ -70,6 +81,32 @@ CONTRAINTE DE LONGUEUR OBLIGATOIRE :
 - Avant de répondre, vérifie silencieusement la longueur de "content".
 - Si le texte est trop court, enrichis les scènes, les descriptions et les dialogues.
 - Ne résume jamais l'histoire et ne renvoie jamais une ébauche.
+
+RÈGLES NARRATIVES OBLIGATOIRES :
+- Le héros ou l'héroïne est l'enfant : utilise son prénom réel "{_child_label(child)}" plusieurs fois.
+- N'utilise jamais une variable brute telle que "A", "childName", "prenom", "{{{{name}}}}" ou "{{{{child_name}}}}".
+- Ne répète jamais un paragraphe, une scène ou une séquence pour atteindre la longueur.
+- Donne à {_child_label(child)} une personnalité visible grâce à ses traits et à ses préférences.
+- Construis un début, un développement et une fin.
+- Ajoute une mini-mission simple et non stressante : trouver, aider, choisir, allumer ou réparer quelque chose.
+- Ajoute au moins une interaction douce avec un personnage, un objet ou un élément magique.
+- Fais évoluer l'émotion : curiosité, confiance, satisfaction, puis repos.
+- Varie la longueur des phrases et les verbes. N'utilise pas "doucement", "tranquille" ou "paisible" dans chaque paragraphe.
+- Utilise un français naturel, fluide et correctement accentué.
+- Termine par un retour au calme dans la chambre, au lit ou dans un environnement rassurant.
+- Ne termine pas par un cliffhanger stimulant. Le prochain chapitre peut seulement être évoqué de manière apaisante.
+
+STRUCTURE RECOMMANDÉE :
+1. Situation initiale familière.
+2. Apparition d'un élément magique ou poétique.
+3. Choix ou petite mission.
+4. Exploration calme avec une interaction.
+5. Découverte d'un message rassurant.
+6. Retour dans la chambre ou au calme.
+7. Phrase finale propice à l'endormissement.
+
+Avant de finaliser, relis silencieusement "content" et corrige toute répétition,
+variable non remplacée, formulation artificielle, incohérence ou scène trop excitante.
 
 Réponds avec ce JSON :
 {{
@@ -143,50 +180,82 @@ def _mock_story(payload: dict[str, Any]) -> dict[str, Any]:
     total = int(payload.get("totalChapters") or 1)
     _, target_words, _ = _story_word_bounds()
     paragraphs = [
-        f"Ce soir, {name} remarque une petite lumière posée près de son oreiller. "
-        "Elle brille juste assez pour dessiner un chemin tranquille sur le tapis. "
-        "La chambre reste silencieuse et familière. La lumière semble attendre sans "
-        "se presser, comme une amie qui connaît déjà le chemin du repos.",
-        f"{name} pose les pieds sur le tapis et avance doucement. À chaque pas, un "
-        "petit reflet apparaît sur un objet connu : un livre, un coussin, une boîte "
-        "à souvenirs. Rien ne bouge brusquement. Tout rappelle que les belles "
-        "aventures peuvent commencer dans le calme.",
-        "Au bout du chemin, une veilleuse ronde murmure une idée simple : pour "
-        "continuer, il suffit de choisir un souvenir agréable de la journée. "
-        f"{name} prend le temps de réfléchir, puis choisit un moment qui donne envie "
-        "de sourire. La veilleuse devient un peu plus lumineuse.",
-        "Un passage de lumière s'ouvre alors, comme une porte peinte avec des "
-        "couleurs douces. De l'autre côté se trouve un jardin paisible. Les feuilles "
-        "font un bruit léger, les fleurs se balancent lentement, et un banc attend "
-        "près d'un petit bassin parfaitement calme.",
-        f"{name} s'assoit sur le banc et observe les reflets. Chaque reflet raconte "
-        "une petite chose rassurante : un rire partagé, un jeu terminé, une main "
-        "tendue au bon moment. La veilleuse explique que ces souvenirs restent "
-        "disponibles même quand la journée est finie.",
-        "Plus loin, un pont très court traverse le bassin. Pour le franchir, il "
-        "faut respirer lentement et compter quelques pas. Le pont ne demande ni "
-        "vitesse ni courage extraordinaire. Il invite seulement à avancer avec "
-        "patience, en remarquant combien le jardin est tranquille.",
-        f"De l'autre côté, {name} trouve une petite boîte à musique. Elle joue une "
-        "mélodie discrète, assez douce pour ne pas déranger la nuit. Dans la boîte, "
-        "un papier porte quelques mots : les petites étapes comptent autant que les "
-        "grandes, surtout lorsque vient le moment de se reposer.",
-        "La veilleuse propose de rapporter ce message dans la chambre. Le jardin "
-        "reste ouvert encore un instant, puis les couleurs se replient doucement "
-        "comme les pages d'un livre. Le chemin de lumière revient sur le tapis, "
-        "toujours paisible, toujours facile à suivre.",
-        f"De retour près du lit, {name} replace la veilleuse à sa place. La chambre "
-        "semble encore plus confortable qu'avant. Les objets familiers sont là, "
-        "le coussin attend, et le souvenir choisi au début de l'aventure garde une "
-        "petite chaleur agréable.",
-        f"Avant de fermer les yeux, {name} pense au prochain chapitre de cette "
-        "aventure calme. Il n'est pas nécessaire de tout découvrir ce soir. La "
-        "veilleuse brillera encore demain. Pour maintenant, le chemin est rangé, "
-        "le jardin se repose, et la nuit peut commencer doucement.",
+        f"Ce soir, après avoir rangé ses affaires, {name} remarque près de son "
+        "oreiller une petite lueur couleur de miel. Elle ne clignote pas comme une "
+        "lampe ordinaire : elle respire lentement, au rythme de la chambre. Sur la "
+        "table de nuit, les livres sont immobiles et le coussin attend déjà. "
+        f"{name} s'approche, intrigué, sans avoir besoin de se presser.",
+        "La lueur révèle alors une minuscule veilleuse ronde, coiffée d'un chapeau "
+        "en forme d'étoile. « Bonsoir », murmure-t-elle d'une voix légère. Elle "
+        "explique qu'une de ses étincelles s'est égarée avant l'heure du coucher. "
+        "Sans cette étincelle, sa lumière reste un peu pâle. Elle ne demande pas "
+        "une grande aventure, seulement un petit coup de main attentif.",
+        f"{name} accepte cette mission simple : retrouver l'étincelle et la "
+        "rapporter avant que la chambre ne s'endorme. La veilleuse propose trois "
+        "endroits familiers où regarder : près des albums, sous le fauteuil et à "
+        f"côté de la boîte à souvenirs. Après un instant de réflexion, {name} choisit "
+        "de commencer par les livres, car leurs couvertures aiment garder les reflets.",
+        "Entre deux albums, aucune étincelle n'apparaît, mais une image argentée "
+        "brille sur une page. Elle représente un chemin bordé de feuilles souples. "
+        "Lorsque la veilleuse approche son chapeau étoilé, le chemin se dessine sur "
+        "le tapis comme un ruban de clair de lune. Il conduit jusqu'au fauteuil, "
+        "sans quitter la chambre et sans faire le moindre bruit brusque.",
+        f"Près du fauteuil, {name} découvre un petit bouton nacré. Il roule de "
+        "quelques centimètres puis s'arrête contre le pied du meuble. « Ce n'est pas "
+        "mon étincelle, mais il pourra nous guider », dit la veilleuse. Quand "
+        f"{name} pose le bouton dans sa paume, celui-ci devient tiède et pointe vers "
+        "la boîte à souvenirs avec un reflet discret.",
+        "La boîte s'ouvre avec un léger soupir de papier. À l'intérieur se trouvent "
+        "des images de la journée : un sourire partagé, un jeu terminé, une parole "
+        "gentille, un moment où quelqu'un a pris le temps d'écouter. La veilleuse "
+        "demande quel souvenir mérite de briller ce soir. Il n'y a pas de mauvaise "
+        "réponse ; il suffit de choisir celui qui réchauffe le plus le cœur.",
+        f"{name} observe chaque image, puis en choisit une. Aussitôt, le souvenir "
+        "prend la forme d'une petite bulle lumineuse. Elle flotte au-dessus de la "
+        "boîte et éclaire un fil presque invisible, posé sur le rebord. Le fil se "
+        "déroule jusqu'à une poche secrète cachée dans la doublure. La veilleuse "
+        "sourit : la recherche avance grâce à ce choix personnel.",
+        "Dans la poche se trouve une enveloppe minuscule. Elle contient trois grains "
+        "de lumière, mais un seul appartient à la veilleuse. Le premier frétille "
+        "beaucoup trop vite, le deuxième s'éteint dès qu'on le regarde, et le "
+        "troisième diffuse une chaleur régulière. « Lequel choisirais-tu ? » demande "
+        "la veilleuse. La réponse semble bientôt évidente.",
+        f"{name} désigne le troisième grain. À peine effleuré, il se pose sur le "
+        "chapeau étoilé et retrouve sa place avec un petit son cristallin. La "
+        "veilleuse ne devient pas éblouissante. Sa lumière est simplement plus "
+        "ronde, plus chaleureuse, exactement comme il faut pour accompagner la fin "
+        "de la journée sans réveiller les pensées déjà fatiguées.",
+        "Pour remercier son partenaire de recherche, la veilleuse offre une dernière "
+        "image : un jardin nocturne vu depuis une fenêtre imaginaire. Les herbes y "
+        "ondulent lentement sous la lune et un banc de bois semble inviter à une "
+        "pause. Aucun autre chemin ne s'ouvre, aucune nouvelle mission ne commence. "
+        "Le jardin rappelle seulement que les petites réussites peuvent suffire.",
+        "Avant de partir, la veilleuse invite à écouter quelques secondes. On entend "
+        "à peine le froissement des feuilles imaginaires et le tic-tac régulier de "
+        "la maison. Chaque son retrouve sa juste place. La veilleuse explique que "
+        "le calme n'est pas un silence parfait : c'est un espace où les pensées "
+        "peuvent ralentir et se poser l'une après l'autre.",
+        f"{name} prend alors une respiration lente, puis une seconde. La petite "
+        "lumière accompagne ce rythme sans donner d'ordre et sans se presser. Le "
+        "jardin nocturne devient plus lointain, comme une illustration que l'on "
+        "referme après l'avoir appréciée. Il restera disponible un autre soir, mais "
+        "il n'a rien de plus à demander maintenant.",
+        f"{name} remet le bouton nacré dans la boîte à souvenirs, referme le "
+        "couvercle et replace les albums. Le ruban de clair de lune s'efface du "
+        "tapis, laissant chaque chose à sa place. La veilleuse remercie encore "
+        f"{name} : choisir, observer et aider avec patience lui a permis de réparer "
+        "sa petite lumière avant la nuit.",
+        f"Enfin, {name} retourne dans son lit et ajuste l'oreiller. La veilleuse "
+        "reste sur la table de nuit, avec son éclat couleur de miel. La chambre "
+        "retrouve son silence familier. Le souvenir choisi garde une chaleur douce, "
+        "les paupières deviennent lourdes, et le sommeil peut arriver à son rythme, "
+        "sans autre mission à accomplir ce soir.",
     ]
     selected: list[str] = []
-    while len(" ".join(selected).split()) < target_words:
-        selected.append(paragraphs[len(selected) % len(paragraphs)])
+    for paragraph in paragraphs:
+        selected.append(paragraph)
+        if len(" ".join(selected).split()) >= target_words:
+            break
     content = "\n\n".join(selected)
     return {
         "title": f"La lumière douce de {name}",
@@ -216,6 +285,105 @@ def _mock_story(payload: dict[str, Any]) -> dict[str, Any]:
 def _story_word_bounds() -> tuple[int, int, int]:
     # Around 100 words/minute keeps the bedtime story within 8 to 12 minutes.
     return (800, 1000, 1200)
+
+
+class StoryQualityError(ValueError):
+    def __init__(self, issues: list[str]):
+        self.issues = issues
+        super().__init__("; ".join(issues))
+
+
+def _canonical_text(value: str) -> str:
+    normalized = unicodedata.normalize("NFKD", value.casefold())
+    return " ".join(re.findall(r"[a-z0-9]+", normalized))
+
+
+def _paragraphs(content: str) -> list[str]:
+    return [paragraph.strip() for paragraph in re.split(r"\n\s*\n", content) if paragraph.strip()]
+
+
+def _repeated_paragraphs(content: str) -> list[str]:
+    seen: set[str] = set()
+    repeated: list[str] = []
+    for paragraph in _paragraphs(content):
+        canonical = _canonical_text(paragraph)
+        if canonical in seen:
+            repeated.append(paragraph)
+        seen.add(canonical)
+    return repeated
+
+
+def _repeated_sentences(content: str) -> list[str]:
+    seen: set[str] = set()
+    repeated: list[str] = []
+    for sentence in re.split(r"(?<=[.!?])\s+", content):
+        canonical = _canonical_text(sentence)
+        if len(canonical.split()) < 8:
+            continue
+        if canonical in seen:
+            repeated.append(sentence)
+        seen.add(canonical)
+    return repeated
+
+
+def _contains_raw_variable(content: str) -> bool:
+    return bool(
+        re.search(
+            r"(?i)(\{\{[^}]+\}\}|\{(?:child_?name|name|prenom|prénom)\}|"
+            r"\bchild_?name\b|\bprenom\b|\bprénom\b)",
+            content,
+        )
+        or re.search(r"\bA\b", content)
+    )
+
+
+def _contains_any(content: str, words: tuple[str, ...]) -> bool:
+    canonical = _canonical_text(content)
+    return any(_canonical_text(word) in canonical for word in words)
+
+
+def _story_quality_issues(content: str, child_name: str) -> list[str]:
+    issues: list[str] = []
+    minimum_words, _, maximum_words = _story_word_bounds()
+    word_count = len(content.split())
+    if word_count < minimum_words:
+        issues.append(f"histoire trop courte : {word_count} mots, minimum {minimum_words}")
+    if word_count > maximum_words:
+        issues.append(f"histoire trop longue : {word_count} mots, maximum {maximum_words}")
+    if len(_paragraphs(content)) < 7:
+        issues.append("progression narrative insuffisante : moins de 7 paragraphes")
+    if _repeated_paragraphs(content):
+        issues.append("un ou plusieurs paragraphes sont répétés")
+    if _repeated_sentences(content):
+        issues.append("une ou plusieurs phrases développées sont répétées")
+    if _contains_raw_variable(content):
+        issues.append("une variable brute non remplacée apparaît dans le texte")
+    if child_name and _canonical_text(child_name) not in _canonical_text(content):
+        issues.append(f"le prénom réel {child_name!r} n'apparaît pas dans l'histoire")
+    if not _contains_any(content, ("mission", "trouver", "retrouver", "aider", "choisir", "allumer", "réparer", "rapporter")):
+        issues.append("aucune mini-mission calme n'est identifiable")
+    if not _contains_any(content, ("dit", "demande", "répond", "murmure", "propose", "explique", "sourit")):
+        issues.append("aucune interaction douce n'est identifiable")
+    ending = " ".join(_paragraphs(content)[-2:])
+    if not _contains_any(ending, ("lit", "chambre", "oreiller", "sommeil", "dormir", "fermer les yeux", "nuit", "repos", "coucher")):
+        issues.append("la fin ne revient pas clairement au calme ou au coucher")
+    if "Ã" in content or "�" in content:
+        issues.append("le texte contient des caractères français mal encodés")
+    return issues
+
+
+def _corrective_story_prompt(prompt: str, issues: list[str]) -> str:
+    details = "\n".join(f"- {issue}" for issue in issues)
+    return f"""
+{prompt}
+
+CORRECTION OBLIGATOIRE APRÈS CONTRÔLE QUALITÉ :
+La première version a été refusée pour les raisons suivantes :
+{details}
+
+Réécris entièrement l'histoire. Ne recycle aucun paragraphe de la version précédente.
+Corrige tous les points listés avant de renvoyer le JSON final.
+""".strip()
 
 
 def _mock_bible(payload: dict[str, Any]) -> dict[str, Any]:
@@ -298,12 +466,9 @@ def _narrative_list(value: Any) -> list[str]:
 def _normalize_story(result: dict[str, Any], payload: dict[str, Any]) -> dict[str, Any]:
     child = payload.get("child") or {}
     content = _narrative_text(result.get("content"))
-    minimum_words, _, maximum_words = _story_word_bounds()
-    word_count = len(content.split())
-    if word_count < minimum_words:
-        raise ValueError(f"OpenAI story is too short ({word_count} words)")
-    if word_count > maximum_words:
-        raise ValueError(f"OpenAI story is too long ({word_count} words)")
+    issues = _story_quality_issues(content, _child_label(child))
+    if issues:
+        raise StoryQualityError(issues)
     continuity = result.get("continuityUpdate")
     continuity = continuity if isinstance(continuity, dict) else {}
     for key in (
@@ -370,15 +535,19 @@ def _openai_json(prompt: str, *, temperature: float) -> dict[str, Any]:
 def generate_story(payload: dict[str, Any]) -> dict[str, Any]:
     if os.getenv("OPENAI_MOCK", "").lower() == "true":
         return _mock_story(payload)
-    attempts = max(1, int(os.getenv("OPENAI_VALIDATION_ATTEMPTS", "2")))
-    for attempt in range(1, attempts + 1):
+    prompt = _story_prompt(payload)
+    for attempt in range(1, 3):
         try:
             return _normalize_story(
-                _openai_json(_story_prompt(payload), temperature=0.55),
+                _openai_json(prompt, temperature=0.55),
                 payload,
             )
+        except StoryQualityError as exc:
+            logger.warning("OpenAI story quality attempt %s/2 rejected: %s", attempt, exc)
+            if attempt == 1:
+                prompt = _corrective_story_prompt(prompt, exc.issues)
         except Exception:
-            logger.exception("OpenAI story validation attempt %s/%s failed", attempt, attempts)
+            logger.exception("OpenAI story generation attempt %s/2 failed", attempt)
     logger.warning("Returning local story fallback")
     return _mock_story(payload)
 
