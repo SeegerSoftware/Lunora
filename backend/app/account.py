@@ -5,13 +5,14 @@ from fastapi import HTTPException
 from .auth import firestore_client, _firebase_auth
 
 
-USER_SCOPED_COLLECTIONS = [
-    "children_profiles",
-    "stories",
-    "child_series_state",
-    "story_worlds",
-    "story_memory_snapshots",
-]
+USER_SCOPED_COLLECTIONS = {
+    "children_profiles": "userId",
+    "stories": "userId",
+    "child_series_state": "userId",
+    "story_worlds": "userId",
+    "story_memory_snapshots": "userId",
+    "generation_rate_limits": "uid",
+}
 
 
 def _delete_query_results(query) -> int:
@@ -28,9 +29,9 @@ def delete_account_data(uid: str) -> dict[str, int | bool]:
 
     db = firestore_client()
     counts: dict[str, int | bool] = {}
-    for collection in USER_SCOPED_COLLECTIONS:
+    for collection, owner_field in USER_SCOPED_COLLECTIONS.items():
         counts[collection] = _delete_query_results(
-            db.collection(collection).where("userId", "==", uid)
+            db.collection(collection).where(owner_field, "==", uid)
         )
 
     db.collection("subscriptions").document(uid).delete()

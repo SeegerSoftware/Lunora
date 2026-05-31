@@ -18,10 +18,7 @@ import '../../../shared/widgets/lunora_screen_shell.dart';
 import '../../auth/presentation/providers/auth_providers.dart';
 import '../../../services/firebase/app_check_token_provider.dart';
 
-/// Écran de paiement préparé pour Stripe : récap plan + zone « carte ».
-///
-/// **Prod** : un backend doit créer un [PaymentIntent] (ou Checkout Session) ;
-/// l’app appellera l’endpoint puis affichera PaymentSheet / redirect.
+/// Écran de paiement Stripe : récapitulatif puis redirection vers Checkout.
 class StripeCheckoutScreen extends ConsumerStatefulWidget {
   const StripeCheckoutScreen({super.key, required this.initialPlanId});
 
@@ -57,9 +54,9 @@ class _StripeCheckoutScreenState extends ConsumerState<StripeCheckoutScreen> {
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('$e')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('$e')));
       }
     } finally {
       if (mounted) setState(() => _payBusy = false);
@@ -73,12 +70,14 @@ class _StripeCheckoutScreenState extends ConsumerState<StripeCheckoutScreen> {
       if (token == null || token.isEmpty) {
         throw StateError('Session Firebase requise pour ouvrir Stripe.');
       }
-      final response = await ref.read(elunaiApiClientProvider).postJson(
-        '/stripe/checkout',
-        bearerToken: token,
-        appCheckToken: await AppCheckTokenProvider.getToken(),
-        body: {'planId': _plan.planId, 'email': email},
-      );
+      final response = await ref
+          .read(elunaiApiClientProvider)
+          .postJson(
+            '/stripe/checkout',
+            bearerToken: token,
+            appCheckToken: await AppCheckTokenProvider.getToken(),
+            body: {'planId': _plan.planId, 'email': email},
+          );
       final url = response['url']?.toString().trim() ?? '';
       if (url.isEmpty) {
         throw StateError('Le backend Stripe n’a pas renvoyé d’URL Checkout.');
@@ -140,7 +139,9 @@ class _StripeCheckoutScreenState extends ConsumerState<StripeCheckoutScreen> {
                     DecoratedBox(
                       decoration: BoxDecoration(
                         borderRadius: LunoraSpacing.radiusLg,
-                        color: LunoraColors.nightBlueLift.withValues(alpha: 0.75),
+                        color: LunoraColors.nightBlueLift.withValues(
+                          alpha: 0.75,
+                        ),
                         border: Border.all(
                           color: LunoraColors.mist.withValues(alpha: 0.12),
                         ),
@@ -161,7 +162,9 @@ class _StripeCheckoutScreenState extends ConsumerState<StripeCheckoutScreen> {
                             Text(
                               'Durée cible ~${_plan.targetStoryMinutes} min / histoire',
                               style: theme.textTheme.bodySmall?.copyWith(
-                                color: LunoraColors.mist.withValues(alpha: 0.75),
+                                color: LunoraColors.mist.withValues(
+                                  alpha: 0.75,
+                                ),
                               ),
                             ),
                             const SizedBox(height: LunoraSpacing.xs),
@@ -176,7 +179,9 @@ class _StripeCheckoutScreenState extends ConsumerState<StripeCheckoutScreen> {
                             Text(
                               'Compte : ${user.email}',
                               style: theme.textTheme.bodySmall?.copyWith(
-                                color: LunoraColors.mist.withValues(alpha: 0.65),
+                                color: LunoraColors.mist.withValues(
+                                  alpha: 0.65,
+                                ),
                               ),
                             ),
                           ],
@@ -185,14 +190,16 @@ class _StripeCheckoutScreenState extends ConsumerState<StripeCheckoutScreen> {
                     ),
                     const SizedBox(height: LunoraSpacing.xl),
                     Text(
-                      'Carte bancaire',
+                      'Paiement sécurisé',
                       style: LunoraTextStyles.sectionTitle(theme.textTheme),
                     ),
                     const SizedBox(height: LunoraSpacing.sm),
                     DecoratedBox(
                       decoration: BoxDecoration(
                         borderRadius: LunoraSpacing.radiusMd,
-                        color: LunoraColors.nightBlueLift.withValues(alpha: 0.55),
+                        color: LunoraColors.nightBlueLift.withValues(
+                          alpha: 0.55,
+                        ),
                         border: Border.all(
                           color: LunoraColors.mist.withValues(alpha: 0.1),
                         ),
@@ -204,40 +211,17 @@ class _StripeCheckoutScreenState extends ConsumerState<StripeCheckoutScreen> {
                           children: [
                             Text(
                               stripeReady
-                                  ? 'Checkout backend détecté. '
-                                      'Paiement via Stripe Checkout sécurisé.'
+                                  ? 'Tu vas être redirigé vers Stripe Checkout. '
+                                        'Les informations bancaires sont saisies '
+                                        'uniquement sur la page sécurisée de Stripe.'
                                   : 'Configure le backend de paiement et '
-                                      'ELUNAI_API_BASE_URL côté app.',
+                                        'ELUNAI_API_BASE_URL côté app.',
                               style: theme.textTheme.bodySmall?.copyWith(
-                                color: LunoraColors.mist.withValues(alpha: 0.82),
+                                color: LunoraColors.mist.withValues(
+                                  alpha: 0.82,
+                                ),
                                 height: 1.45,
                               ),
-                            ),
-                            const SizedBox(height: LunoraSpacing.md),
-                            _PlaceholderField(
-                              label: 'Numéro de carte',
-                              hint: '4242 4242 4242 4242',
-                              icon: Icons.credit_card_rounded,
-                            ),
-                            const SizedBox(height: LunoraSpacing.sm),
-                            Row(
-                              children: [
-                                Expanded(
-                                  child: _PlaceholderField(
-                                    label: 'Expiration',
-                                    hint: 'MM / AA',
-                                    icon: Icons.calendar_month_rounded,
-                                  ),
-                                ),
-                                const SizedBox(width: LunoraSpacing.sm),
-                                Expanded(
-                                  child: _PlaceholderField(
-                                    label: 'CVC',
-                                    hint: '123',
-                                    icon: Icons.lock_outline_rounded,
-                                  ),
-                                ),
-                              ],
                             ),
                           ],
                         ),
@@ -256,51 +240,6 @@ class _StripeCheckoutScreenState extends ConsumerState<StripeCheckoutScreen> {
               ),
             ],
           ),
-        ),
-      ),
-    );
-  }
-}
-
-class _PlaceholderField extends StatelessWidget {
-  const _PlaceholderField({
-    required this.label,
-    required this.hint,
-    required this.icon,
-  });
-
-  final String label;
-  final String hint;
-  final IconData icon;
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    return TextField(
-      enabled: false,
-      decoration: InputDecoration(
-        labelText: label,
-        hintText: hint,
-        prefixIcon: Icon(icon, color: LunoraColors.mist.withValues(alpha: 0.5)),
-        filled: true,
-        fillColor: LunoraColors.nightBlueLift.withValues(alpha: 0.4),
-        border: OutlineInputBorder(
-          borderRadius: LunoraSpacing.radiusSm,
-          borderSide: BorderSide(
-            color: LunoraColors.mist.withValues(alpha: 0.15),
-          ),
-        ),
-        enabledBorder: OutlineInputBorder(
-          borderRadius: LunoraSpacing.radiusSm,
-          borderSide: BorderSide(
-            color: LunoraColors.mist.withValues(alpha: 0.12),
-          ),
-        ),
-        labelStyle: theme.textTheme.labelMedium?.copyWith(
-          color: LunoraColors.mist.withValues(alpha: 0.75),
-        ),
-        hintStyle: theme.textTheme.bodyMedium?.copyWith(
-          color: LunoraColors.mist.withValues(alpha: 0.35),
         ),
       ),
     );

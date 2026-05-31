@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 
 import 'package:http/http.dart' as http;
@@ -57,15 +58,16 @@ class ElunaiApiClient {
     String? bearerToken,
     String? appCheckToken,
   }) async {
-    final response = await _http
-        .get(
-          _uri(path, query),
-          headers: _headers(
-            bearerToken: bearerToken,
-            appCheckToken: appCheckToken,
-          ),
-        )
-        .timeout(_timeout);
+    final response = await withTimeoutMessage(
+      _http.get(
+        _uri(path, query),
+        headers: _headers(
+          bearerToken: bearerToken,
+          appCheckToken: appCheckToken,
+        ),
+      ),
+      path,
+    );
     return _decodeJson(response, path);
   }
 
@@ -75,16 +77,17 @@ class ElunaiApiClient {
     String? bearerToken,
     String? appCheckToken,
   }) async {
-    final response = await _http
-        .post(
-          _uri(path),
-          headers: _headers(
-            bearerToken: bearerToken,
-            appCheckToken: appCheckToken,
-          ),
-          body: jsonEncode(body ?? const <String, dynamic>{}),
-        )
-        .timeout(_timeout);
+    final response = await withTimeoutMessage(
+      _http.post(
+        _uri(path),
+        headers: _headers(
+          bearerToken: bearerToken,
+          appCheckToken: appCheckToken,
+        ),
+        body: jsonEncode(body ?? const <String, dynamic>{}),
+      ),
+      path,
+    );
     return _decodeJson(response, path);
   }
 
@@ -94,15 +97,16 @@ class ElunaiApiClient {
     String? bearerToken,
     String? appCheckToken,
   }) async {
-    final response = await _http
-        .delete(
-          _uri(path, query),
-          headers: _headers(
-            bearerToken: bearerToken,
-            appCheckToken: appCheckToken,
-          ),
-        )
-        .timeout(_timeout);
+    final response = await withTimeoutMessage(
+      _http.delete(
+        _uri(path, query),
+        headers: _headers(
+          bearerToken: bearerToken,
+          appCheckToken: appCheckToken,
+        ),
+      ),
+      path,
+    );
     return _decodeJson(response, path);
   }
 
@@ -119,6 +123,19 @@ class ElunaiApiClient {
       throw const FormatException('API backend: réponse JSON objet attendue');
     }
     return decoded;
+  }
+
+  Future<T> withTimeoutMessage<T>(Future<T> request, String path) async {
+    try {
+      return await request.timeout(_timeout);
+    } on TimeoutException {
+      throw ElunaiApiException(
+        statusCode: 408,
+        body:
+            'Le serveur met trop de temps a repondre. Reessaie dans un instant.',
+        path: path,
+      );
+    }
   }
 
   void close() => _http.close();

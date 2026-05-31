@@ -31,7 +31,7 @@ abstract final class MobileApiConfig {
   static Duration get requestTimeout {
     const fromDefine = int.fromEnvironment(
       'ELUNAI_API_TIMEOUT_SECONDS',
-      defaultValue: 20,
+      defaultValue: 60,
     );
     final raw = readRuntimeEnv('ELUNAI_API_TIMEOUT_SECONDS')?.trim();
     final env = int.tryParse(raw ?? '');

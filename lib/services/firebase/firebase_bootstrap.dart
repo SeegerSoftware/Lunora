@@ -27,14 +27,21 @@ abstract final class FirebaseBootstrap {
           FirebaseEmulatorConfig.firestorePort,
         );
       }
-      await FirebaseAppCheck.instance.activate(
-        androidProvider: kDebugMode
-            ? AndroidProvider.debug
-            : AndroidProvider.playIntegrity,
-        appleProvider: kDebugMode
-            ? AppleProvider.debug
-            : AppleProvider.appAttestWithDeviceCheckFallback,
-      );
+      try {
+        await FirebaseAppCheck.instance.activate(
+          androidProvider: kDebugMode
+              ? AndroidProvider.debug
+              : AndroidProvider.playIntegrity,
+          appleProvider: kDebugMode
+              ? AppleProvider.debug
+              : AppleProvider.appAttestWithDeviceCheckFallback,
+        );
+      } catch (e, st) {
+        // Firestore and Auth remain usable while App Check configuration is
+        // completed in Firebase Console.
+        debugPrint('FirebaseAppCheck activation skipped: $e');
+        debugPrint('$st');
+      }
     } catch (e, st) {
       debugPrint('FirebaseBootstrap: $e');
       debugPrint('$st');

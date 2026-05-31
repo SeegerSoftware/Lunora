@@ -18,8 +18,8 @@ class BackendStoryGenerationService implements StoryGenerationService {
   BackendStoryGenerationService({
     required ElunaiApiClient apiClient,
     firebase_auth.FirebaseAuth? firebaseAuth,
-  })  : _api = apiClient,
-        _auth = firebaseAuth ?? firebase_auth.FirebaseAuth.instance;
+  }) : _api = apiClient,
+       _auth = firebaseAuth ?? firebase_auth.FirebaseAuth.instance;
 
   final ElunaiApiClient _api;
   final firebase_auth.FirebaseAuth _auth;
@@ -29,26 +29,37 @@ class BackendStoryGenerationService implements StoryGenerationService {
     final response = await _postGeneration(kind: 'story', request: request);
     final result = response['result'];
     if (result is! Map) {
-      throw StoryGenerationException('Réponse backend invalide: result manquant.');
+      throw StoryGenerationException(
+        'Réponse backend invalide: result manquant.',
+      );
     }
     final parsed = StoryGenerationJsonParser.parseMap(
       Map<String, dynamic>.from(result),
     );
+    final source = result['generationSource']?.toString().trim();
     return StoryGenerationResultNormalizer.normalize(
       parsed: parsed,
       request: request,
-    ).copyWith(generationSource: 'backend-openai');
+    ).copyWith(
+      generationSource: source == null || source.isEmpty
+          ? 'backend-openai'
+          : source,
+    );
   }
 
   @override
-  Future<SeriesBible> generateSeriesBible(StoryGenerationRequest request) async {
+  Future<SeriesBible> generateSeriesBible(
+    StoryGenerationRequest request,
+  ) async {
     final response = await _postGeneration(
       kind: 'series_bible',
       request: request,
     );
     final result = response['result'];
     if (result is! Map) {
-      throw StoryGenerationException('Réponse backend invalide: result manquant.');
+      throw StoryGenerationException(
+        'Réponse backend invalide: result manquant.',
+      );
     }
     return SeriesBible.fromMap(Map<String, dynamic>.from(result));
   }
@@ -71,8 +82,21 @@ class BackendStoryGenerationService implements StoryGenerationService {
         appCheckToken: await AppCheckTokenProvider.getToken(),
         body: _requestBody(kind: kind, request: request),
       );
-    } catch (e) {
-      throw StoryGenerationException('Génération backend impossible : $e');
+    } on ElunaiApiException catch (e) {
+      final message = switch (e.statusCode) {
+        408 =>
+          'Le serveur met trop de temps à répondre. Réessaie dans un instant.',
+        401 || 403 => 'La session a expiré. Reconnecte-toi puis réessaie.',
+        429 =>
+          'La limite de génération est atteinte. Réessaie un peu plus tard.',
+        _ =>
+          'La génération est temporairement indisponible. Réessaie dans un instant.',
+      };
+      throw StoryGenerationException(message);
+    } catch (_) {
+      throw StoryGenerationException(
+        'La génération est temporairement indisponible. Réessaie dans un instant.',
+      );
     }
   }
 

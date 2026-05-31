@@ -1,6 +1,49 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:equatable/equatable.dart';
 
+String _readNarrativeText(dynamic value, {String fallback = ''}) {
+  if (value == null) return fallback;
+  if (value is String) return value.trim();
+  if (value is num || value is bool) return value.toString();
+  if (value is Map) {
+    const preferredKeys = [
+      'name',
+      'title',
+      'label',
+      'description',
+      'text',
+      'value',
+      'goal',
+      'summary',
+    ];
+    for (final key in preferredKeys) {
+      final text = _readNarrativeText(value[key]);
+      if (text.isNotEmpty) return text;
+    }
+    final parts = value.values
+        .map(_readNarrativeText)
+        .where((text) => text.isNotEmpty)
+        .toList();
+    if (parts.isNotEmpty) return parts.join(' - ');
+  }
+  if (value is Iterable) {
+    final parts = value
+        .map(_readNarrativeText)
+        .where((text) => text.isNotEmpty)
+        .toList();
+    if (parts.isNotEmpty) return parts.join(', ');
+  }
+  return fallback;
+}
+
+List<String> _readNarrativeList(dynamic value) {
+  if (value is! Iterable) return const [];
+  return value
+      .map(_readNarrativeText)
+      .where((text) => text.isNotEmpty)
+      .toList();
+}
+
 class ChapterPlanItem extends Equatable {
   const ChapterPlanItem({
     required this.chapterIndex,
@@ -21,11 +64,11 @@ class ChapterPlanItem extends Equatable {
   factory ChapterPlanItem.fromMap(Map<String, dynamic> map) {
     return ChapterPlanItem(
       chapterIndex: (map['chapterIndex'] as num?)?.toInt() ?? 1,
-      title: (map['title'] as String?)?.trim() ?? '',
-      goal: (map['goal'] as String?)?.trim() ?? '',
-      emotionalStep: (map['emotionalStep'] as String?)?.trim() ?? '',
-      newElement: (map['newElement'] as String?)?.trim() ?? '',
-      openLoop: (map['openLoop'] as String?)?.trim() ?? '',
+      title: _readNarrativeText(map['title']),
+      goal: _readNarrativeText(map['goal']),
+      emotionalStep: _readNarrativeText(map['emotionalStep']),
+      newElement: _readNarrativeText(map['newElement']),
+      openLoop: _readNarrativeText(map['openLoop']),
     );
   }
 
@@ -83,11 +126,7 @@ class SeriesBible extends Equatable {
   final String plannedEnding;
 
   factory SeriesBible.fromMap(Map<String, dynamic> map) {
-    List<String> readList(String key) =>
-        List<String>.from(map[key] as List? ?? const [])
-            .map((e) => e.trim())
-            .where((e) => e.isNotEmpty)
-            .toList();
+    List<String> readList(String key) => _readNarrativeList(map[key]);
 
     final rawPlan = (map['chapterPlan'] as List? ?? const [])
         .whereType<Map>()
@@ -95,19 +134,22 @@ class SeriesBible extends Equatable {
         .toList();
 
     return SeriesBible(
-      seriesTitle: (map['seriesTitle'] as String?)?.trim() ?? 'Série du soir',
-      pitch: (map['pitch'] as String?)?.trim() ?? '',
-      universe: (map['universe'] as String?)?.trim() ?? '',
-      tone: (map['tone'] as String?)?.trim() ?? '',
+      seriesTitle: _readNarrativeText(
+        map['seriesTitle'],
+        fallback: 'Série du soir',
+      ),
+      pitch: _readNarrativeText(map['pitch']),
+      universe: _readNarrativeText(map['universe']),
+      tone: _readNarrativeText(map['tone']),
       mainCharacters: readList('mainCharacters'),
       secondaryCharacters: readList('secondaryCharacters'),
       recurringPlaces: readList('recurringPlaces'),
-      storyArc: (map['storyArc'] as String?)?.trim() ?? '',
-      emotionalArc: (map['emotionalArc'] as String?)?.trim() ?? '',
+      storyArc: _readNarrativeText(map['storyArc']),
+      emotionalArc: _readNarrativeText(map['emotionalArc']),
       chapterPlan: rawPlan,
       continuityRules: readList('continuityRules'),
       antiRepetitionRules: readList('antiRepetitionRules'),
-      plannedEnding: (map['plannedEnding'] as String?)?.trim() ?? '',
+      plannedEnding: _readNarrativeText(map['plannedEnding']),
     );
   }
 
@@ -173,23 +215,19 @@ class ChapterContinuityUpdate extends Equatable {
   final String nextChapterGoal;
 
   factory ChapterContinuityUpdate.fromMap(Map<String, dynamic> map) {
-    List<String> readList(String key) =>
-        List<String>.from(map[key] as List? ?? const [])
-            .map((e) => e.trim())
-            .where((e) => e.isNotEmpty)
-            .toList();
+    List<String> readList(String key) => _readNarrativeList(map[key]);
 
     return ChapterContinuityUpdate(
-      chapterSummary: (map['chapterSummary'] as String?)?.trim() ?? '',
+      chapterSummary: _readNarrativeText(map['chapterSummary']),
       importantEvents: readList('importantEvents'),
       charactersMet: readList('charactersMet'),
       objectsIntroduced: readList('objectsIntroduced'),
       resolvedLoops: readList('resolvedLoops'),
       openLoops: readList('openLoops'),
-      emotionalStep: (map['emotionalStep'] as String?)?.trim() ?? '',
+      emotionalStep: _readNarrativeText(map['emotionalStep']),
       thingsToRemember: readList('thingsToRemember'),
       thingsToAvoidRepeating: readList('thingsToAvoidRepeating'),
-      nextChapterGoal: (map['nextChapterGoal'] as String?)?.trim() ?? '',
+      nextChapterGoal: _readNarrativeText(map['nextChapterGoal']),
     );
   }
 
@@ -226,6 +264,7 @@ class ChapterContinuityUpdate extends Equatable {
 class SeriesState extends Equatable {
   const SeriesState({
     required this.id,
+    required this.seriesId,
     required this.childId,
     required this.userId,
     required this.status,
@@ -249,6 +288,8 @@ class SeriesState extends Equatable {
     required this.importantObjects,
     required this.emotionalProgression,
     required this.antiRepetitionMemory,
+    required this.antiRepetitionRules,
+    required this.chapterContinuityUpdates,
     required this.lastChapterSummary,
     required this.nextChapterGoal,
     required this.createdAt,
@@ -257,6 +298,7 @@ class SeriesState extends Equatable {
   });
 
   final String id;
+  final String seriesId;
   final String childId;
   final String userId;
   final String status;
@@ -280,6 +322,8 @@ class SeriesState extends Equatable {
   final List<String> importantObjects;
   final List<String> emotionalProgression;
   final List<String> antiRepetitionMemory;
+  final List<String> antiRepetitionRules;
+  final List<ChapterContinuityUpdate> chapterContinuityUpdates;
   final String lastChapterSummary;
   final String nextChapterGoal;
   final DateTime createdAt;
@@ -288,6 +332,7 @@ class SeriesState extends Equatable {
 
   SeriesState copyWith({
     String? id,
+    String? seriesId,
     String? childId,
     String? userId,
     String? status,
@@ -311,14 +356,18 @@ class SeriesState extends Equatable {
     List<String>? importantObjects,
     List<String>? emotionalProgression,
     List<String>? antiRepetitionMemory,
+    List<String>? antiRepetitionRules,
+    List<ChapterContinuityUpdate>? chapterContinuityUpdates,
     String? lastChapterSummary,
     String? nextChapterGoal,
     DateTime? createdAt,
     DateTime? updatedAt,
     DateTime? completedAt,
+    bool clearCompletedAt = false,
   }) {
     return SeriesState(
       id: id ?? this.id,
+      seriesId: seriesId ?? this.seriesId,
       childId: childId ?? this.childId,
       userId: userId ?? this.userId,
       status: status ?? this.status,
@@ -342,11 +391,14 @@ class SeriesState extends Equatable {
       importantObjects: importantObjects ?? this.importantObjects,
       emotionalProgression: emotionalProgression ?? this.emotionalProgression,
       antiRepetitionMemory: antiRepetitionMemory ?? this.antiRepetitionMemory,
+      antiRepetitionRules: antiRepetitionRules ?? this.antiRepetitionRules,
+      chapterContinuityUpdates:
+          chapterContinuityUpdates ?? this.chapterContinuityUpdates,
       lastChapterSummary: lastChapterSummary ?? this.lastChapterSummary,
       nextChapterGoal: nextChapterGoal ?? this.nextChapterGoal,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
-      completedAt: completedAt ?? this.completedAt,
+      completedAt: clearCompletedAt ? null : completedAt ?? this.completedAt,
     );
   }
 
@@ -359,45 +411,62 @@ class SeriesState extends Equatable {
       return fallback;
     }
 
-    List<String> readList(String key) =>
-        List<String>.from(map[key] as List? ?? const [])
-            .map((e) => e.trim())
-            .where((e) => e.isNotEmpty)
-            .toList();
+    List<String> readList(String key) => _readNarrativeList(map[key]);
 
     final now = DateTime.now();
     final rawChapterPlan = (map['chapterPlan'] as List? ?? const [])
         .whereType<Map>()
         .map((e) => ChapterPlanItem.fromMap(Map<String, dynamic>.from(e)))
         .toList();
+    final rawContinuityUpdates =
+        (map['chapterContinuityUpdates'] as List? ?? const [])
+            .whereType<Map>()
+            .map(
+              (e) =>
+                  ChapterContinuityUpdate.fromMap(Map<String, dynamic>.from(e)),
+            )
+            .toList();
 
     return SeriesState(
-      id: (map['id'] as String?)?.trim() ?? '',
-      childId: (map['childId'] as String?)?.trim() ?? '',
-      userId: (map['userId'] as String?)?.trim() ?? '',
-      status: (map['status'] as String?)?.trim() ?? 'active',
-      seriesTitle: (map['seriesTitle'] as String?)?.trim() ?? 'Série du soir',
-      seriesFormat: (map['seriesFormat'] as String?)?.trim() ?? 'serialized',
+      id: _readNarrativeText(map['id']),
+      seriesId: _readNarrativeText(map['seriesId']).isNotEmpty
+          ? _readNarrativeText(map['seriesId'])
+          : 'series_${_readNarrativeText(map['childId'])}',
+      childId: _readNarrativeText(map['childId']),
+      userId: _readNarrativeText(map['userId']),
+      status: _readNarrativeText(map['status'], fallback: 'active'),
+      seriesTitle: _readNarrativeText(
+        map['seriesTitle'],
+        fallback: 'Série du soir',
+      ),
+      seriesFormat: _readNarrativeText(
+        map['seriesFormat'],
+        fallback: 'serialized',
+      ),
       currentChapterIndex: (map['currentChapterIndex'] as num?)?.toInt() ?? 0,
       totalChapters: (map['totalChapters'] as num?)?.toInt() ?? 7,
       seriesDurationDays: (map['seriesDurationDays'] as num?)?.toInt() ?? 7,
-      universe: (map['universe'] as String?)?.trim() ?? '',
-      tone: (map['tone'] as String?)?.trim() ?? '',
+      universe: _readNarrativeText(map['universe']),
+      tone: _readNarrativeText(map['tone']),
       mainCharacters: readList('mainCharacters'),
       secondaryCharacters: readList('secondaryCharacters'),
       recurringPlaces: readList('recurringPlaces'),
-      storyArc: (map['storyArc'] as String?)?.trim() ?? '',
-      emotionalArc: (map['emotionalArc'] as String?)?.trim() ?? '',
+      storyArc: _readNarrativeText(map['storyArc']),
+      emotionalArc: _readNarrativeText(map['emotionalArc']),
       chapterPlan: rawChapterPlan,
-      continuitySummary: (map['continuitySummary'] as String?)?.trim() ?? '',
+      continuitySummary: _readNarrativeText(map['continuitySummary']),
       chapterSummaries: readList('chapterSummaries'),
       openLoops: readList('openLoops'),
       resolvedLoops: readList('resolvedLoops'),
       importantObjects: readList('importantObjects'),
       emotionalProgression: readList('emotionalProgression'),
       antiRepetitionMemory: readList('antiRepetitionMemory'),
-      lastChapterSummary: (map['lastChapterSummary'] as String?)?.trim() ?? '',
-      nextChapterGoal: (map['nextChapterGoal'] as String?)?.trim() ?? '',
+      antiRepetitionRules: readList('antiRepetitionRules').isEmpty
+          ? readList('antiRepetitionMemory')
+          : readList('antiRepetitionRules'),
+      chapterContinuityUpdates: rawContinuityUpdates,
+      lastChapterSummary: _readNarrativeText(map['lastChapterSummary']),
+      nextChapterGoal: _readNarrativeText(map['nextChapterGoal']),
       createdAt: readDate(map['createdAt'], now),
       updatedAt: readDate(map['updatedAt'], now),
       completedAt: map['completedAt'] == null
@@ -409,6 +478,7 @@ class SeriesState extends Equatable {
   Map<String, dynamic> toMap() {
     return {
       'id': id,
+      'seriesId': seriesId,
       'childId': childId,
       'userId': userId,
       'status': status,
@@ -432,6 +502,10 @@ class SeriesState extends Equatable {
       'importantObjects': importantObjects,
       'emotionalProgression': emotionalProgression,
       'antiRepetitionMemory': antiRepetitionMemory,
+      'antiRepetitionRules': antiRepetitionRules,
+      'chapterContinuityUpdates': chapterContinuityUpdates
+          .map((e) => e.toMap())
+          .toList(),
       'lastChapterSummary': lastChapterSummary,
       'nextChapterGoal': nextChapterGoal,
       'createdAt': createdAt.toIso8601String(),
@@ -443,6 +517,7 @@ class SeriesState extends Equatable {
   @override
   List<Object?> get props => [
     id,
+    seriesId,
     childId,
     userId,
     status,
@@ -466,6 +541,8 @@ class SeriesState extends Equatable {
     importantObjects,
     emotionalProgression,
     antiRepetitionMemory,
+    antiRepetitionRules,
+    chapterContinuityUpdates,
     lastChapterSummary,
     nextChapterGoal,
     createdAt,

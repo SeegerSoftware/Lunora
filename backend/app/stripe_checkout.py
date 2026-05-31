@@ -9,6 +9,10 @@ def create_checkout_session(payload: dict[str, Any], firebase_user: dict[str, An
     price_id = os.getenv("STRIPE_PRICE_ID_ELUNAI", "").strip()
     success_url = os.getenv("STRIPE_SUCCESS_URL", "https://lunora.app/#/subscription/success")
     cancel_url = os.getenv("STRIPE_CANCEL_URL", "https://lunora.app/#/subscription/cancel")
+    plan_id = str(payload.get("planId") or "plan_elunai")
+    allowed_plan_id = os.getenv("STRIPE_DEFAULT_PLAN_ID", "plan_elunai").strip()
+    if plan_id != allowed_plan_id:
+        raise HTTPException(status_code=400, detail="Unsupported Stripe plan")
 
     if os.getenv("STRIPE_MOCK", "").lower() == "true":
         return {"url": "https://checkout.stripe.com/mock-session"}
@@ -22,7 +26,6 @@ def create_checkout_session(payload: dict[str, Any], firebase_user: dict[str, An
         raise HTTPException(status_code=503, detail="stripe package is not installed") from exc
 
     stripe.api_key = secret_key
-    plan_id = str(payload.get("planId") or "plan_elunai")
     email = str(firebase_user.get("email") or payload.get("email") or "").strip() or None
 
     session = stripe.checkout.Session.create(

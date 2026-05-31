@@ -17,6 +17,7 @@ import '../../../shared/models/enums/story_format.dart';
 import '../../../shared/models/series_state.dart';
 import '../../../shared/models/story.dart';
 import '../../../shared/models/user_model.dart';
+import 'series_state_reducer.dart';
 import 'story_repository.dart';
 
 class FirebaseStoryRepository implements StoryRepository {
@@ -81,6 +82,7 @@ class FirebaseStoryRepository implements StoryRepository {
       final query = await _db
           .collection(FirestorePaths.stories)
           .where('userId', isEqualTo: userId)
+          .limit(100)
           .get();
       final list = query.docs.map((d) {
         final m = Map<String, dynamic>.from(d.data());
@@ -117,7 +119,9 @@ class FirebaseStoryRepository implements StoryRepository {
         }
       }
       final existingSnap = existing;
-      if (existingSnap != null && existingSnap.exists && existingSnap.data() != null) {
+      if (existingSnap != null &&
+          existingSnap.exists &&
+          existingSnap.data() != null) {
         final m = Map<String, dynamic>.from(existingSnap.data()!);
         m['id'] = existingSnap.id;
         final cached = Story.fromMap(m);
@@ -139,7 +143,6 @@ class FirebaseStoryRepository implements StoryRepository {
         chapterIndex = 1;
         seriesId = null;
       } else {
-        seriesId = 'series_${child.id}';
         final seriesStateDocId = _seriesStateDocId(
           childId: child.id,
           userId: user.id,
@@ -149,6 +152,7 @@ class FirebaseStoryRepository implements StoryRepository {
             activeSeriesState.status != 'active' ||
             activeSeriesState.currentChapterIndex >=
                 activeSeriesState.totalChapters) {
+          seriesId = _newSeriesId(childId: child.id, dateKey: todayKey);
           final bibleRequest = StoryGenerationRequest(
             user: user,
             child: child,
@@ -157,7 +161,9 @@ class FirebaseStoryRepository implements StoryRepository {
             totalChapters: totalChapters,
             seriesId: seriesId,
           );
-          seriesBible = await _generationService.generateSeriesBible(bibleRequest);
+          seriesBible = await _generationService.generateSeriesBible(
+            bibleRequest,
+          );
           activeSeriesState = await _createSeriesState(
             stateDocId: seriesStateDocId,
             child: child,
@@ -167,6 +173,7 @@ class FirebaseStoryRepository implements StoryRepository {
             totalChapters: totalChapters,
           );
         } else {
+          seriesId = activeSeriesState.seriesId;
           seriesBible = _extractSeriesBible(activeSeriesState);
         }
         chapterIndex = (activeSeriesState.currentChapterIndex + 1).clamp(
@@ -219,19 +226,33 @@ class FirebaseStoryRepository implements StoryRepository {
         createdAt: DateTime.now(),
       );
 
-      await ref.set(FirestoreMappers.storyWrite(story));
-
       if (isSerialized && activeSeriesState != null) {
-        await _updateSeriesStateAfterChapter(
-          stateDocId: activeSeriesState.id,
+        final nextState = SeriesStateReducer.advance(
           state: activeSeriesState,
           chapterIndex: chapterIndex,
-          story: story,
+          fallbackSummary: story.summary,
           continuityUpdate: generated.continuityUpdate,
+          now: DateTime.now(),
         );
+        final batch = _db.batch();
+        batch.set(ref, FirestoreMappers.storyWrite(story));
+        batch.set(
+          _db
+              .collection(FirestorePaths.childSeriesState)
+              .doc(activeSeriesState.id),
+          _seriesStateWrite(nextState),
+          SetOptions(merge: true),
+        );
+        await batch.commit();
+      } else {
+        await ref.set(FirestoreMappers.storyWrite(story));
       }
 
-      await _safeUpdateMemoryAfterStorySaved(story: story, child: child, user: user);
+      await _safeUpdateMemoryAfterStorySaved(
+        story: story,
+        child: child,
+        user: user,
+      );
 
       return story;
     } catch (e) {
@@ -256,7 +277,16 @@ class FirebaseStoryRepository implements StoryRepository {
       final snapRef = _db
           .collection(FirestorePaths.storyMemorySnapshots)
           .doc(storyId);
-      await _safeDeleteDoc(storyRef);
+      final existing = await storyRef.get();
+      final existingData = existing.data();
+      final existingStory = existing.exists && existingData != null
+          ? Story.fromMap({...existingData, 'id': existing.id})
+          : null;
+      if (existingStory?.isSerialized == true) {
+        await _rewindSeriesForRegeneration(existingStory!);
+      } else {
+        await _safeDeleteDoc(storyRef);
+      }
       await _safeDeleteDoc(snapRef);
       return ensureTodayStory(user: user, child: child);
     } catch (e) {
@@ -265,7 +295,9 @@ class FirebaseStoryRepository implements StoryRepository {
     }
   }
 
-  Future<void> _safeDeleteDoc(DocumentReference<Map<String, dynamic>> ref) async {
+  Future<void> _safeDeleteDoc(
+    DocumentReference<Map<String, dynamic>> ref,
+  ) async {
     try {
       final doc = await ref.get();
       if (doc.exists) {
@@ -294,11 +326,40 @@ class FirebaseStoryRepository implements StoryRepository {
         raw.contains('acces refuse');
   }
 
-  String _seriesStateDocId({
-    required String childId,
-    required String userId,
-  }) {
+  String _seriesStateDocId({required String childId, required String userId}) {
     return '${childId}_$userId';
+  }
+
+  String _newSeriesId({required String childId, required String dateKey}) {
+    return 'series_${childId}_$dateKey';
+  }
+
+  Future<void> _rewindSeriesForRegeneration(Story story) async {
+    final stateDocId = _seriesStateDocId(
+      childId: story.childId,
+      userId: story.userId,
+    );
+    final state = await _loadSeriesState(stateDocId);
+    final storyRef = _db.collection(FirestorePaths.stories).doc(story.id);
+    if (state == null ||
+        state.seriesId != story.seriesId ||
+        state.currentChapterIndex != story.chapterNumber) {
+      await _safeDeleteDoc(storyRef);
+      return;
+    }
+    final rewound = SeriesStateReducer.rewindCurrentChapter(
+      state: state,
+      chapterIndex: story.chapterNumber,
+      now: DateTime.now(),
+    );
+    final batch = _db.batch();
+    batch.delete(storyRef);
+    batch.set(
+      _db.collection(FirestorePaths.childSeriesState).doc(stateDocId),
+      _seriesStateWrite(rewound),
+      SetOptions(merge: true),
+    );
+    await batch.commit();
   }
 
   Future<SeriesState?> _loadSeriesState(String stateDocId) async {
@@ -332,7 +393,7 @@ class FirebaseStoryRepository implements StoryRepository {
       emotionalArc: state.emotionalArc,
       chapterPlan: state.chapterPlan,
       continuityRules: const [],
-      antiRepetitionRules: state.antiRepetitionMemory,
+      antiRepetitionRules: state.antiRepetitionRules,
       plannedEnding: state.storyArc,
     );
   }
@@ -356,6 +417,7 @@ class FirebaseStoryRepository implements StoryRepository {
     final now = DateTime.now();
     final state = SeriesState(
       id: stateDocId,
+      seriesId: seriesId,
       childId: child.id,
       userId: user.id,
       status: 'active',
@@ -379,8 +441,12 @@ class FirebaseStoryRepository implements StoryRepository {
       importantObjects: const [],
       emotionalProgression: const [],
       antiRepetitionMemory: bible.antiRepetitionRules,
+      antiRepetitionRules: bible.antiRepetitionRules,
+      chapterContinuityUpdates: const [],
       lastChapterSummary: '',
-      nextChapterGoal: bible.chapterPlan.isEmpty ? '' : bible.chapterPlan.first.goal,
+      nextChapterGoal: bible.chapterPlan.isEmpty
+          ? ''
+          : bible.chapterPlan.first.goal,
       createdAt: now,
       updatedAt: now,
     );
@@ -389,73 +455,8 @@ class FirebaseStoryRepository implements StoryRepository {
       'createdAt': Timestamp.fromDate(state.createdAt),
       'updatedAt': Timestamp.fromDate(state.updatedAt),
       'completedAt': null,
-      'seriesId': seriesId,
     });
     return state;
-  }
-
-  Future<void> _updateSeriesStateAfterChapter({
-    required String stateDocId,
-    required SeriesState state,
-    required int chapterIndex,
-    required Story story,
-    required ChapterContinuityUpdate? continuityUpdate,
-  }) async {
-    final safeSummary = continuityUpdate?.chapterSummary.trim().isNotEmpty == true
-        ? continuityUpdate!.chapterSummary.trim()
-        : story.summary;
-    final update = continuityUpdate ??
-        ChapterContinuityUpdate(
-          chapterSummary: safeSummary,
-          importantEvents: const [],
-          charactersMet: const [],
-          objectsIntroduced: const [],
-          resolvedLoops: const [],
-          openLoops: const [],
-          emotionalStep: '',
-          thingsToRemember: const [],
-          thingsToAvoidRepeating: const [],
-          nextChapterGoal: '',
-        );
-
-    final mergedSummaries = [...state.chapterSummaries, safeSummary];
-    final mergedObjects = {...state.importantObjects, ...update.objectsIntroduced}.toList();
-    final mergedResolved = {...state.resolvedLoops, ...update.resolvedLoops}.toList();
-    final mergedOpen = {
-      ...state.openLoops.where((loop) => !update.resolvedLoops.contains(loop)),
-      ...update.openLoops,
-    }.toList();
-    final mergedEmotions = update.emotionalStep.trim().isEmpty
-        ? state.emotionalProgression
-        : [...state.emotionalProgression, update.emotionalStep.trim()];
-    final antiRep = {
-      ...state.antiRepetitionMemory,
-      ...update.thingsToAvoidRepeating,
-    }.toList();
-
-    final isCompleted = chapterIndex >= state.totalChapters;
-    final now = DateTime.now();
-    try {
-      await _db.collection(FirestorePaths.childSeriesState).doc(stateDocId).set({
-        'currentChapterIndex': chapterIndex,
-        'status': isCompleted ? 'completed' : 'active',
-        'chapterSummaries': mergedSummaries,
-        'continuitySummary': mergedSummaries.take(6).join(' | '),
-        'lastChapterSummary': safeSummary,
-        'importantObjects': mergedObjects,
-        'resolvedLoops': mergedResolved,
-        'openLoops': isCompleted ? const <String>[] : mergedOpen,
-        'emotionalProgression': mergedEmotions,
-        'antiRepetitionMemory': antiRep,
-        'nextChapterGoal': isCompleted ? 'Série terminée' : update.nextChapterGoal,
-        'updatedAt': Timestamp.fromDate(now),
-        'completedAt': isCompleted ? Timestamp.fromDate(now) : null,
-      }, SetOptions(merge: true));
-    } catch (e) {
-      if (kDebugMode) {
-        debugPrint('Series continuity update skipped for $stateDocId: $e');
-      }
-    }
   }
 
   Future<StoryMemoryContext?> _safeBuildMemoryContext({
@@ -488,13 +489,27 @@ class FirebaseStoryRepository implements StoryRepository {
     }
   }
 
+  Map<String, dynamic> _seriesStateWrite(SeriesState state) {
+    return {
+      ...state.toMap(),
+      'createdAt': Timestamp.fromDate(state.createdAt),
+      'updatedAt': Timestamp.fromDate(state.updatedAt),
+      'completedAt': state.completedAt == null
+          ? null
+          : Timestamp.fromDate(state.completedAt!),
+    };
+  }
+
   Future<void> _safeUpdateMemoryAfterStorySaved({
     required Story story,
     required ChildProfile child,
     required UserModel user,
   }) async {
     try {
-      final world = await _memoryRepository.getOrCreateWorld(user: user, child: child);
+      final world = await _memoryRepository.getOrCreateWorld(
+        user: user,
+        child: child,
+      );
       await StoryMemoryUpdater.afterStorySaved(
         repository: _memoryRepository,
         story: story,

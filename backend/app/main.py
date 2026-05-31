@@ -1,6 +1,7 @@
 import os
 
 from fastapi import Depends, FastAPI, HTTPException, Request
+from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
 
 from .account import delete_account_data
@@ -17,11 +18,25 @@ app = FastAPI(
     description="Backend minimal Elunai (FastAPI).",
 )
 
+
+@app.middleware("http")
+async def reject_oversized_requests(request: Request, call_next):
+    limit = int(os.getenv("MAX_REQUEST_BODY_BYTES", "131072"))
+    content_length = request.headers.get("content-length")
+    if content_length and int(content_length) > limit:
+        return JSONResponse(status_code=413, content={"detail": "Request body is too large"})
+    return await call_next(request)
+
+
 def _cors_origins() -> list[str]:
     raw = os.getenv("CORS_ALLOWED_ORIGINS", "").strip()
     if not raw:
         return ["http://localhost:3000", "http://localhost:5173"]
-    return [origin.strip() for origin in raw.split(",") if origin.strip()]
+    return [
+        origin.strip()
+        for origin in raw.replace("|", ",").replace(";", ",").split(",")
+        if origin.strip()
+    ]
 
 
 app.add_middleware(

@@ -28,6 +28,13 @@ Ne jamais versionner `dart_defines.json`, `.env`, les fichiers Firebase natifs o
 
 La génération OpenAI doit passer par le backend. Ne place pas de clé OpenAI dans les `dart-defines` de l'app mobile.
 
+## Cycle des histoires
+
+- Une série personnalisée contient 7 chapitres, avec un nouveau chapitre généré chaque jour.
+- Les résumés et éléments de continuité sont conservés pour guider le chapitre suivant.
+- Après le chapitre 7, la prochaine génération démarre une nouvelle série avec un identifiant distinct.
+- La régénération admin du chapitre du jour remplace ce chapitre sans avancer artificiellement la série.
+
 ## Mise en production
 
 Voir le plan d'actions exportable : [`docs/release-action-plan.md`](docs/release-action-plan.md).

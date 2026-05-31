@@ -536,7 +536,9 @@ class _StoryReaderScreenState extends ConsumerState<StoryReaderScreen> {
                     ),
                     const SizedBox(height: LunoraSpacing.sm),
                     Text(
-                      err is StoryGenerationException ? err.message : '$err',
+                      err is StoryGenerationException
+                          ? err.message
+                          : 'Une erreur de chargement est survenue. Réessaie dans un instant.',
                       style: theme.textTheme.bodySmall?.copyWith(
                         color: LunoraColors.mist.withValues(alpha: 0.86),
                       ),

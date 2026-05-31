@@ -2,6 +2,8 @@ import os
 import sys
 from pathlib import Path
 
+import pytest
+from fastapi import HTTPException
 from fastapi.testclient import TestClient
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
@@ -11,11 +13,79 @@ os.environ["OPENAI_MOCK"] = "true"
 os.environ["STRIPE_MOCK"] = "true"
 os.environ["FIRESTORE_EMULATOR_HOST"] = "localhost:8080"
 os.environ["ALLOW_TEST_APP_CHECK"] = "true"
+os.environ["GENERATION_RATE_LIMIT_PER_HOUR"] = "0"
 
 from app.main import app  # noqa: E402
+from app.rate_limit import check_generation_rate_limit  # noqa: E402
+from app.story_generation import _mock_story, _story_prompt  # noqa: E402
 
 
 client = TestClient(app)
+
+
+def test_local_fallback_is_long_enough_for_mobile_validation():
+    story = _mock_story(
+        {
+            "ageYears": 8,
+            "child": {"firstName": "Lina", "storyLengthMinutes": 10},
+        }
+    )
+
+    assert story["generationSource"] == "backend-fallback"
+    assert len(story["content"].split()) >= 900
+
+
+def test_story_prompt_includes_minimum_length():
+    prompt = _story_prompt(
+        {
+            "ageYears": 8,
+            "child": {"firstName": "Lina", "storyLengthMinutes": 10},
+        }
+    )
+
+    assert "environ 900 mots" in prompt
+    assert "minimum de 675 mots" in prompt
+
+
+def test_rate_limit_is_shared_through_firestore(monkeypatch):
+    state = {}
+
+    class FakeSnap:
+        @property
+        def exists(self):
+            return bool(state)
+
+        def get(self, key):
+            return state[key]
+
+    class FakeRef:
+        def get(self, transaction=None):
+            return FakeSnap()
+
+    class FakeCollection:
+        def document(self, _doc_id):
+            return FakeRef()
+
+    class FakeTransaction:
+        def set(self, _ref, values, merge=False):
+            state.update(values)
+
+    class FakeDb:
+        def collection(self, _name):
+            return FakeCollection()
+
+        def transaction(self):
+            return FakeTransaction()
+
+    monkeypatch.setenv("GENERATION_RATE_LIMIT_PER_HOUR", "1")
+    monkeypatch.setattr("app.rate_limit.firestore_client", lambda: FakeDb())
+    monkeypatch.setattr("app.rate_limit.transactional", lambda fn: fn)
+
+    check_generation_rate_limit("user-1", now_seconds=1_700_000_000)
+    with pytest.raises(HTTPException) as exc:
+        check_generation_rate_limit("user-1", now_seconds=1_700_000_001)
+
+    assert exc.value.status_code == 429
 
 
 def test_stories_generate_requires_firebase_token():
@@ -64,6 +134,19 @@ def test_stripe_checkout_with_test_token_returns_url():
 
     assert response.status_code == 200
     assert response.json()["url"].startswith("https://checkout.stripe.com/")
+
+
+def test_stripe_checkout_rejects_unknown_plan():
+    response = client.post(
+        "/stripe/checkout",
+        headers={
+            "Authorization": "Bearer test:user-1",
+            "X-Firebase-AppCheck": "test",
+        },
+        json={"planId": "plan_admin"},
+    )
+
+    assert response.status_code == 400
 
 
 def test_stories_generate_validates_payload():

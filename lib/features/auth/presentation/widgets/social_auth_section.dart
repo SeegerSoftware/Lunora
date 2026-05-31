@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../../core/config/social_auth_config.dart';
 import '../../../../core/theme/colors.dart';
 import '../../../../core/theme/spacing.dart';
 import '../auth_navigation.dart';
@@ -34,6 +35,9 @@ class _SocialAuthSectionState extends ConsumerState<SocialAuthSection> {
 
   @override
   Widget build(BuildContext context) {
+    if (!SocialAuthConfig.googleSignInConfigured) {
+      return const SizedBox.shrink();
+    }
     final theme = Theme.of(context);
     final light = theme.brightness == Brightness.light;
     return Column(

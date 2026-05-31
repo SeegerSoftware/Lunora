@@ -5,3 +5,7 @@ __pycache__
 venv
 .git
 *.md
+.pytest_cache
+tests
+secrets
+*.json

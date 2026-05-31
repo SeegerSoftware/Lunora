@@ -31,8 +31,12 @@ service cloud.firestore {
     match /users/{userId} {
       allow read: if isOwnerByUid(userId);
       allow create: if isOwnerByUid(userId) &&
-          request.resource.data.id == request.auth.uid;
-      allow update, delete: if isOwnerByUid(userId);
+          request.resource.data.id == request.auth.uid &&
+          request.resource.data.subscriptionStatus == 'none' &&
+          request.resource.data.selectedPlan == null &&
+          !('isAdmin' in request.resource.data);
+      // Subscription and account lifecycle changes go through the backend.
+      allow update, delete: if false;
     }
 
     // Donnees enfant (1 profil par enfant).
@@ -47,7 +51,11 @@ service cloud.firestore {
     match /stories/{storyId} {
       allow read: if ownerMatchesUserId();
       allow create: if ownerMatchesUserIdOnCreate();
-      allow update: if ownerMatchesOnWrite();
+      allow update: if ownerMatchesUserId() &&
+          request.resource.data.userId == resource.data.userId &&
+          request.resource.data.diff(resource.data).affectedKeys()
+              .hasOnly(['userFeedback', 'userFeedbackAt']) &&
+          request.resource.data.userFeedback in [-1, 1];
       allow delete: if ownerMatchesUserId();
     }
 
@@ -62,11 +70,8 @@ service cloud.firestore {
     // Abonnement utilisateur.
     match /subscriptions/{userId} {
       allow read: if isOwnerByUid(userId);
-      allow create: if isOwnerByUid(userId) &&
-          request.resource.data.userId == request.auth.uid;
-      allow update: if isOwnerByUid(userId) &&
-          request.resource.data.userId == request.auth.uid;
-      allow delete: if isOwnerByUid(userId);
+      // Stripe webhooks write with Firebase Admin and bypass client rules.
+      allow create, update, delete: if false;
     }
 
     // Memoire narrative long terme.
